@@ -32,10 +32,12 @@ public class JwtUtils {
      * @param userType 用户类型（admin/client）
      * @return token 字符串
      */
-    public String generateToken(Long userId, String userType) {
+    public String generateToken(Long userId, String userType, String username, String nickname) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("userType", userType);
+        claims.put("username", username);
+        claims.put("nickname", nickname);
 
         return Jwts.builder()
                 .claims(claims)
@@ -60,6 +62,22 @@ public class JwtUtils {
     public String getUserTypeFromToken(String token) {
         Claims claims = parseToken(token);
         return claims.get("userType", String.class);
+    }
+
+    /**
+     * 从 Token 中获取用户名
+     */
+    public String getUsernameFromToken(String token) {
+        Claims claims = parseToken(token);
+        return claims.get("username", String.class);
+    }
+
+    /**
+     * 从 Token 中获取昵称
+     */
+    public String getNicknameFromToken(String token) {
+        Claims claims = parseToken(token);
+        return claims.get("nickname", String.class);
     }
 
     /**

@@ -146,7 +146,7 @@
 
   const formInline = reactive({
     username: 'admin',
-    password: '123456',
+    password: 'admin123',
     isCaptcha: true,
   });
 
@@ -174,7 +174,7 @@
         };
 
         try {
-          const { code, message: msg } = await userStore.login(params);
+          const { code, msg } = await userStore.login(params);
           message.destroyAll();
           if (code == ResultEnum.SUCCESS) {
             const toPath = decodeURIComponent((route.query?.redirect || '/') as string);

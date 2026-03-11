@@ -8,7 +8,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/design_studio?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     username: root
-    password: root
+    password: 123456
     driver-class-name: com.mysql.cj.jdbc.Driver
   # ==================== Redis 配置 ====================
   data:
@@ -28,6 +28,10 @@ spring:
     multipart:
       max-file-size: 5MB
       max-request-size: 10MB
+  security:
+    user:
+      name: admin
+      password: admin123
 
 # ==================== MyBatis-Plus ====================
 mybatis-plus:

@@ -45,7 +45,7 @@ public class AuthController {
         }
 
         // 2. 校验账号状态
-        if (admin.getStatus() != null && admin.getStatus() == 1) {
+        if (admin.getStatus() != null && admin.getStatus() == 0) {
             throw new BusinessException(ErrorCode.ACCOUNT_DISABLED);
         }
 
@@ -56,7 +56,7 @@ public class AuthController {
 
         // 4. 生成 JWT Token（TODO: 根据角色表查出实际角色）
         String userType = "admin";
-        String token = jwtUtils.generateToken(admin.getAdminId(), userType);
+        String token = jwtUtils.generateToken(admin.getAdminId(), userType, admin.getUsername(), admin.getNickname());
 
         // 5. 构建返回值
         LoginVO vo = LoginVO.builder()

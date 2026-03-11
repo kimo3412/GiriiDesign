@@ -1,6 +1,7 @@
 package com.designstudio.common.security;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 
 import java.io.Serializable;
@@ -11,6 +12,7 @@ import java.io.Serializable;
  * 存储在 SecurityContext 中，通过 LoginHelper 获取
  */
 @Data
+@Builder
 @AllArgsConstructor
 public class LoginUser implements Serializable {
 
@@ -19,6 +21,19 @@ public class LoginUser implements Serializable {
 
     /** 用户类型：admin / designer / client */
     private String userType;
+
+    /** 登录账号 */
+    private String username;
+
+    /** 昵称 */
+    private String nickname;
+
+    // ===== 便捷方法（兼容 AdminController 调用） =====
+
+    /** 返回 adminId（即 userId） */
+    public Long getAdminId() {
+        return userId;
+    }
 
     public boolean isAdmin() {
         return "admin".equalsIgnoreCase(userType);

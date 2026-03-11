@@ -56,12 +56,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // 提取用户信息，设置到 SecurityContext
             Long userId = jwtUtils.getUserIdFromToken(token);
             String userType = jwtUtils.getUserTypeFromToken(token);
+            String username = jwtUtils.getUsernameFromToken(token);
+            String nickname = jwtUtils.getNicknameFromToken(token);
 
             // 根据用户类型设置角色
             List<SimpleGrantedAuthority> authorities = Collections.singletonList(
                     new SimpleGrantedAuthority("ROLE_" + userType.toUpperCase()));
 
-            LoginUser loginUser = new LoginUser(userId, userType);
+            LoginUser loginUser = LoginUser.builder()
+                    .userId(userId)
+                    .userType(userType)
+                    .username(username)
+                    .nickname(nickname)
+                    .build();
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(loginUser,
                     null, authorities);
 

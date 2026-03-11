@@ -4,73 +4,73 @@ import { RouteRecordRaw } from 'vue-router';
 import { Layout, ParentLayout } from '@/router/constant';
 import type { AppRouteRecordRaw } from '@/router/types';
 
-const Iframe = () => import('@/views/iframe/index.vue');
 const LayoutMap = new Map<string, () => Promise<typeof import('*.vue')>>();
 
 LayoutMap.set('LAYOUT', Layout);
-LayoutMap.set('IFRAME', Iframe);
 
 /**
- * 格式化 后端 结构信息并递归生成层级路由表
- * @param routerMap
- * @param parent
- * @returns {*}
+ * 将后端菜单数据转换为前端路由格式
+ *
+ * 后端格式:
+ *   { menuId, menuName, menuType, path, component, perms, icon, sortOrder, visible, children }
+ *
+ * 前端期望:
+ *   { name, path, component, meta: { title, icon, permissions }, children }
  */
-export const generateRoutes = (routerMap, parent?): any[] => {
-  return routerMap.map((item) => {
-    const currentRoute: any = {
-      // 路由地址 动态拼接生成如 /dashboard/workplace
-      path: `${(parent && parent.path) ?? ''}/${item.path}`,
-      // 路由名称，建议唯一
-      name: item.name ?? '',
-      // 该路由对应页面的 组件
-      component: item.component,
-      // meta: 页面标题, 菜单图标, 页面权限(供指令权限用，可去掉)
-      meta: {
-        ...item.meta,
-        label: item.meta.title,
-        icon: constantRouterIcon[item.meta.icon] || null,
-        permissions: item.meta.permissions || null,
-      },
-    };
+export const transformMenuToRoute = (menus: any[], parent?: any): any[] => {
+  return menus
+    .filter((item) => item.menuType !== 'F') // 过滤按钮类型，只保留目录(M)和菜单(C)
+    .map((item) => {
+      const currentRoute: any = {
+        path: `${(parent && parent.path) || ''}/${item.path}`.replace('//', '/'),
+        name: item.path?.replace(/\//g, '-')?.replace(/^-/, '') || `menu-${item.menuId}`,
+        component: item.menuType === 'M' ? 'LAYOUT' : (item.component || item.path),
+        meta: {
+          title: item.menuName,
+          icon: constantRouterIcon[item.icon] || null,
+          permissions: item.perms ? [item.perms] : null,
+          sort: item.sortOrder,
+        },
+      };
 
-    // 为了防止出现后端返回结果不规范，处理有可能出现拼接出两个 反斜杠
-    currentRoute.path = currentRoute.path.replace('//', '/');
-    // 重定向
-    item.redirect && (currentRoute.redirect = item.redirect);
-    // 是否有子菜单，并递归处理
-    if (item.children && item.children.length > 0) {
-      //如果未定义 redirect 默认第一个子路由为 redirect
-      !item.redirect && (currentRoute.redirect = `${item.path}/${item.children[0].path}`);
-      // Recursion
-      currentRoute.children = generateRoutes(item.children, currentRoute);
-    }
-    return currentRoute;
-  });
+      // 有子菜单时递归
+      if (item.children && item.children.length > 0) {
+        // 过滤掉按钮子菜单
+        const childMenus = item.children.filter((c: any) => c.menuType !== 'F');
+        if (childMenus.length > 0) {
+          currentRoute.children = transformMenuToRoute(childMenus, currentRoute);
+          // 默认重定向到第一个子路由
+          if (!currentRoute.redirect && currentRoute.children.length > 0) {
+            currentRoute.redirect = currentRoute.children[0].path;
+          }
+        }
+      }
+
+      return currentRoute;
+    });
 };
 
 /**
  * 动态生成菜单
- * @returns {Promise<Router>}
  */
 export const generateDynamicRoutes = async (): Promise<RouteRecordRaw[]> => {
   const result = await adminMenus();
-  const router = generateRoutes(result);
+  const router = transformMenuToRoute(result);
   asyncImportRoute(router);
   return router;
 };
 
+// 保持原有的 generateRoutes 用于兼容
+export const generateRoutes = transformMenuToRoute;
+
 /**
  * 查找views中对应的组件文件
- * */
+ */
 let viewsModules: Record<string, () => Promise<Recordable>>;
 export const asyncImportRoute = (routes: AppRouteRecordRaw[] | undefined): void => {
   viewsModules = viewsModules || import.meta.glob('../views/**/*.{vue,tsx}');
   if (!routes) return;
   routes.forEach((item) => {
-    if (!item.component && item.meta?.frameSrc) {
-      item.component = 'IFRAME';
-    }
     const { component, name } = item;
     const { children } = item;
     if (component) {
@@ -88,8 +88,8 @@ export const asyncImportRoute = (routes: AppRouteRecordRaw[] | undefined): void 
 };
 
 /**
- * 动态导入
- * */
+ * 动态导入组件
+ */
 export const dynamicImport = (
   viewsModules: Record<string, () => Promise<Recordable>>,
   component: string
@@ -107,7 +107,7 @@ export const dynamicImport = (
   }
   if (matchKeys?.length > 1) {
     console.warn(
-      'Please do not create `.vue` and `.TSX` files with the same file name in the same hierarchical directory under the views folder. This will cause dynamic introduction failure'
+      'Please do not create `.vue` and `.TSX` files with the same file name in the same hierarchical directory under the views folder.'
     );
     return;
   }
