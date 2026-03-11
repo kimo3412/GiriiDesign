@@ -1,0 +1,38 @@
+package com.designstudio.common.domain;
+
+import com.baomidou.mybatisplus.annotation.FieldFill;
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableLogic;
+import lombok.Data;
+
+import java.io.Serializable;
+import java.time.LocalDateTime;
+
+/**
+ * 基础实体类 —— 所有业务表实体必须继承
+ * <p>
+ * 包含公共审计字段：创建人、创建时间、更新人、更新时间、逻辑删除标记
+ */
+@Data
+public abstract class BaseEntity implements Serializable {
+
+    /** 创建人ID */
+    @TableField(fill = FieldFill.INSERT)
+    private Long createBy;
+
+    /** 创建时间 */
+    @TableField(fill = FieldFill.INSERT)
+    private LocalDateTime createTime;
+
+    /** 更新人ID */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private Long updateBy;
+
+    /** 更新时间 */
+    @TableField(fill = FieldFill.INSERT_UPDATE)
+    private LocalDateTime updateTime;
+
+    /** 逻辑删除标记 (0=正常, 1=删除) */
+    @TableLogic
+    private Integer delFlag;
+}

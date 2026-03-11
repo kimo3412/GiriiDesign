@@ -1,0 +1,49 @@
+# ==========================================
+# 独立设计师工作室生产流程管理系统 - Git 忽略规则
+# ==========================================
+
+# ==================== IDE ====================
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+.settings/
+.project
+.classpath
+
+# ==================== OS ====================
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+
+# ==================== 后端 (Java/Maven) ====================
+Code/target/
+Code/*.jar
+Code/*.war
+Code/*.class
+Code/.mvn/wrapper/maven-wrapper.jar
+Code/mvnw
+Code/mvnw.cmd
+
+# ==================== 前端 (Node/Vite) ====================
+web-admin/node_modules/
+web-admin/dist/
+web-admin/.cache/
+web-admin/.temp/
+web-admin/*.local
+web-admin/.env.production
+
+# ==================== 日志 ====================
+*.log
+logs/
+
+# ==================== 上传文件 ====================
+uploads/
+
+# ==================== 系统生成 ====================
+.agent/
+.claude/
+.gemini/

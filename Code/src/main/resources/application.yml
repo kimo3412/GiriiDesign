@@ -1,0 +1,69 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: design-studio
+  # ==================== 数据库配置 ====================
+  datasource:
+    url: jdbc:mysql://localhost:3306/design_studio?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  # ==================== Redis 配置 ====================
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      database: 0
+      timeout: 3000ms
+  # ==================== Jackson 配置 ====================
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: Asia/Shanghai
+    serialization:
+      write-dates-as-timestamps: false
+  # ==================== 文件上传 ====================
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 10MB
+
+# ==================== MyBatis-Plus ====================
+mybatis-plus:
+  mapper-locations: classpath*:mapper/**/*.xml
+  type-aliases-package: com.designstudio.**.domain
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      id-type: auto
+      logic-delete-field: delFlag
+      logic-delete-value: 1
+      logic-not-delete-value: 0
+
+# ==================== JWT 配置 ====================
+jwt:
+  secret: YourDesignStudioJwtSecretKeyMustBeLongEnoughForHS256Algorithm2026
+  expiration: 604800000  # 7 天 (毫秒)
+
+# ==================== 文件上传路径 ====================
+upload:
+  path: /data/uploads/
+  url-prefix: /uploads/
+
+# ==================== SpringDoc API 文档 ====================
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    tags-sorter: alpha
+    operations-sorter: alpha
+
+# ==================== 日志配置 ====================
+logging:
+  level:
+    com.designstudio: debug
+    org.springframework.security: info
