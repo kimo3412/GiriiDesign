@@ -30,6 +30,7 @@ export const transformMenuToRoute = (menus: any[], parent?: any): any[] => {
           icon: constantRouterIcon[item.icon] || null,
           permissions: item.perms ? [item.perms] : null,
           sort: item.sortOrder,
+          hidden: item.visible === 0,
         },
       };
 
@@ -99,7 +100,7 @@ export const dynamicImport = (
     let k = key.replace('../views', '');
     const lastIndex = k.lastIndexOf('.');
     k = k.substring(0, lastIndex);
-    return k === component;
+    return k === component || k === component + '/index';
   });
   if (matchKeys?.length === 1) {
     const matchKey = matchKeys[0];

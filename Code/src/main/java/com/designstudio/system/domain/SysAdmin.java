@@ -33,6 +33,10 @@ public class SysAdmin extends BaseEntity {
     /** 手机号 */
     private String phone;
 
+    /** 邮箱 */
+    private String email;
+
     /** 状态（0=正常, 1=禁用） */
     private Integer status;
 }
+
