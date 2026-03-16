@@ -57,6 +57,26 @@ export const transformMenuToRoute = (menus: any[], parent?: any): any[] => {
 export const generateDynamicRoutes = async (): Promise<RouteRecordRaw[]> => {
   const result = await adminMenus();
   const router = transformMenuToRoute(result);
+
+  // 注入需要隐藏的业务路由（不在菜单中显示，但需要通过 URL 访问）
+  const hiddenRoutes: any[] = [
+    {
+      path: '/order/detail/:id',
+      name: 'order-detail',
+      component: '/order/detail',
+      meta: { title: '订单详情', hidden: true },
+    },
+  ];
+
+  // 将隐藏路由挂到顶层 Layout 下
+  router.push({
+    path: '/order-hidden',
+    name: 'order-hidden-layout',
+    component: 'LAYOUT',
+    meta: { title: '订单详情', hidden: true },
+    children: hiddenRoutes,
+  } as any);
+
   asyncImportRoute(router);
   return router;
 };
