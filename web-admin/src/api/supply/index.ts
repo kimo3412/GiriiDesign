@@ -59,3 +59,8 @@ export function updateBomTemplate(id: number, data: any) {
 export function deleteBomTemplate(id: number) {
     return Alova.Delete<any>(`/v1/admin/bom-templates/${id}`);
 }
+
+/** 库存预警列表 */
+export function getLowStock() {
+    return Alova.Get<any>('/v1/admin/materials/low-stock');
+}
