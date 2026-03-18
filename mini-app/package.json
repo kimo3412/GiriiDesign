@@ -1,0 +1,18 @@
+{
+  "name": "mini-app",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:mp-weixin": "uni -p mp-weixin",
+    "build:mp-weixin": "uni build -p mp-weixin"
+  },
+  "dependencies": {
+    "@dcloudio/uni-app": "3.0.0-4010120250120001"
+  },
+  "devDependencies": {
+    "@dcloudio/uni-cli-shared": "3.0.0-4010120250120001",
+    "@dcloudio/uni-mp-weixin": "3.0.0-4010120250120001",
+    "@dcloudio/vite-plugin-uni": "3.0.0-4010120250120001",
+    "vite": "5.4.21"
+  }
+}

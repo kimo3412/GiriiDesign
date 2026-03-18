@@ -36,6 +36,20 @@ web-admin/.temp/
 web-admin/*.local
 web-admin/.env.production
 
+# ==================== 小程序 (Uni-app) ====================
+mini-app/node_modules/
+mini-app/dist/
+mini-app/unpackage/
+mini-app/.cache/
+mini-app/.temp/
+mini-app/*.local
+mini-app/.env
+
+# 微信开发者工具
+mini-app/project.config.json
+mini-app/project.private.config.json
+mini-app/package-lock.json
+
 # ==================== 日志 ====================
 *.log
 logs/

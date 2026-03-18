@@ -1,0 +1,47 @@
+const fs = require('fs');
+const path = require('path');
+
+// 创建一个简单的 81x81 像素 PNG (使用原始字节)
+// 这是一个最小有效的 PNG 文件 - 灰色方块
+const createSimplePNG = () => {
+  // 最小 1x1 灰色 PNG
+  const pngData = Buffer.from([
+    0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, // PNG signature
+    0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52, // IHDR chunk
+    0x00, 0x00, 0x00, 0x51, 0x00, 0x00, 0x00, 0x51, // 81x81
+    0x08, 0x02, 0x00, 0x00, 0x00, 0xD3, 0x10, 0x3F, 0x31, // 8-bit RGB
+    0x00, 0x00, 0x00, 0x0C, 0x49, 0x44, 0x41, 0x54, // IDAT chunk
+    0x78, 0x9C, 0x62, 0x60, 0x60, 0x60, 0x00, 0x00, 0x00, 0x04, 0x00, 0x01,
+    0x00, 0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, // IEND
+    0xAE, 0x42, 0x60, 0x82
+  ]);
+  return pngData;
+};
+
+// 创建 icons 目录
+const iconsDir = path.join(__dirname, 'static', 'icons');
+if (!fs.existsSync(iconsDir)) {
+  fs.mkdirSync(iconsDir, { recursive: true });
+}
+
+// 创建简单的占位图标
+const icons = [
+  'home.png',
+  'home-active.png',
+  'order.png',
+  'order-active.png',
+  'user.png',
+  'user-active.png'
+];
+
+icons.forEach(icon => {
+  const iconPath = path.join(iconsDir, icon);
+  if (!fs.existsSync(iconPath)) {
+    // 创建一个最小的有效 PNG
+    const png = createSimplePNG();
+    fs.writeFileSync(iconPath, png);
+    console.log(`Created: ${icon}`);
+  }
+});
+
+console.log('Done!');
