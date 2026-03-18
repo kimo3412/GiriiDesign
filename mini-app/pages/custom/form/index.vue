@@ -167,10 +167,12 @@ const onSelectChange = (field, e) => {
  * 上传图片
  */
 const uploadImage = async (fieldName) => {
+  // 找到对应的字段配置
+  const field = schema.value.find(f => f.fieldName === fieldName)
   const images = formData[fieldName] || []
 
   const [err, res] = await uni.chooseImage({
-    count: (field.maxImages || 9) - images.length,
+    count: (field?.maxImages || 9) - images.length,
     sizeType: ['compressed'],
     sourceType: ['album', 'camera']
   })

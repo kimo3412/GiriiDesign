@@ -6,7 +6,13 @@
       <text class="subtitle">定制您的专属体验</text>
     </view>
 
-    <button class="login-btn" type="primary" open-type="getPhoneNumber" @getphonenumber="handleGetPhoneNumber">
+    <!-- 模拟登录按钮（测试用） -->
+    <button class="login-btn" type="primary" @click="handleSimulateLogin">
+      测试登录
+    </button>
+
+    <!-- 微信登录（需要企业账号） -->
+    <button class="login-btn wechat" type="primary" open-type="getPhoneNumber" @getphonenumber="handleGetPhoneNumber">
       微信一键登录
     </button>
 
@@ -25,6 +31,29 @@ import { useUserStore } from '@/store/user'
 import storage from '@/utils/storage'
 
 const userStore = useUserStore()
+
+/**
+ * 模拟登录（测试用）
+ */
+const handleSimulateLogin = () => {
+  // 模拟登录成功
+  const mockToken = 'mock_token_' + Date.now()
+  const mockUserInfo = {
+    userId: 1,
+    nickname: '测试用户',
+    phone: '13800138000',
+    avatar: ''
+  }
+
+  userStore.setToken(mockToken)
+  userStore.setUserInfo(mockUserInfo)
+
+  uni.showToast({ title: '登录成功', icon: 'success' })
+
+  setTimeout(() => {
+    uni.switchTab({ url: '/pages/index/index' })
+  }, 1500)
+}
 
 /**
  * 微信登录
