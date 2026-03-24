@@ -1,5 +1,5 @@
 // 开发环境后端地址
-const BASE_URL = 'http://localhost:8080'
+const BASE_URL = 'http://localhost:8081/api'
 
 // 请求封装
 const request = (options) => {

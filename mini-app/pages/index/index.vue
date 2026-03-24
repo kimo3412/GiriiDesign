@@ -1,50 +1,69 @@
 <template>
   <view class="index-container">
-    <!-- 顶部Banner -->
+    <!-- 顶部品牌介绍 -->
+    <view class="brand-header">
+      <text class="brand-title">ZeHana</text>
+      <text class="brand-subtitle">独立设计师工作室</text>
+    </view>
+
+    <!-- 极简轮播 Banner -->
     <view class="banner">
-      <swiper class="banner-swiper" circular indicator-dots autoplay interval="3000">
+      <swiper class="banner-swiper" circular autoplay interval="4000" duration="800">
         <swiper-item v-for="(item, index) in banners" :key="index">
-          <image :src="item.image" mode="aspectFill" />
+          <view class="banner-image-wrapper">
+            <image :src="item.image" mode="aspectFill" class="banner-img" />
+            <view class="banner-mask"></view>
+            <view class="banner-text-box">
+              <text class="banner-label">{{ item.label }}</text>
+              <text class="banner-headline">{{ item.headline }}</text>
+            </view>
+          </view>
         </swiper-item>
       </swiper>
     </view>
 
-    <!-- 功能入口 -->
-    <view class="entry-grid">
-      <view class="entry-item" @click="goTo('/pages/portfolio/list/index')">
-        <view class="entry-icon">🎨</view>
-        <text class="entry-text">作品集</text>
+    <!-- 典雅入口 -->
+    <view class="entry-list">
+      <view class="entry-card" @click="goTo('/pages/custom/category/index')">
+        <text class="entry-en">专属定制</text>
+        <text class="entry-cn">发起私人定制</text>
+        <text class="entry-arrow">→</text>
       </view>
-      <view class="entry-item" @click="goTo('/pages/custom/category/index')">
-        <view class="entry-icon">✨</view>
-        <text class="entry-text">发起定制</text>
-      </view>
-      <view class="entry-item" @click="goTo('/pages/order/list/index')">
-        <view class="entry-icon">📋</view>
-        <text class="entry-text">我的订单</text>
-      </view>
-      <view class="entry-item" @click="goTo('/pages/user/index')">
-        <view class="entry-icon">👤</view>
-        <text class="entry-text">个人中心</text>
+      <view class="entry-card" @click="goTo('/pages/order/list/index')">
+        <text class="entry-en">我的订单</text>
+        <text class="entry-cn">订单进度查询</text>
+        <text class="entry-arrow">→</text>
       </view>
     </view>
 
-    <!-- 推荐作品 -->
-    <view class="section">
-      <view class="section-header">
-        <text class="section-title">推荐作品</text>
-        <text class="section-more" @click="goTo('/pages/portfolio/list/index')">更多 ></text>
+    <!-- 经典作品集瀑布流 (模拟) -->
+    <view class="portfolio-section">
+      <view class="section-title-wrap">
+        <text class="section-title">往期作品大赏</text>
+        <text class="section-desc">ZeHana 过往经典设计精粹</text>
       </view>
-      <view class="portfolio-grid">
-        <view
-          v-for="item in portfolios"
-          :key="item.id"
-          class="portfolio-item"
-          @click="goToDetail(item.id)"
-        >
-          <image :src="item.thumbnail" mode="aspectFill" class="portfolio-cover" />
-          <view class="portfolio-info">
-            <text class="portfolio-title">{{ item.title }}</text>
+      
+      <view class="waterfall">
+        <view class="waterfall-col" v-for="(col, colIndex) in splitPortfolios" :key="colIndex">
+          <view 
+            class="portfolio-card" 
+            v-for="item in col" 
+            :key="item.portfolioId"
+            @click="goToDetail(item.portfolioId)"
+          >
+            <!-- 若无图则用模拟的高定灰绿色块占位 -->
+            <view class="img-placeholder" v-if="!item.coverUrl">
+              <text class="placeholder-text">ZeHana</text>
+            </view>
+            <image v-else :src="item.coverUrl" mode="widthFix" class="portfolio-img"></image>
+            
+            <view class="portfolio-info">
+              <text class="p-title">{{ item.title }}</text>
+              <view class="p-bottom">
+                <text class="p-category">高级定制</text>
+                <text class="p-views">{{ item.viewCount || 0 }} 次浏览</text>
+              </view>
+            </view>
           </view>
         </view>
       </view>
@@ -53,38 +72,50 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { onShow, onLoad } from '@dcloudio/uni-app'
 import { getPortfolioList } from '@/api/portfolio'
 
+// 新生成的绝美高定绿调展示图
 const banners = ref([
-  { image: '/static/images/banner1.jpg' },
-  { image: '/static/images/banner2.jpg' }
+  { image: '/static/images/zehana_couture_1774340712019.png', label: '2026 高定系列', headline: '静谧奢华' },
+  { image: '/static/images/zehana_leather_1774340726407.png', label: '手工皮具', headline: '永恒优雅' }
 ])
 
 const portfolios = ref([])
 
-/**
- * 跳转页面
- */
+// 把数据平分为两列，做简单的瀑布流
+const splitPortfolios = computed(() => {
+  const col1 = []
+  const col2 = []
+  portfolios.value.forEach((item, index) => {
+    if (index % 2 === 0) col1.push(item)
+    else col2.push(item)
+  })
+  return [col1, col2]
+})
+
 const goTo = (url) => {
   uni.navigateTo({ url })
 }
 
-/**
- * 跳转作品详情
- */
 const goToDetail = (id) => {
   uni.navigateTo({ url: `/pages/portfolio/detail/index?id=${id}` })
 }
 
-/**
- * 获取推荐作品
- */
 const fetchPortfolios = async () => {
   try {
-    const data = await getPortfolioList({ page: 1, size: 6 })
-    portfolios.value = data.list || []
+    const data = await getPortfolioList()
+    portfolios.value = data || []
+    
+    // 如果后台一条数据都没有，我们塞点 Mock 的定制占位数据撑门面
+    if (portfolios.value.length === 0) {
+      portfolios.value = [
+        { portfolioId: 1, title: 'Sage Tailored Suit 初晓西装', coverUrl: '/static/images/zehana_suit_1774340741093.png', viewCount: 1204 },
+        { portfolioId: 2, title: 'Emerald Evening Gown 翡翠晚礼服', coverUrl: '/static/images/zehana_couture_1774340712019.png', viewCount: 890 },
+        { portfolioId: 3, title: 'Olive Leather Tote 橄榄色皮具', coverUrl: '/static/images/zehana_leather_1774340726407.png', viewCount: 562 }
+      ]
+    }
   } catch (err) {
     console.error('获取作品列表失败', err)
   }
@@ -97,94 +128,211 @@ onLoad(() => {
 
 <style lang="scss" scoped>
 .index-container {
-  background: #f8f8f8;
+  background: $background-color;
   min-height: 100vh;
+  padding-bottom: 60rpx;
+}
+
+.brand-header {
+  padding: 60rpx 40rpx 30rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: $white;
+  letter-spacing: 4rpx;
+
+  .brand-title {
+    font-size: 56rpx;
+    font-weight: 300;
+    color: $primary-color;
+    font-family: 'Times New Roman', serif;
+  }
+  .brand-subtitle {
+    margin-top: 12rpx;
+    font-size: 20rpx;
+    color: $text-color-light;
+    letter-spacing: 4rpx;
+  }
 }
 
 .banner {
-  height: 350rpx;
-
+  height: 800rpx;
+  width: 100%;
+  
   .banner-swiper {
     height: 100%;
+  }
 
-    image {
+  .banner-image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+
+    .banner-img {
       width: 100%;
       height: 100%;
+    }
+
+    .banner-mask {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6));
+    }
+
+    .banner-text-box {
+      position: absolute;
+      bottom: 80rpx;
+      left: 40rpx;
+      display: flex;
+      flex-direction: column;
+      
+      .banner-label {
+        font-size: 20rpx;
+        color: rgba(255,255,255,0.8);
+        letter-spacing: 6rpx;
+        margin-bottom: 12rpx;
+      }
+      .banner-headline {
+        font-size: 48rpx;
+        color: #fff;
+        font-weight: 300;
+        letter-spacing: 4rpx;
+      }
     }
   }
 }
 
-.entry-grid {
+.entry-list {
+  padding: 40rpx 40rpx;
   display: flex;
-  background: #fff;
-  padding: 40rpx 0;
-  margin-bottom: 20rpx;
-}
+  gap: 30rpx;
+  background-color: $white;
 
-.entry-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  .entry-card {
+    flex: 1;
+    background: #fdfdfd;
+    border: 1px solid $border-color;
+    padding: 40rpx 30rpx;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.02);
+    transition: all 0.3s ease;
 
-  .entry-icon {
-    font-size: 48rpx;
-    margin-bottom: 16rpx;
-  }
-
-  .entry-text {
-    font-size: 24rpx;
-    color: #333;
-  }
-}
-
-.section {
-  background: #fff;
-  padding: 30rpx;
-  margin-bottom: 20rpx;
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 24rpx;
-
-  .section-title {
-    font-size: 32rpx;
-    font-weight: bold;
-    color: #333;
-  }
-
-  .section-more {
-    font-size: 24rpx;
-    color: #999;
+    .entry-en {
+      font-size: 20rpx;
+      color: $text-color-light;
+      letter-spacing: 2rpx;
+      margin-bottom: 8rpx;
+    }
+    .entry-cn {
+      font-size: 32rpx;
+      color: $text-color;
+      font-weight: 400;
+    }
+    .entry-arrow {
+      position: absolute;
+      bottom: 40rpx;
+      right: 30rpx;
+      color: $primary-color;
+      font-size: 36rpx;
+      font-weight: 300;
+    }
   }
 }
 
-.portfolio-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20rpx;
+.portfolio-section {
+  padding: 60rpx 30rpx;
+
+  .section-title-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 40rpx;
+    
+    .section-title {
+      font-size: 32rpx;
+      font-weight: 400;
+      color: $text-color;
+      letter-spacing: 4rpx;
+    }
+    .section-desc {
+      font-size: 22rpx;
+      color: $text-color-light;
+      margin-top: 10rpx;
+      letter-spacing: 2rpx;
+    }
+  }
+
+  .waterfall {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+
+    .waterfall-col {
+      width: 48%;
+      display: flex;
+      flex-direction: column;
+      gap: 30rpx;
+    }
+  }
 }
 
-.portfolio-item {
-  width: calc(50% - 10rpx);
-  border-radius: 12rpx;
+.portfolio-card {
+  background: $white;
+  border-radius: $border-radius-sm;
   overflow: hidden;
-  background: #f8f8f8;
-
-  .portfolio-cover {
+  box-shadow: 0 6rpx 24rpx rgba(0,0,0,0.04);
+  
+  .img-placeholder {
     width: 100%;
-    height: 300rpx;
+    height: 480rpx; 
+    background: linear-gradient(135deg, #7F9E8B, #4A5D4E);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    .placeholder-text {
+      color: rgba(255,255,255,0.6);
+      font-family: 'Times New Roman', serif;
+      letter-spacing: 4rpx;
+      font-size: 24rpx;
+    }
+  }
+
+  .portfolio-img {
+    width: 100%;
+    display: block; 
   }
 
   .portfolio-info {
-    padding: 16rpx;
+    padding: 24rpx 20rpx;
 
-    .portfolio-title {
+    .p-title {
       font-size: 26rpx;
-      color: #333;
+      color: $text-color;
+      font-weight: 500;
+      line-height: 1.4;
+      display: block;
+      margin-bottom: 16rpx;
+    }
+
+    .p-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      
+      .p-category {
+        font-size: 20rpx;
+        color: $primary-color;
+        border: 1px solid rgba(74, 93, 78, 0.3);
+        padding: 2rpx 12rpx;
+        border-radius: 4rpx;
+      }
+      .p-views {
+        font-size: 20rpx;
+        color: $text-color-light;
+      }
     }
   }
 }

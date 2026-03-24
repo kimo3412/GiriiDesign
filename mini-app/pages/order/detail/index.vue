@@ -165,7 +165,7 @@ onLoad((options) => {
 }
 
 .status-card {
-  background: linear-gradient(135deg, #07c160, #06ad56);
+  background: #4A5D4E;
   padding: 60rpx 30rpx;
   text-align: center;
 
@@ -244,10 +244,10 @@ onLoad((options) => {
 .confirm-btn {
   width: 100%;
   height: 88rpx;
-  background: #07c160;
+  background: #1a1a1a;
   color: #fff;
   font-size: 32rpx;
-  border-radius: 44rpx;
+  border-radius: 0;
   border: none;
 
   &::after {

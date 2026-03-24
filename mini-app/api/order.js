@@ -6,7 +6,7 @@ import request from '../utils/request'
  */
 export const getOrderList = (params) => {
   return request({
-    url: '/api/v1/users/me/orders',
+    url: '/v1/app/orders/my',
     method: 'GET',
     data: params
   })
@@ -18,7 +18,7 @@ export const getOrderList = (params) => {
  */
 export const getOrderDetail = (id) => {
   return request({
-    url: `/api/v1/orders/${id}`,
+    url: `/v1/app/orders/${id}`,
     method: 'GET'
   })
 }
@@ -28,8 +28,10 @@ export const getOrderDetail = (id) => {
  * @param {number} id - 订单ID
  */
 export const getOrderProgress = (id) => {
+  // 在后端并没有独立的 progress 接口，我们已经通过 detail 将其合并返回了
+  // 所以这个接口实际上在前端应当被废弃或指向 detail（前端逻辑兼容处理）
   return request({
-    url: `/api/v1/orders/${id}/progress`,
+    url: `/v1/app/orders/${id}`,
     method: 'GET'
   })
 }

@@ -190,8 +190,9 @@ fetchOrders(true)
   position: relative;
 
   &.active {
-    color: #07c160;
-    font-weight: 500;
+    color: #4A5D4E;
+    font-size: 30rpx;
+    font-weight: bold;
 
     &::after {
       content: '';
@@ -201,7 +202,7 @@ fetchOrders(true)
       transform: translateX(-50%);
       width: 40rpx;
       height: 4rpx;
-      background: #07c160;
+      background: #1a1a1a;
       border-radius: 2rpx;
     }
   }
@@ -235,7 +236,8 @@ fetchOrders(true)
 
   .order-status {
     font-size: 26rpx;
-    color: #07c160;
+    color: #4A5D4E;
+    font-weight: 500;
   }
 }
 
@@ -274,11 +276,11 @@ fetchOrders(true)
 
 .order-actions {
   .action-btn {
-    padding: 10rpx 24rpx;
+    padding: 10rpx 28rpx;
     font-size: 24rpx;
-    background: #07c160;
+    background: #1a1a1a;
     color: #fff;
-    border-radius: 30rpx;
+    border-radius: 4rpx;
     border: none;
 
     &::after {

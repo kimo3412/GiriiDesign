@@ -71,7 +71,7 @@
           <view class="form-item">
             <view class="switch-row">
               <text class="label">设为默认</text>
-              <switch :checked="form.isDefault" @change="form.isDefault = !form.isDefault" color="#07c160" />
+              <switch :checked="form.isDefault" @change="form.isDefault = !form.isDefault" color="#4A5D4E" />
             </view>
           </view>
         </view>
@@ -261,8 +261,8 @@ onShow(() => {
     margin-left: 16rpx;
     padding: 4rpx 12rpx;
     font-size: 22rpx;
-    color: #07c160;
-    background: rgba(7, 193, 96, 0.1);
+    color: #4A5D4E;
+    background: rgba(74, 93, 78, 0.1);
     border-radius: 4rpx;
   }
 }
@@ -285,7 +285,7 @@ onShow(() => {
     margin-left: 30rpx;
 
     &.edit {
-      color: #07c160;
+      color: #4A5D4E;
     }
 
     &.delete {
@@ -312,10 +312,10 @@ onShow(() => {
 .add-btn {
   width: 100%;
   height: 88rpx;
-  background: #07c160;
+  background: #1a1a1a;
   color: #fff;
   font-size: 32rpx;
-  border-radius: 44rpx;
+  border-radius: 0;
   border: none;
 
   &::after {
@@ -407,10 +407,10 @@ onShow(() => {
 .save-btn {
   width: 100%;
   height: 88rpx;
-  background: #07c160;
+  background: #1a1a1a;
   color: #fff;
   font-size: 32rpx;
-  border-radius: 44rpx;
+  border-radius: 0;
   border: none;
 
   &::after {

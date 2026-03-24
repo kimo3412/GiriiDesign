@@ -1,9 +1,10 @@
 <template>
   <view class="profile-container">
     <view class="avatar-section" @click="changeAvatar">
-      <text class="label">头像</text>
+      <text class="label">Avatar / 头像</text>
       <view class="avatar-right">
-        <image class="avatar" :src="form.avatar || '/static/images/default-avatar.png'" mode="aspectFill" />
+        <image v-if="form.avatar" class="avatar" :src="form.avatar" mode="aspectFill" />
+        <view v-else class="avatar-placeholder">Y</view>
         <text class="arrow">></text>
       </view>
     </view>
@@ -133,7 +134,20 @@ onShow(() => {
       height: 100rpx;
       border-radius: 50rpx;
       margin-right: 10rpx;
-      background: #f0f0f0;
+    }
+
+    .avatar-placeholder {
+      width: 100rpx;
+      height: 100rpx;
+      border-radius: 50rpx;
+      margin-right: 10rpx;
+      background: $primary-color;
+      color: $white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Times New Roman', serif;
+      font-size: 50rpx;
     }
 
     .arrow {
@@ -158,15 +172,17 @@ onShow(() => {
   }
 
   .label {
-    width: 150rpx;
-    font-size: 30rpx;
+    width: 250rpx;
+    font-size: 26rpx;
     color: #333;
+    letter-spacing: 2rpx;
   }
 
   .input {
     flex: 1;
-    font-size: 30rpx;
+    font-size: 26rpx;
     text-align: right;
+    letter-spacing: 2rpx;
 
     &[disabled] {
       color: #999;
@@ -175,16 +191,18 @@ onShow(() => {
 }
 
 .save-section {
-  padding: 40rpx 30rpx;
+  padding: 60rpx 40rpx;
 }
 
 .save-btn {
   width: 100%;
-  height: 88rpx;
-  background: #07c160;
+  height: 90rpx;
+  line-height: 90rpx;
+  background: $primary-color;
   color: #fff;
-  font-size: 32rpx;
-  border-radius: 44rpx;
+  font-size: 24rpx;
+  letter-spacing: 6rpx;
+  border-radius: 0;
   border: none;
 
   &::after {

@@ -1,8 +1,8 @@
 <template>
   <view class="category-container">
     <view class="header">
-      <text class="title">选择定制品类</text>
-      <text class="desc">选择您需要定制的类型</text>
+      <text class="title">专属定制</text>
+      <text class="desc">选择您期待的定制形式</text>
     </view>
 
     <view class="category-list">
@@ -12,12 +12,15 @@
         class="category-item"
         @click="selectCategory(item)"
       >
-        <image :src="item.icon" mode="aspectFill" class="category-icon" />
+        <view class="icon-placeholder" v-if="!item.icon">
+          <text>{{ item.name ? item.name.substring(0, 1) : 'Z' }}</text>
+        </view>
+        <image v-else :src="item.icon" mode="aspectFill" class="category-icon" />
         <view class="category-info">
           <text class="category-name">{{ item.name }}</text>
-          <text class="category-desc">{{ item.description }}</text>
+          <text class="category-desc">{{ item.description || 'ZeHana Exclusive Studio' }}</text>
         </view>
-        <text class="arrow">></text>
+        <text class="arrow">→</text>
       </view>
     </view>
   </view>
@@ -37,6 +40,13 @@ const fetchCategories = async () => {
   try {
     const data = await getCategoryList()
     categories.value = data || []
+    // 塞点假数据测试展示效果
+    if (categories.value.length === 0) {
+      categories.value = [
+        { categoryId: 1, name: '高定礼服 Couture', description: '量身定制专属晚装' },
+        { categoryId: 2, name: '手工皮具 Leather', description: '私人订制头层皮艺' }
+      ]
+    }
   } catch (err) {
     console.error('获取品类列表失败', err)
     uni.showToast({ title: '获取品类失败', icon: 'none' })
@@ -60,47 +70,70 @@ onLoad(() => {
 <style lang="scss" scoped>
 .category-container {
   min-height: 100vh;
-  background: #f8f8f8;
+  background: $background-color;
+  padding: 40rpx 40rpx;
 }
 
 .header {
-  background: #fff;
-  padding: 40rpx 30rpx;
+  margin-bottom: 60rpx;
 
   .title {
     display: block;
-    font-size: 40rpx;
-    font-weight: bold;
-    color: #333;
+    font-size: 56rpx;
+    font-weight: 300;
+    font-family: 'Times New Roman', serif;
+    color: $primary-color;
     margin-bottom: 16rpx;
+    letter-spacing: 6rpx;
   }
 
   .desc {
-    font-size: 28rpx;
-    color: #999;
+    font-size: 22rpx;
+    color: $text-color-light;
+    letter-spacing: 4rpx;
   }
 }
 
 .category-list {
-  background: #fff;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 30rpx;
 }
 
 .category-item {
   display: flex;
   align-items: center;
-  padding: 30rpx;
-  border-bottom: 1rpx solid #f0f0f0;
+  padding: 40rpx 30rpx;
+  background: $white;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.02);
+  border: 1px solid $border-color;
+  transition: all 0.3s ease;
 
-  &:last-child {
-    border-bottom: none;
+  &:active {
+    background: #fafafa;
+  }
+
+  .icon-placeholder {
+    width: 100rpx;
+    height: 100rpx;
+    border-radius: 0; // 高定直角
+    margin-right: 30rpx;
+    background: $primary-color;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Times New Roman', serif;
+    font-size: 44rpx;
+    font-weight: 300;
   }
 
   .category-icon {
-    width: 120rpx;
-    height: 120rpx;
-    border-radius: 12rpx;
-    margin-right: 24rpx;
-    background: #f8f8f8;
+    width: 100rpx;
+    height: 100rpx;
+    margin-right: 30rpx;
+    border-radius: 0;
   }
 
   .category-info {
@@ -108,21 +141,24 @@ onLoad(() => {
 
     .category-name {
       display: block;
-      font-size: 32rpx;
-      font-weight: 500;
-      color: #333;
-      margin-bottom: 8rpx;
+      font-size: 28rpx;
+      font-weight: 400;
+      color: $text-color;
+      margin-bottom: 12rpx;
+      letter-spacing: 2rpx;
     }
 
     .category-desc {
-      font-size: 24rpx;
-      color: #999;
+      font-size: 20rpx;
+      color: $text-color-light;
+      letter-spacing: 1rpx;
     }
   }
 
   .arrow {
-    font-size: 32rpx;
-    color: #ccc;
+    font-size: 36rpx;
+    color: $primary-color;
+    font-weight: 300;
   }
 }
 </style>

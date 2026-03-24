@@ -5,7 +5,7 @@ import request from '../utils/request'
  */
 export const getCategoryList = () => {
   return request({
-    url: '/api/v1/categories/active',
+    url: '/v1/app/public/config/categories',
     method: 'GET'
   })
 }
@@ -16,7 +16,7 @@ export const getCategoryList = () => {
  */
 export const getFormSchema = (categoryId) => {
   return request({
-    url: `/api/v1/categories/${categoryId}/schema`,
+    url: `/v1/app/public/config/categories/${categoryId}/fields`,
     method: 'GET'
   })
 }
@@ -27,7 +27,7 @@ export const getFormSchema = (categoryId) => {
  */
 export const submitRequest = (data) => {
   return request({
-    url: '/api/v1/requests',
+    url: '/v1/app/requests',
     method: 'POST',
     data
   })

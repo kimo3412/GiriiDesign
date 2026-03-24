@@ -38,6 +38,8 @@ public class SecurityConfig {
                         // 公开接口（登录、注册、API 文档等）
                         .requestMatchers(
                                 "/api/v1/auth/**",
+                                "/api/v1/app/auth/**",
+                                "/api/v1/app/public/**",
                                 "/api/v1/portfolios",
                                 "/api/v1/portfolios/**",
                                 "/api/v1/categories")

@@ -22,7 +22,10 @@
           class="portfolio-item"
           @click="goToDetail(item.id)"
         >
-          <image :src="item.thumbnail" mode="aspectFill" class="portfolio-cover" />
+          <view class="img-placeholder" v-if="!item.thumbnail">
+            <text class="placeholder-text">ZeHana</text>
+          </view>
+          <image v-else :src="item.thumbnail" mode="aspectFill" class="portfolio-cover" />
           <view class="portfolio-info">
             <text class="portfolio-title">{{ item.title }}</text>
             <text class="portfolio-desc">{{ item.description }}</text>
@@ -32,12 +35,12 @@
 
       <!-- 空状态 -->
       <view v-if="list.length === 0 && !loading" class="empty">
-        <text>暂无作品</text>
+        <text>期待与您共同创造</text>
       </view>
 
       <!-- 加载中 -->
       <view v-if="loading" class="loading">
-        <text>加载中...</text>
+        <text>静候加载加载中...</text>
       </view>
     </scroll-view>
   </view>
@@ -49,10 +52,10 @@ import { onShow, onLoad } from '@dcloudio/uni-app'
 import { getPortfolioList } from '@/api/portfolio'
 
 const categories = ref([
-  { id: '', name: '全部' },
-  { id: '1', name: '服装' },
-  { id: '2', name: '皮具' },
-  { id: '3', name: '插画' }
+  { id: '', name: '全部作品' },
+  { id: '1', name: '高级定制' },
+  { id: '2', name: '手工皮具' },
+  { id: '3', name: '数字插画' }
 ])
 
 const currentCategory = ref('')
@@ -128,29 +131,41 @@ onLoad(() => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f8f8f8;
+  background: $background-color;
 }
 
 .filter-bar {
   display: flex;
-  background: #fff;
-  padding: 20rpx 30rpx;
+  background: $white;
+  padding: 30rpx 40rpx;
   overflow-x: auto;
   white-space: nowrap;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.02);
+  z-index: 10;
 }
 
 .filter-item {
   display: inline-block;
-  padding: 12rpx 28rpx;
-  font-size: 26rpx;
-  color: #666;
-  background: #f5f5f5;
-  border-radius: 30rpx;
-  margin-right: 16rpx;
+  padding: 10rpx 0;
+  font-size: 24rpx;
+  color: $text-color-light;
+  margin-right: 48rpx;
+  letter-spacing: 2rpx;
+  position: relative;
 
   &.active {
-    background: #07c160;
-    color: #fff;
+    color: $primary-color;
+    font-weight: 500;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: $primary-color;
+    }
   }
 }
 
@@ -161,37 +176,54 @@ onLoad(() => {
 .portfolio-grid {
   display: flex;
   flex-wrap: wrap;
-  padding: 20rpx;
-  gap: 20rpx;
+  padding: 30rpx;
+  gap: 30rpx;
 }
 
 .portfolio-item {
-  width: calc(50% - 10rpx);
-  background: #fff;
-  border-radius: 12rpx;
+  width: calc(50% - 15rpx);
+  background: $white;
+  border-radius: $border-radius-sm;
   overflow: hidden;
+  box-shadow: 0 6rpx 24rpx rgba(0,0,0,0.04);
+
+  .img-placeholder {
+    width: 100%;
+    height: 380rpx;
+    background: linear-gradient(135deg, #7F9E8B, #4A5D4E);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    
+    .placeholder-text {
+      color: rgba(255,255,255,0.6);
+      font-family: 'Times New Roman', serif;
+      letter-spacing: 4rpx;
+      font-size: 24rpx;
+    }
+  }
 
   .portfolio-cover {
     width: 100%;
-    height: 350rpx;
-    background: #f0f0f0;
+    height: 380rpx;
   }
 
   .portfolio-info {
-    padding: 20rpx;
+    padding: 24rpx;
 
     .portfolio-title {
       display: block;
-      font-size: 28rpx;
-      font-weight: 500;
-      color: #333;
+      font-size: 26rpx;
+      font-weight: 400;
+      color: $text-color;
       margin-bottom: 8rpx;
+      letter-spacing: 2rpx;
     }
 
     .portfolio-desc {
       display: block;
-      font-size: 24rpx;
-      color: #999;
+      font-size: 20rpx;
+      color: $text-color-light;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -204,8 +236,9 @@ onLoad(() => {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 60rpx;
-  font-size: 26rpx;
-  color: #999;
+  padding: 80rpx;
+  font-size: 22rpx;
+  color: $text-color-light;
+  letter-spacing: 4rpx;
 }
 </style>

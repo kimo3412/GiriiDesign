@@ -1,103 +1,67 @@
 <template>
   <view class="login-container">
     <view class="logo-section">
-      <image class="logo" src="/static/images/logo.png" mode="aspectFit" />
-      <text class="title">独立设计师工作室</text>
-      <text class="subtitle">定制您的专属体验</text>
+      <text class="title">ZeHana</text>
+      <text class="subtitle">高定与专属体验</text>
+      <view class="line"></view>
     </view>
 
-    <!-- 模拟登录按钮（测试用） -->
-    <button class="login-btn" type="primary" @click="handleSimulateLogin">
-      测试登录
-    </button>
-
-    <!-- 微信登录（需要企业账号） -->
-    <button class="login-btn wechat" type="primary" open-type="getPhoneNumber" @getphonenumber="handleGetPhoneNumber">
-      微信一键登录
+    <!-- 模拟登录按钮 -->
+    <button class="login-btn" hover-class="btn-hover" @click="handleSimulateLogin">
+      测试一键登录
     </button>
 
     <view class="agreement">
-      <text>登录即表示同意</text>
-      <text class="link" @click="showAgreement('user')">《用户协议》</text>
-      <text>和</text>
-      <text class="link" @click="showAgreement('privacy')">《隐私政策》</text>
+      <text>使用即表示您同意我们的</text>
+      <view class="links">
+        <text class="link" @click="showAgreement('user')">《用户协议》</text>
+        <text class="link" @click="showAgreement('privacy')">《隐私政策》</text>
+      </view>
     </view>
   </view>
 </template>
 
 <script setup>
-import { wxLogin } from '@/api/auth'
 import { useUserStore } from '@/store/user'
-import storage from '@/utils/storage'
+import request from '@/utils/request'
 
 const userStore = useUserStore()
 
-/**
- * 模拟登录（测试用）
- */
-const handleSimulateLogin = () => {
-  // 模拟登录成功
-  const mockToken = 'mock_token_' + Date.now()
-  const mockUserInfo = {
-    userId: 1,
-    nickname: '测试用户',
-    phone: '13800138000',
-    avatar: ''
-  }
-
-  userStore.setToken(mockToken)
-  userStore.setUserInfo(mockUserInfo)
-
-  uni.showToast({ title: '登录成功', icon: 'success' })
-
-  setTimeout(() => {
-    uni.switchTab({ url: '/pages/index/index' })
-  }, 1500)
-}
-
-/**
- * 微信登录
- */
-const handleGetPhoneNumber = async (e) => {
-  if (e.detail.errMsg !== 'getPhoneNumber:ok') {
-    return
-  }
-
+const handleSimulateLogin = async () => {
   try {
-    uni.showLoading({ title: '登录中...' })
+    uni.showLoading({ title: 'LOADING...' })
+    
+    // 调用我们在后端写的免密模拟登录接口
+    const data = await request({
+      url: '/v1/app/auth/mock-login',
+      method: 'POST',
+      data: { phone: '13888888888' }
+    })
+    
+    if (data) {
+      userStore.setToken(data.token)
+      userStore.setUserInfo(data)
+      
+      uni.hideLoading()
+      uni.showToast({ title: 'WELCOME', icon: 'none' })
 
-    // 1. 获取微信 code (使用 wx.login 作为后备)
-    const loginRes = await uni.login()
-    const code = loginRes.code
-
-    // 2. 调用后端登录接口
-    const data = await wxLogin(code)
-
-    // 3. 保存 token 和用户信息
-    userStore.setToken(data.token)
-    userStore.setUserInfo(data.userInfo)
-
-    uni.hideLoading()
-    uni.showToast({ title: '登录成功', icon: 'success' })
-
-    // 4. 跳转首页
-    setTimeout(() => {
-      uni.switchTab({ url: '/pages/index/index' })
-    }, 1500)
+      setTimeout(() => {
+        uni.switchTab({ url: '/pages/index/index' })
+      }, 1500)
+    }
   } catch (err) {
     uni.hideLoading()
-    uni.showToast({ title: err.message || '登录失败', icon: 'none' })
+    console.error(err)
+    uni.showToast({ title: '登录失败' || err.message, icon: 'none' })
   }
 }
 
-/**
- * 显示协议
- */
 const showAgreement = (type) => {
   uni.showModal({
     title: type === 'user' ? '用户协议' : '隐私政策',
-    content: '这里是协议内容...',
-    showCancel: false
+    content: 'ZeHana Studio Terms & Conditions...',
+    showCancel: false,
+    confirmColor: '#4A5D4E'
   })
 }
 </script>
@@ -105,10 +69,9 @@ const showAgreement = (type) => {
 <style lang="scss" scoped>
 .login-container {
   min-height: 100vh;
-  background: #fff;
+  background: $background-color;
   display: flex;
   flex-direction: column;
-  align-items: center;
   padding: 100rpx 60rpx;
 }
 
@@ -118,48 +81,70 @@ const showAgreement = (type) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-}
-
-.logo {
-  width: 200rpx;
-  height: 200rpx;
-  margin-bottom: 40rpx;
+  margin-top: -100rpx; // 稍微整体向上偏移
 }
 
 .title {
-  font-size: 44rpx;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 16rpx;
+  font-size: 64rpx;
+  font-weight: 300;
+  color: $primary-color;
+  letter-spacing: 8rpx;
+  font-family: 'Times New Roman', serif;
+  margin-bottom: 24rpx;
 }
 
 .subtitle {
-  font-size: 28rpx;
-  color: #999;
+  font-size: 20rpx;
+  color: $text-color-light;
+  letter-spacing: 6rpx;
+}
+
+.line {
+  width: 40rpx;
+  height: 1px;
+  background-color: $primary-color;
+  margin-top: 40rpx;
+  opacity: 0.5;
 }
 
 .login-btn {
   width: 100%;
-  height: 96rpx;
-  background: #07c160;
-  color: #fff;
-  font-size: 32rpx;
-  border-radius: 48rpx;
+  height: 100rpx;
+  line-height: 100rpx;
+  background: $text-color; // 极黑底色
+  color: $white;
+  font-size: 24rpx;
+  letter-spacing: 6rpx;
+  border-radius: 0; // 高级感直角
   border: none;
-  margin-bottom: 40rpx;
+  margin-bottom: 60rpx;
 
   &::after {
     border: none;
   }
 }
 
+.btn-hover {
+  opacity: 0.8;
+}
+
 .agreement {
-  font-size: 24rpx;
-  color: #999;
+  font-size: 18rpx;
+  color: $text-color-light;
   text-align: center;
+  letter-spacing: 2rpx;
+  margin-bottom: 40rpx;
+
+  .links {
+    margin-top: 10rpx;
+    display: flex;
+    justify-content: center;
+    gap: 20rpx;
+  }
 
   .link {
-    color: #07c160;
+    color: $primary-color;
+    text-decoration: underline;
   }
 }
 </style>

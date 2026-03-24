@@ -5,7 +5,7 @@ import request from '../utils/request'
  */
 export const getUserInfo = () => {
   return request({
-    url: '/api/v1/users/me',
+    url: '/v1/app/auth/info',
     method: 'GET'
   })
 }
@@ -16,8 +16,8 @@ export const getUserInfo = () => {
  */
 export const updateUserInfo = (data) => {
   return request({
-    url: '/api/v1/users/me',
-    method: 'PUT',
+    url: '/v1/app/auth/update',
+    method: 'POST',
     data
   })
 }
@@ -27,7 +27,7 @@ export const updateUserInfo = (data) => {
  */
 export const getAddressList = () => {
   return request({
-    url: '/api/v1/users/me/addresses',
+    url: '/v1/app/address/list',
     method: 'GET'
   })
 }
@@ -38,7 +38,7 @@ export const getAddressList = () => {
  */
 export const addAddress = (data) => {
   return request({
-    url: '/api/v1/users/me/addresses',
+    url: '/v1/app/address',
     method: 'POST',
     data
   })
@@ -51,7 +51,7 @@ export const addAddress = (data) => {
  */
 export const updateAddress = (id, data) => {
   return request({
-    url: `/api/v1/addresses/${id}`,
+    url: `/v1/app/address/${id}`,
     method: 'PUT',
     data
   })
@@ -63,7 +63,7 @@ export const updateAddress = (id, data) => {
  */
 export const deleteAddress = (id) => {
   return request({
-    url: `/api/v1/addresses/${id}`,
+    url: `/v1/app/address/${id}`,
     method: 'DELETE'
   })
 }
@@ -74,7 +74,7 @@ export const deleteAddress = (id) => {
  */
 export const setDefaultAddress = (id) => {
   return request({
-    url: `/api/v1/addresses/${id}/default`,
+    url: `/v1/app/address/${id}/default`,
     method: 'PUT'
   })
 }

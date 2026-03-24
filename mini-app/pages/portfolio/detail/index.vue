@@ -138,9 +138,9 @@ onLoad((options) => {
     display: inline-block;
     padding: 8rpx 20rpx;
     font-size: 24rpx;
-    color: #07c160;
-    background: rgba(7, 193, 96, 0.1);
-    border-radius: 4rpx;
+    color: #4A5D4E;
+    background: rgba(74, 93, 78, 0.1);
+    border-radius: 0;
   }
 }
 
@@ -174,10 +174,10 @@ onLoad((options) => {
 .custom-btn {
   width: 100%;
   height: 88rpx;
-  background: #07c160;
+  background: #1a1a1a;
   color: #fff;
   font-size: 32rpx;
-  border-radius: 44rpx;
+  border-radius: 0;
   border: none;
 
   &::after {

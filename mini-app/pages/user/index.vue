@@ -1,30 +1,33 @@
 <template>
   <view class="user-container">
-    <!-- 用户信息 -->
-    <view class="user-header" @click="goToProfile">
-      <image class="avatar" :src="userInfo.avatar || '/static/images/default-avatar.png'" mode="aspectFill" />
-      <view class="user-info">
-        <text class="nickname">{{ userInfo.nickname || '未设置昵称' }}</text>
-        <text class="phone">{{ userInfo.phone || '未绑定手机' }}</text>
+    <!-- 用户信息极简版框 -->
+    <view class="user-header">
+      <view class="user-info-wrap" @click="goToProfile">
+        <view class="avatar-box">
+          <image v-if="userInfo.avatar" class="avatar" :src="userInfo.avatar" mode="aspectFill" />
+          <view v-else class="avatar-placeholder">Z</view>
+        </view>
+        <view class="user-info">
+          <text class="nickname">{{ userInfo.nickname || 'ZeHana 访客' }}</text>
+          <text class="phone">{{ userInfo.phone || '请绑定手机号' }}</text>
+        </view>
       </view>
-      <text class="arrow">></text>
     </view>
 
-    <!-- 功能菜单 -->
+    <!-- 高级感菜单 -->
     <view class="menu-section">
       <view class="menu-item" @click="goTo('/pages/user/address/index')">
-        <text class="menu-icon">📍</text>
-        <text class="menu-text">收货地址</text>
-        <text class="arrow">></text>
+        <text class="menu-text">地址簿 Address</text>
+        <text class="menu-cn">收货地址</text>
       </view>
+      <view class="menu-divider"></view>
       <view class="menu-item" @click="showAbout">
-        <text class="menu-icon">ℹ️</text>
-        <text class="menu-text">关于我们</text>
-        <text class="arrow">></text>
+        <text class="menu-text">关于品牌 About</text>
+        <text class="menu-cn">关于独立工作室</text>
       </view>
     </view>
 
-    <!-- 退出登录 -->
+    <!-- 高级退出按钮 -->
     <view class="logout-section">
       <button class="logout-btn" @click="handleLogout">退出登录</button>
     </view>
@@ -41,49 +44,45 @@ const userStore = useUserStore()
 
 const userInfo = ref({})
 
-/**
- * 更新用户信息
- */
 const updateUserInfo = () => {
   userInfo.value = storage.getUserInfo() || {}
 }
 
-/**
- * 跳转页面
- */
 const goTo = (url) => {
   uni.navigateTo({ url })
 }
 
-/**
- * 跳转个人资料
- */
 const goToProfile = () => {
+  if (!userStore.isLoggedIn) {
+     uni.showToast({ title: '请先登录', icon: 'none' })
+     return
+  }
   uni.navigateTo({ url: '/pages/user/profile/index' })
 }
 
-/**
- * 显示关于
- */
 const showAbout = () => {
   uni.showModal({
-    title: '关于我们',
-    content: '独立设计师工作室\n版本 1.0.0',
-    showCancel: false
+    title: 'ZeHana STUDIO',
+    content: '高级定制独立设计师工作室\nVersion 1.0.0',
+    showCancel: false,
+    confirmColor: '#4A5D4E'
   })
 }
 
-/**
- * 退出登录
- */
 const handleLogout = () => {
+  if (!userStore.isLoggedIn) {
+     uni.showToast({ title: '尚未登录', icon: 'none' })
+     return
+  }
   uni.showModal({
-    title: '提示',
-    content: '确定要退出登录吗？',
+    title: 'SIGN OUT',
+    content: '确定要退出当前账号吗？',
+    confirmColor: '#4A5D4E',
     success: (res) => {
       if (res.confirm) {
         userStore.logout()
-        uni.reLaunch({ url: '/pages/login/index' })
+        updateUserInfo()
+        uni.switchTab({ url: '/pages/index/index' })
       }
     }
   })
@@ -97,94 +96,125 @@ onShow(() => {
 <style lang="scss" scoped>
 .user-container {
   min-height: 100vh;
-  background: #f8f8f8;
+  background: $background-color;
+  display: flex;
+  flex-direction: column;
 }
 
 .user-header {
+  padding: 80rpx 60rpx;
+  background-color: $white;
   display: flex;
+  justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #07c160, #06ad56);
-  padding: 60rpx 30rpx;
+  box-shadow: 0 10rpx 40rpx rgba(0,0,0,0.02);
+  margin-bottom: 40rpx;
+}
+
+.user-info-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 30rpx;
+}
+
+.avatar-box {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 50%;
+  border: 1px solid $border-color;
+  padding: 8rpx;
 }
 
 .avatar {
-  width: 120rpx;
-  height: 120rpx;
-  border-radius: 60rpx;
-  border: 4rpx solid rgba(255, 255, 255, 0.3);
-  margin-right: 24rpx;
-  background: #fff;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: $primary-color;
+  color: $white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Times New Roman', serif;
+  font-size: 80rpx;
 }
 
 .user-info {
-  flex: 1;
+  text-align: center;
 
   .nickname {
     display: block;
-    font-size: 36rpx;
-    font-weight: bold;
-    color: #fff;
-    margin-bottom: 10rpx;
+    font-size: 32rpx;
+    font-weight: 300;
+    color: $text-color;
+    letter-spacing: 4rpx;
+    margin-bottom: 8rpx;
   }
 
   .phone {
-    font-size: 26rpx;
-    color: rgba(255, 255, 255, 0.8);
+    font-size: 20rpx;
+    color: $text-color-light;
+    letter-spacing: 2rpx;
   }
 }
 
-.user-header .arrow {
-  font-size: 32rpx;
-  color: rgba(255, 255, 255, 0.6);
-}
-
 .menu-section {
-  background: #fff;
-  margin-top: 20rpx;
+  background: $white;
+  padding: 0 40rpx;
 }
 
 .menu-item {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  padding: 30rpx;
-  border-bottom: 1rpx solid #f5f5f5;
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  .menu-icon {
-    font-size: 40rpx;
-    margin-right: 20rpx;
-  }
-
+  padding: 40rpx 10rpx;
+  
   .menu-text {
-    flex: 1;
-    font-size: 30rpx;
-    color: #333;
+    font-size: 26rpx;
+    color: $text-color;
+    letter-spacing: 2rpx;
   }
 
-  .arrow {
-    font-size: 28rpx;
-    color: #ccc;
+  .menu-cn {
+    font-size: 22rpx;
+    color: $text-color-light;
   }
 }
 
+.menu-divider {
+  height: 1px;
+  background-color: #f0f0f0;
+  margin: 0 10rpx;
+}
+
 .logout-section {
-  padding: 40rpx 30rpx;
+  padding: 60rpx 40rpx;
+  margin-top: auto;
 }
 
 .logout-btn {
   width: 100%;
-  height: 88rpx;
-  background: #fff;
-  color: #e74c3c;
-  font-size: 30rpx;
-  border-radius: 12rpx;
-  border: none;
+  height: 90rpx;
+  line-height: 90rpx;
+  background: transparent;
+  color: $text-color-light;
+  font-size: 24rpx;
+  letter-spacing: 4rpx;
+  border: 1px solid $border-color;
+  border-radius: 0; // 高定直角
 
   &::after {
     border: none;
+  }
+  
+  &:active {
+    background-color: #f9f9f9;
   }
 }
 </style>

@@ -6,7 +6,7 @@ import request from '../utils/request'
  */
 export const getPortfolioList = (params) => {
   return request({
-    url: '/api/v1/portfolios',
+    url: '/v1/app/public/portfolios',
     method: 'GET',
     data: params
   })
@@ -18,7 +18,7 @@ export const getPortfolioList = (params) => {
  */
 export const getPortfolioDetail = (id) => {
   return request({
-    url: `/api/v1/portfolios/${id}`,
+    url: `/v1/app/public/portfolios/${id}`,
     method: 'GET'
   })
 }

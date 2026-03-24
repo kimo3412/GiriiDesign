@@ -98,10 +98,14 @@ CREATE TABLE `ds_user` (
   `nickname` VARCHAR(100) DEFAULT NULL COMMENT '昵称',
   `avatar_url` VARCHAR(512) DEFAULT NULL COMMENT '头像URL',
   `phone` VARCHAR(20) DEFAULT NULL COMMENT '手机号',
+  `status` TINYINT(1) DEFAULT 1 COMMENT '0=禁用,1=正常',
   `gender` TINYINT(1) DEFAULT NULL COMMENT '性别',
   `default_address_id` BIGINT DEFAULT NULL COMMENT '默认地址ID',
-  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
   `last_login_time` DATETIME DEFAULT NULL COMMENT '最后登录',
+  `create_by` BIGINT DEFAULT NULL,
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
+  `update_by` BIGINT DEFAULT NULL,
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   `del_flag` TINYINT(1) DEFAULT 0,
   PRIMARY KEY (`user_id`),
   UNIQUE KEY `uk_openid` (`openid`)
@@ -703,3 +707,24 @@ SELECT 1, menu_id FROM `sys_menu`;
 -- 设计师角色拥有订单、意向、作品集菜单权限
 INSERT INTO `sys_role_menu` (`role_id`, `menu_id`)
 SELECT 2, menu_id FROM `sys_menu` WHERE parent_id IN (1, 2, 5) OR menu_id IN (1, 2, 5);
+
+-- 6. 客户收货地址表
+DROP TABLE IF EXISTS `ds_address`;
+CREATE TABLE `ds_address` (
+  `address_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '地址ID',
+  `user_id` BIGINT NOT NULL COMMENT '所属用户',
+  `receiver_name` VARCHAR(100) NOT NULL COMMENT '收货人姓名',
+  `phone` VARCHAR(20) NOT NULL COMMENT '手机号',
+  `province` VARCHAR(50) DEFAULT NULL COMMENT '省份',
+  `city` VARCHAR(50) DEFAULT NULL COMMENT '城市',
+  `district` VARCHAR(50) DEFAULT NULL COMMENT '区县',
+  `detail_address` VARCHAR(255) DEFAULT NULL COMMENT '详细地址',
+  `is_default` TINYINT(1) DEFAULT 0 COMMENT '否是默认地址',
+  `create_by` BIGINT DEFAULT NULL,
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  `update_by` BIGINT DEFAULT NULL,
+  `update_time` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `del_flag` TINYINT(1) DEFAULT 0,
+  PRIMARY KEY (`address_id`),
+  KEY `idx_user` (`user_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='客户收货地址表';

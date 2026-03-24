@@ -263,7 +263,7 @@ onLoad((options) => {
 
   .category {
     font-size: 28rpx;
-    color: #07c160;
+    color: #4A5D4E;
   }
 }
 
@@ -394,7 +394,7 @@ onLoad((options) => {
 .submit-btn {
   width: 100%;
   height: 88rpx;
-  background: #07c160;
+  background: #1a1a1a;
   color: #fff;
   font-size: 32rpx;
   border-radius: 44rpx;
