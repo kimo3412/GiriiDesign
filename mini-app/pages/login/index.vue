@@ -23,37 +23,45 @@
 
 <script setup>
 import { useUserStore } from '@/store/user'
+import { wxLogin } from '@/api/auth'
 import request from '@/utils/request'
 
 const userStore = useUserStore()
 
-const handleSimulateLogin = async () => {
-  try {
-    uni.showLoading({ title: 'LOADING...' })
-    
-    // 调用我们在后端写的免密模拟登录接口
-    const data = await request({
-      url: '/v1/app/auth/mock-login',
-      method: 'POST',
-      data: { phone: '13888888888' }
-    })
-    
-    if (data) {
-      userStore.setToken(data.token)
-      userStore.setUserInfo(data)
-      
-      uni.hideLoading()
-      uni.showToast({ title: 'WELCOME', icon: 'none' })
+const handleSimulateLogin = () => {
+  uni.showLoading({ title: '安全连接中...' })
+  uni.login({
+    provider: 'weixin',
+    success: async (loginRes) => {
+      if (loginRes.code) {
+        try {
+          const data = await wxLogin(loginRes.code)
+          if (data) {
+            userStore.setToken(data.token)
+            userStore.setUserInfo(data)
+            
+            uni.hideLoading()
+            uni.showToast({ title: '欢迎!', icon: 'none' })
 
-      setTimeout(() => {
-        uni.switchTab({ url: '/pages/index/index' })
-      }, 1500)
+            setTimeout(() => {
+              uni.switchTab({ url: '/pages/index/index' })
+            }, 1500)
+          }
+        } catch (err) {
+          uni.hideLoading()
+          console.error(err)
+          uni.showToast({ title: '身份验证失败', icon: 'none' })
+        }
+      } else {
+        uni.hideLoading()
+        uni.showToast({ title: '获取权限失败', icon: 'none' })
+      }
+    },
+    fail: () => {
+      uni.hideLoading()
+      uni.showToast({ title: '微信服务不可用', icon: 'none' })
     }
-  } catch (err) {
-    uni.hideLoading()
-    console.error(err)
-    uni.showToast({ title: '登录失败' || err.message, icon: 'none' })
-  }
+  })
 }
 
 const showAgreement = (type) => {

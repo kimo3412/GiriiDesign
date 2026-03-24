@@ -131,7 +131,17 @@ const description = ref('')
 const fetchSchema = async () => {
   try {
     const data = await getFormSchema(categoryId.value)
-    schema.value = data || []
+    const list = data || []
+    list.forEach(item => {
+      if (typeof item.options === 'string' && item.options) {
+        try {
+          item.options = JSON.parse(item.options)
+        } catch(e) {
+          item.options = []
+        }
+      }
+    })
+    schema.value = list
   } catch (err) {
     console.error('获取表单配置失败', err)
     uni.showToast({ title: '获取表单失败', icon: 'none' })

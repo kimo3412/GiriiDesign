@@ -6,7 +6,7 @@ import request from '../utils/request'
  */
 export const wxLogin = (code) => {
   return request({
-    url: '/api/v1/auth/wx-login',
+    url: '/v1/app/auth/wx-login',
     method: 'POST',
     data: { code }
   })

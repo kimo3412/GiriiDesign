@@ -1,6 +1,6 @@
 import { getApp } from '@dcloudio/uni-app'
 
-const BASE_URL = 'http://localhost:8080'
+const BASE_URL = 'http://localhost:8081/api'
 
 /**
  * 上传文件到服务器
@@ -9,14 +9,19 @@ const BASE_URL = 'http://localhost:8080'
  */
 export const uploadFile = (filePath) => {
   return new Promise((resolve, reject) => {
+    const token = uni.getStorageSync('token')
+    
     uni.uploadFile({
-      url: BASE_URL + '/api/v1/upload',
+      url: BASE_URL + '/v1/oss/upload',
       filePath: filePath,
       name: 'file',
+      header: {
+        'Authorization': token ? `Bearer ${token}` : ''
+      },
       success: (res) => {
         const data = JSON.parse(res.data)
         if (data.code === 200) {
-          resolve(data.data.url)
+          resolve(data.data)
         } else {
           reject(new Error(data.msg || '上传失败'))
         }
