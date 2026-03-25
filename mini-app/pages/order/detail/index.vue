@@ -56,8 +56,9 @@
     </view>
 
     <!-- 底部操作 -->
-    <view v-if="order.status === 2" class="bottom-action">
-      <button class="confirm-btn" type="primary" @click="handleConfirm">
+    <view class="bottom-action">
+      <button class="chat-btn" @click="goToChat">联系设计师</button>
+      <button v-if="order.status === 2" class="confirm-btn" @click="handleConfirm">
         确认收货
       </button>
     </view>
@@ -127,6 +128,15 @@ const getStatusText = (status) => {
     4: '已关闭'
   }
   return map[status] || '未知'
+}
+
+/**
+ * 联系设计师（跳转聊天页）
+ */
+const goToChat = () => {
+  uni.navigateTo({
+    url: `/pages/chat/index?orderId=${orderId.value}`
+  })
 }
 
 /**
@@ -239,14 +249,32 @@ onLoad((options) => {
   padding: 20rpx 30rpx;
   padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
   box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
+  display: flex;
+  gap: 20rpx;
+}
+
+.chat-btn {
+  flex: 1;
+  height: 88rpx;
+  background: transparent;
+  color: #1a1a1a;
+  font-size: 26rpx;
+  letter-spacing: 2rpx;
+  border-radius: 0;
+  border: 1px solid #1a1a1a;
+
+  &::after {
+    border: none;
+  }
 }
 
 .confirm-btn {
-  width: 100%;
+  flex: 1;
   height: 88rpx;
   background: #1a1a1a;
   color: #fff;
-  font-size: 32rpx;
+  font-size: 26rpx;
+  letter-spacing: 2rpx;
   border-radius: 0;
   border: none;
 

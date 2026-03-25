@@ -105,19 +105,22 @@ public class AppAuthController {
     }
 
     @PostMapping("/mock-login")
-    @Operation(summary = "模拟微信登录（一键生成/登录测试号）")
+    @Operation(summary = "模拟微信登录（固定测试用户，开发调试用）")
     public R<LoginVO> mockLogin(@RequestBody LoginDTO dto) {
-        String mockOpenid = "wx_test_openid_" + dto.getPhone();
+        // 固定使用默认测试客户账号
+        String mockOpenid = "wx_test_openid_default";
 
         boolean isNew = false;
         DsUser user = userMapper.selectOne(new LambdaQueryWrapper<DsUser>()
                 .eq(DsUser::getOpenid, mockOpenid));
 
         if (user == null) {
+            // 自动创建默认测试用户
             isNew = true;
             user = new DsUser();
             user.setOpenid(mockOpenid);
-            user.setPhone(dto.getPhone());
+            user.setPhone("13888888888");
+            user.setNickname("ZeHana测试客户");
             user.setStatus(1);
             user.setCreateTime(LocalDateTime.now());
             user.setLastLoginTime(LocalDateTime.now());
@@ -134,7 +137,7 @@ public class AppAuthController {
             return R.fail("账号已被禁用");
         }
 
-        String token = jwtUtils.generateToken(user.getUserId(), "client", user.getPhone(), user.getNickname() != null ? user.getNickname() : "新用户");
+        String token = jwtUtils.generateToken(user.getUserId(), "client", user.getPhone() != null ? user.getPhone() : "13888888888", user.getNickname() != null ? user.getNickname() : "ZeHana测试客户");
 
         LoginVO vo = new LoginVO();
         vo.setToken(token);

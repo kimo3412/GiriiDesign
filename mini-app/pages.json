@@ -67,6 +67,12 @@
       "style": {
         "navigationBarTitleText": "个人资料"
       }
+    },
+    {
+      "path": "pages/chat/index",
+      "style": {
+        "navigationBarTitleText": "在线沟通"
+      }
     }
   ],
   "globalStyle": {

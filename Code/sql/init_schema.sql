@@ -728,3 +728,19 @@ CREATE TABLE `ds_address` (
   PRIMARY KEY (`address_id`),
   KEY `idx_user` (`user_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='客户收货地址表';
+
+-- 7. 聊天消息表
+DROP TABLE IF EXISTS `ds_chat_message`;
+CREATE TABLE `ds_chat_message` (
+  `message_id` BIGINT NOT NULL AUTO_INCREMENT COMMENT '消息ID',
+  `order_id` BIGINT NOT NULL COMMENT '关联订单',
+  `sender_type` VARCHAR(10) NOT NULL COMMENT '发送方: client/admin',
+  `sender_id` BIGINT NOT NULL COMMENT '发送人ID',
+  `content` TEXT COMMENT '消息内容',
+  `msg_type` VARCHAR(20) DEFAULT 'text' COMMENT '消息类型: text/image',
+  `is_read` TINYINT(1) DEFAULT 0 COMMENT '是否已读',
+  `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP COMMENT '发送时间',
+  PRIMARY KEY (`message_id`),
+  KEY `idx_order_id` (`order_id`),
+  KEY `idx_sender` (`sender_type`, `sender_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='聊天消息表';
