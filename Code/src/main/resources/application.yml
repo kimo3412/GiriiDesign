@@ -55,7 +55,7 @@ jwt:
 # ==================== 微信小程序配置 ====================
 wechat:
   miniapp:
-    appid: "wx1234567890abcdef" # TODO: 请替换为你的真实 AppID
+    appid: "wx5aeef2c8fab8bc4d"
     secret: "your_real_app_secret_here" # TODO: 请替换为你的真实 AppSecret
 
 # ==================== 文件上传路径 ====================

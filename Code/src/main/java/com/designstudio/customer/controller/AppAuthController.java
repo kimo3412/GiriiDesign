@@ -62,18 +62,23 @@ public class AppAuthController {
             }
 
             // 查找或创建用户
+            boolean isNew = false;
             DsUser user = userMapper.selectOne(new LambdaQueryWrapper<DsUser>()
                     .eq(DsUser::getOpenid, openid));
 
             if (user == null) {
+                isNew = true;
                 user = new DsUser();
                 user.setOpenid(openid);
-                user.setNickname("微信用户" + openid.substring(0, 4));
                 user.setStatus(1);
                 user.setCreateTime(LocalDateTime.now());
                 user.setLastLoginTime(LocalDateTime.now());
                 userMapper.insert(user);
             } else {
+                // 老用户但资料未完善也算新用户
+                if (StrUtil.isBlank(user.getNickname()) || StrUtil.isBlank(user.getPhone())) {
+                    isNew = true;
+                }
                 user.setLastLoginTime(LocalDateTime.now());
                 userMapper.updateById(user);
             }
@@ -82,13 +87,15 @@ public class AppAuthController {
                 return R.fail("账号已被禁用");
             }
 
-            String token = jwtUtils.generateToken(user.getUserId(), "client", user.getPhone() != null ? user.getPhone() : "wx", user.getNickname());
+            String token = jwtUtils.generateToken(user.getUserId(), "client", user.getPhone() != null ? user.getPhone() : "wx", user.getNickname() != null ? user.getNickname() : "新用户");
 
             LoginVO vo = new LoginVO();
             vo.setToken(token);
             vo.setUserId(user.getUserId());
             vo.setNickname(user.getNickname());
             vo.setAvatarUrl(user.getAvatarUrl());
+            vo.setPhone(user.getPhone());
+            vo.setIsNewUser(isNew);
             return R.ok(vo);
 
         } catch (Exception e) {
@@ -102,20 +109,23 @@ public class AppAuthController {
     public R<LoginVO> mockLogin(@RequestBody LoginDTO dto) {
         String mockOpenid = "wx_test_openid_" + dto.getPhone();
 
-        // 查找或创建用户
+        boolean isNew = false;
         DsUser user = userMapper.selectOne(new LambdaQueryWrapper<DsUser>()
                 .eq(DsUser::getOpenid, mockOpenid));
 
         if (user == null) {
+            isNew = true;
             user = new DsUser();
             user.setOpenid(mockOpenid);
             user.setPhone(dto.getPhone());
-            user.setNickname("客户" + dto.getPhone().substring(7));
             user.setStatus(1);
             user.setCreateTime(LocalDateTime.now());
             user.setLastLoginTime(LocalDateTime.now());
             userMapper.insert(user);
         } else {
+            if (StrUtil.isBlank(user.getNickname())) {
+                isNew = true;
+            }
             user.setLastLoginTime(LocalDateTime.now());
             userMapper.updateById(user);
         }
@@ -124,14 +134,15 @@ public class AppAuthController {
             return R.fail("账号已被禁用");
         }
 
-        // 生成 C 端 Token (userType = client)
-        String token = jwtUtils.generateToken(user.getUserId(), "client", user.getPhone(), user.getNickname());
+        String token = jwtUtils.generateToken(user.getUserId(), "client", user.getPhone(), user.getNickname() != null ? user.getNickname() : "新用户");
 
         LoginVO vo = new LoginVO();
         vo.setToken(token);
         vo.setUserId(user.getUserId());
         vo.setNickname(user.getNickname());
         vo.setAvatarUrl(user.getAvatarUrl());
+        vo.setPhone(user.getPhone());
+        vo.setIsNewUser(isNew);
         return R.ok(vo);
     }
 
@@ -145,15 +156,16 @@ public class AppAuthController {
     }
 
     @PostMapping("/update")
-    @Operation(summary = "更新用户信息")
+    @Operation(summary = "更新用户信息（完善资料）")
     public R<Void> updateInfo(@RequestBody DsUser dto) {
         Long userId = LoginHelper.getUserId();
         if (userId == null) return R.fail("未登录");
 
         DsUser user = new DsUser();
         user.setUserId(userId);
-        user.setNickname(dto.getNickname());
-        user.setAvatarUrl(dto.getAvatarUrl());
+        if (dto.getNickname() != null) user.setNickname(dto.getNickname());
+        if (dto.getAvatarUrl() != null) user.setAvatarUrl(dto.getAvatarUrl());
+        if (dto.getPhone() != null) user.setPhone(dto.getPhone());
         userMapper.updateById(user);
         return R.ok();
     }
@@ -172,5 +184,7 @@ public class AppAuthController {
         private Long userId;
         private String nickname;
         private String avatarUrl;
+        private String phone;
+        private Boolean isNewUser;
     }
 }

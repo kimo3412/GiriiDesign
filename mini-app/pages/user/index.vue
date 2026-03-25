@@ -16,14 +16,19 @@
 
     <!-- 高级感菜单 -->
     <view class="menu-section">
+      <view class="menu-item" @click="goTo('/pages/user/profile/index')">
+        <text class="menu-text">编辑资料</text>
+        <text class="menu-cn">昵称、头像与手机号</text>
+      </view>
+      <view class="menu-divider"></view>
       <view class="menu-item" @click="goTo('/pages/user/address/index')">
-        <text class="menu-text">地址簿 Address</text>
-        <text class="menu-cn">收货地址</text>
+        <text class="menu-text">收货地址</text>
+        <text class="menu-cn">管理您的地址簿</text>
       </view>
       <view class="menu-divider"></view>
       <view class="menu-item" @click="showAbout">
-        <text class="menu-text">关于品牌 About</text>
-        <text class="menu-cn">关于独立工作室</text>
+        <text class="menu-text">关于品牌</text>
+        <text class="menu-cn">ZeHana 独立设计工作室</text>
       </view>
     </view>
 

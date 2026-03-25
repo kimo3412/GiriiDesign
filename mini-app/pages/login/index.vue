@@ -6,9 +6,14 @@
       <view class="line"></view>
     </view>
 
-    <!-- 模拟登录按钮 -->
-    <button class="login-btn" hover-class="btn-hover" @click="handleSimulateLogin">
-      测试一键登录
+    <!-- 微信一键登录（真机使用） -->
+    <button class="login-btn" hover-class="btn-hover" @click="handleWxLogin">
+      微信授权登录
+    </button>
+
+    <!-- 模拟登录（本地开发调试用，上线前删除） -->
+    <button class="mock-btn" hover-class="btn-hover" @click="handleMockLogin">
+      开发模式 · 模拟登录
     </button>
 
     <view class="agreement">
@@ -28,7 +33,31 @@ import request from '@/utils/request'
 
 const userStore = useUserStore()
 
-const handleSimulateLogin = () => {
+/**
+ * 登录成功后的统一处理
+ */
+const handleLoginSuccess = (data) => {
+  userStore.setToken(data.token)
+  userStore.setUserInfo(data)
+  uni.hideLoading()
+  
+  if (data.isNewUser) {
+    uni.showToast({ title: '欢迎加入 ZeHana', icon: 'none' })
+    setTimeout(() => {
+      uni.navigateTo({ url: '/pages/user/profile/index?mode=setup' })
+    }, 1000)
+  } else {
+    uni.showToast({ title: '欢迎回来', icon: 'none' })
+    setTimeout(() => {
+      uni.switchTab({ url: '/pages/index/index' })
+    }, 1000)
+  }
+}
+
+/**
+ * 真实微信登录（正式使用）
+ */
+const handleWxLogin = () => {
   uni.showLoading({ title: '安全连接中...' })
   uni.login({
     provider: 'weixin',
@@ -36,17 +65,7 @@ const handleSimulateLogin = () => {
       if (loginRes.code) {
         try {
           const data = await wxLogin(loginRes.code)
-          if (data) {
-            userStore.setToken(data.token)
-            userStore.setUserInfo(data)
-            
-            uni.hideLoading()
-            uni.showToast({ title: '欢迎!', icon: 'none' })
-
-            setTimeout(() => {
-              uni.switchTab({ url: '/pages/index/index' })
-            }, 1500)
-          }
+          if (data) handleLoginSuccess(data)
         } catch (err) {
           uni.hideLoading()
           console.error(err)
@@ -62,6 +81,25 @@ const handleSimulateLogin = () => {
       uni.showToast({ title: '微信服务不可用', icon: 'none' })
     }
   })
+}
+
+/**
+ * 模拟登录（本地开发调试，上线前删除）
+ */
+const handleMockLogin = async () => {
+  try {
+    uni.showLoading({ title: '模拟登录中...' })
+    const data = await request({
+      url: '/v1/app/auth/mock-login',
+      method: 'POST',
+      data: { phone: '13888888888' }
+    })
+    if (data) handleLoginSuccess(data)
+  } catch (err) {
+    uni.hideLoading()
+    console.error(err)
+    uni.showToast({ title: '模拟登录失败', icon: 'none' })
+  }
 }
 
 const showAgreement = (type) => {
@@ -89,7 +127,7 @@ const showAgreement = (type) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-top: -100rpx; // 稍微整体向上偏移
+  margin-top: -100rpx;
 }
 
 .title {
@@ -119,12 +157,29 @@ const showAgreement = (type) => {
   width: 100%;
   height: 100rpx;
   line-height: 100rpx;
-  background: $text-color; // 极黑底色
+  background: $text-color;
   color: $white;
   font-size: 24rpx;
   letter-spacing: 6rpx;
-  border-radius: 0; // 高级感直角
+  border-radius: 0;
   border: none;
+  margin-bottom: 24rpx;
+
+  &::after {
+    border: none;
+  }
+}
+
+.mock-btn {
+  width: 100%;
+  height: 80rpx;
+  line-height: 80rpx;
+  background: transparent;
+  color: $text-color-light;
+  font-size: 20rpx;
+  letter-spacing: 4rpx;
+  border-radius: 0;
+  border: 1px dashed #ccc;
   margin-bottom: 60rpx;
 
   &::after {
