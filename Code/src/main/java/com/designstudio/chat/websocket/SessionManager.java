@@ -54,6 +54,20 @@ public class SessionManager {
     }
 
     /**
+     * 精确推送：向指定 key 的用户发消息
+     */
+    public void sendTo(String key, String message) {
+        WebSocketSession session = sessions.get(key);
+        if (session != null && session.isOpen()) {
+            try {
+                session.sendMessage(new TextMessage(message));
+            } catch (IOException e) {
+                log.error("精确推送失败: key={}", key, e);
+            }
+        }
+    }
+
+    /**
      * 向指定类型的所有在线用户广播消息
      */
     private void broadcast(String userTypePrefix, String message) {

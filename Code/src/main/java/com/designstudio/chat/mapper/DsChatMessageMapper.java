@@ -15,6 +15,12 @@ import java.util.Map;
 public interface DsChatMessageMapper extends BaseMapper<DsChatMessage> {
 
     /**
+     * 查询订单对应的客户 userId（用于精确推送消息）
+     */
+    @Select("SELECT user_id FROM ds_order WHERE order_id = #{orderId}")
+    Long selectClientUserIdByOrderId(Long orderId);
+
+    /**
      * 查询有未读消息的订单列表（B端用）
      */
     @Select("SELECT m.order_id, o.order_sn AS order_no, " +

@@ -95,8 +95,14 @@ const splitPortfolios = computed(() => {
   return [col1, col2]
 })
 
+const tabBarPages = ['/pages/index/index', '/pages/order/list/index', '/pages/user/index']
+
 const goTo = (url) => {
-  uni.navigateTo({ url })
+  if (tabBarPages.includes(url)) {
+    uni.switchTab({ url })
+  } else {
+    uni.navigateTo({ url })
+  }
 }
 
 const goToDetail = (id) => {
@@ -106,16 +112,8 @@ const goToDetail = (id) => {
 const fetchPortfolios = async () => {
   try {
     const data = await getPortfolioList()
-    portfolios.value = data || []
-    
-    // 如果后台一条数据都没有，我们塞点 Mock 的定制占位数据撑门面
-    if (portfolios.value.length === 0) {
-      portfolios.value = [
-        { portfolioId: 1, title: 'Sage Tailored Suit 初晓西装', coverUrl: '/static/images/zehana_suit_1774340741093.png', viewCount: 1204 },
-        { portfolioId: 2, title: 'Emerald Evening Gown 翡翠晚礼服', coverUrl: '/static/images/zehana_couture_1774340712019.png', viewCount: 890 },
-        { portfolioId: 3, title: 'Olive Leather Tote 橄榄色皮具', coverUrl: '/static/images/zehana_leather_1774340726407.png', viewCount: 562 }
-      ]
-    }
+    // 后端返回格式可能是 { list: [...] } 或直接是 [...]
+    portfolios.value = (data && data.list) ? data.list : (Array.isArray(data) ? data : [])
   } catch (err) {
     console.error('获取作品列表失败', err)
   }

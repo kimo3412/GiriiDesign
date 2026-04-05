@@ -116,12 +116,13 @@
     {
       title: '操作',
       key: 'actions',
-      width: 120,
+      width: 150,
       render(row: any) {
         return h(NSpace, null, {
           default: () => [
             h(NButton, { text: true, type: 'primary', onClick: () => { selectedType.value = row; loadDataList(); } }, { default: () => '查看' }),
             h(NButton, { text: true, type: 'primary', onClick: () => handleEditType(row) }, { default: () => '编辑' }),
+            h(NButton, { text: true, type: 'error', onClick: () => handleDeleteType(row) }, { default: () => '删除' }),
           ],
         });
       },
@@ -160,6 +161,21 @@
       showTypeModal.value = false;
       await loadTypeList();
     } catch (e) { return false; }
+  };
+
+  const handleDeleteType = async (row: any) => {
+    try {
+      await Alova.Delete(`/v1/admin/dict/types/${row.dictId}`);
+      message.success('删除成功');
+      // 如果删除的是当前选中的类型，清空右侧
+      if (selectedType.value?.dictId === row.dictId) {
+        selectedType.value = null;
+        dataList.value = [];
+      }
+      await loadTypeList();
+    } catch (e) {
+      console.error('删除失败', e);
+    }
   };
 
   const handleTypeSelect = (keys: any[]) => {

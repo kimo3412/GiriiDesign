@@ -9,6 +9,12 @@ export const getPortfolioList = (params) => {
     url: '/v1/app/public/portfolios',
     method: 'GET',
     data: params
+  }).then(res => {
+    // 后端返回List，直接包装成分页格式
+    if (Array.isArray(res)) {
+      return { list: res }
+    }
+    return res
   })
 }
 

@@ -12,7 +12,7 @@
       <text class="title">{{ portfolio.title }}</text>
 
       <view class="meta">
-        <text class="category">{{ portfolio.categoryName }}</text>
+        <text class="category">高级定制</text>
       </view>
 
       <view class="description">
@@ -52,11 +52,12 @@ const fetchDetail = async () => {
     const data = await getPortfolioDetail(portfolioId.value)
 
     // 处理图片
+    // imageUrls 后端已通过 JacksonTypeHandler 反序列化为数组
     let images = []
-    try {
-      images = JSON.parse(data.images || '[]')
-    } catch {
-      images = data.images ? [data.images] : []
+    if (Array.isArray(data.imageUrls)) {
+      images = data.imageUrls
+    } else if (typeof data.imageUrls === 'string') {
+      try { images = JSON.parse(data.imageUrls) } catch { images = [] }
     }
 
     portfolio.value = {

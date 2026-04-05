@@ -18,14 +18,14 @@
       <view class="portfolio-grid">
         <view
           v-for="item in list"
-          :key="item.id"
+          :key="item.portfolioId"
           class="portfolio-item"
-          @click="goToDetail(item.id)"
+          @click="goToDetail(item.portfolioId)"
         >
-          <view class="img-placeholder" v-if="!item.thumbnail">
+          <view class="img-placeholder" v-if="!item.coverUrl">
             <text class="placeholder-text">ZeHana</text>
           </view>
-          <image v-else :src="item.thumbnail" mode="aspectFill" class="portfolio-cover" />
+          <image v-else :src="item.coverUrl" mode="aspectFill" class="portfolio-cover" />
           <view class="portfolio-info">
             <text class="portfolio-title">{{ item.title }}</text>
             <text class="portfolio-desc">{{ item.description }}</text>

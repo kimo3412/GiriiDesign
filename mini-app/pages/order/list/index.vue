@@ -98,13 +98,16 @@ const fetchOrders = async (refresh = false) => {
 
     const data = await getOrderList(params)
 
+    // 后端返回的是 List 数组，不是分页对象
+    const list = Array.isArray(data) ? data : (data.list || [])
+
     if (refresh) {
-      orders.value = data.list || []
+      orders.value = list
     } else {
-      orders.value = [...orders.value, ...(data.list || [])]
+      orders.value = [...orders.value, ...list]
     }
 
-    hasMore.value = (data.list || []).length >= 10
+    hasMore.value = list.length >= 10
   } catch (err) {
     uni.showToast({ title: '获取订单失败', icon: 'none' })
   }
@@ -163,8 +166,12 @@ const getStatusText = (status) => {
   return map[status] || '未知'
 }
 
-// 初始加载
-fetchOrders(true)
+import { onShow } from '@dcloudio/uni-app'
+
+// tabBar 页面每次显示时刷新
+onShow(() => {
+  fetchOrders(true)
+})
 </script>
 
 <style lang="scss" scoped>

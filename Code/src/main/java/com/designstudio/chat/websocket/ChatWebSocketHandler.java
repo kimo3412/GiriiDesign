@@ -106,15 +106,17 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         String pushText = pushJson.toString();
 
         // 3. 推送给对方
-        //    客户发的 → 推给该订单的所有在线 admin
-        //    管理员发的 → 推给该订单的客户
+        //    客户发的 → 广播给所有在线 admin（任何管理员都可能处理）
+        //    管理员发的 → 精确推送给该订单的客户
         if ("client".equals(userType)) {
-            // TODO: 精确推送给该订单的指派设计师，暂时广播给所有在线 admin
             sessionManager.broadcastToAdmins(pushText);
         } else {
-            // 查找该订单的客户 userId（通过订单表）
-            // 暂时推送给所有在线 client
-            sessionManager.broadcastToClients(pushText);
+            // 查找该订单的客户 userId
+            Long clientUserId = messageMapper.selectClientUserIdByOrderId(orderId);
+            if (clientUserId != null) {
+                String clientKey = sessionManager.buildKey("client", clientUserId);
+                sessionManager.sendTo(clientKey, pushText);
+            }
         }
 
         // 4. 回声确认给发送方

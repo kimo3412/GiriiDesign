@@ -1,53 +1,62 @@
 <template>
-  <view class="chat-container">
+  <view class="chat-page">
     <!-- 消息列表 -->
     <scroll-view
-      class="message-list"
+      class="message-area"
       scroll-y
       :scroll-into-view="scrollToId"
       scroll-with-animation
     >
-      <view class="msg-padding"></view>
-      <view
-        v-for="(msg, index) in messages"
-        :key="msg.messageId || index"
-        :id="'msg-' + index"
-        :class="['msg-row', msg.senderType === 'client' ? 'msg-right' : 'msg-left']"
-      >
-        <view class="msg-bubble">
-          <!-- 图片消息 -->
-          <image
-            v-if="msg.msgType === 'image'"
-            class="msg-image"
-            :src="msg.content"
-            mode="widthFix"
-            @click="previewImage(msg.content)"
-          />
-          <!-- 文字消息 -->
-          <text v-else class="msg-text">{{ msg.content }}</text>
+      <view class="msg-list">
+        <view
+          v-for="(msg, index) in messages"
+          :key="msg.messageId || index"
+          :id="'msg-' + index"
+          :class="['msg-row', isMyMsg(msg) ? 'is-mine' : 'is-other']"
+        >
+          <!-- 头像 -->
+          <view class="msg-avatar">
+            <text class="avatar-text">{{ isMyMsg(msg) ? '我' : '师' }}</text>
+          </view>
+
+          <!-- 消息体 -->
+          <view class="msg-body">
+            <view class="msg-bubble">
+              <!-- 图片 -->
+              <image
+                v-if="isImageMsg(msg)"
+                class="msg-image"
+                :src="msg.content"
+                mode="widthFix"
+                @click="previewImage(msg.content)"
+              />
+              <!-- 文字 -->
+              <text v-else class="msg-text">{{ msg.content }}</text>
+            </view>
+            <text class="msg-time">{{ formatTime(msg.createTime) }}</text>
+          </view>
         </view>
-        <text class="msg-time">{{ formatTime(msg.createTime) }}</text>
       </view>
-      <view class="msg-padding-bottom"></view>
+      <view style="height: 20rpx;"></view>
     </scroll-view>
 
-    <!-- 输入区域 -->
-    <view class="input-bar">
-      <view class="input-wrap">
+    <!-- 输入区 -->
+    <view class="input-area">
+      <view class="input-row">
         <input
           v-model="inputText"
-          class="input"
+          class="chat-input"
           placeholder="输入消息..."
           confirm-type="send"
           @confirm="sendTextMsg"
         />
-      </view>
-      <view class="action-btns">
-        <view class="icon-btn" @click="chooseImage">
-          <text class="icon-text">📷</text>
-        </view>
-        <view class="send-btn" @click="sendTextMsg">
-          <text class="send-text">发送</text>
+        <view class="btn-group">
+          <view class="icon-btn" @click="chooseImage">
+            <text>📷</text>
+          </view>
+          <view class="send-btn" @click="sendTextMsg">
+            <text class="send-text">发送</text>
+          </view>
         </view>
       </view>
     </view>
@@ -57,7 +66,6 @@
 <script setup>
 import { ref, onUnmounted, nextTick } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { uploadFile } from '@/api/upload'
 import request from '@/utils/request'
 import storage from '@/utils/storage'
 
@@ -71,11 +79,7 @@ let socketTask = null
 onLoad((options) => {
   orderId.value = Number(options.orderId || 0)
   uni.setNavigationBarTitle({ title: `订单 #${orderId.value} 沟通` })
-
-  // 1. 先拉取历史消息
   fetchHistory()
-
-  // 2. 建立 WebSocket
   connectWS()
 })
 
@@ -86,9 +90,6 @@ onUnmounted(() => {
   }
 })
 
-/**
- * 获取历史消息
- */
 const fetchHistory = async () => {
   try {
     const data = await request({
@@ -102,9 +103,6 @@ const fetchHistory = async () => {
   }
 }
 
-/**
- * 建立 WebSocket 连接
- */
 const connectWS = () => {
   const token = storage.getToken()
   if (!token) return
@@ -126,8 +124,6 @@ const connectWS = () => {
       if (msg.type === 'NEW_MSG' && msg.orderId === orderId.value) {
         messages.value.push(msg)
         scrollToBottom()
-      } else if (msg.type === 'SEND_ACK') {
-        // 发送确认，可以做消息状态更新
       }
     } catch (e) {
       console.error('解析消息失败', e)
@@ -143,70 +139,49 @@ const connectWS = () => {
   })
 }
 
-/**
- * 发送文字消息
- */
 const sendTextMsg = () => {
   const text = inputText.value.trim()
   if (!text) return
-
   sendMessage(text, 'text')
   inputText.value = ''
 }
 
-/**
- * 选择并发送图片
- */
 const chooseImage = () => {
   uni.chooseImage({
     count: 1,
     sizeType: ['compressed'],
-    success: async (res) => {
-      uni.showLoading({ title: '发送中...' })
-      try {
-        const url = await uploadFile(res.tempFilePaths[0])
-        sendMessage(url, 'image')
-        uni.hideLoading()
-      } catch (err) {
-        uni.hideLoading()
-        uni.showToast({ title: '图片发送失败', icon: 'none' })
-      }
+    success: (res) => {
+      // 暂时用本地路径发送
+      sendMessage(res.tempFilePaths[0], 'image')
     }
   })
 }
 
-/**
- * 通过 WebSocket 发送消息
- */
 const sendMessage = (content, msgType) => {
   if (!socketTask) {
     uni.showToast({ title: '连接已断开', icon: 'none' })
     return
   }
 
-  const payload = JSON.stringify({
-    type: 'SEND',
-    orderId: orderId.value,
-    content: content,
-    msgType: msgType
+  socketTask.send({
+    data: JSON.stringify({
+      type: 'SEND',
+      orderId: orderId.value,
+      content: content,
+      msgType: msgType
+    })
   })
 
-  socketTask.send({ data: payload })
-
-  // 本地先展示（乐观更新）
   messages.value.push({
     orderId: orderId.value,
     senderType: 'client',
     content: content,
     msgType: msgType,
-    createTime: new Date().toLocaleString()
+    createTime: new Date().toISOString().replace('T', ' ').substring(0, 19)
   })
   scrollToBottom()
 }
 
-/**
- * 滚动到底部
- */
 const scrollToBottom = () => {
   nextTick(() => {
     if (messages.value.length > 0) {
@@ -218,119 +193,168 @@ const scrollToBottom = () => {
   })
 }
 
-/**
- * 预览大图
- */
 const previewImage = (url) => {
   uni.previewImage({ urls: [url], current: url })
 }
 
-/**
- * 格式化时间
- */
 const formatTime = (timeStr) => {
   if (!timeStr) return ''
-  return timeStr.substring(11, 16) // HH:mm
+  return String(timeStr).substring(11, 16)
+}
+
+const isMyMsg = (msg) => {
+  return msg.senderType === 'client' || msg.senderType === 0
+}
+
+const isImageMsg = (msg) => {
+  return msg.msgType === 'image' || msg.contentType === 1
 }
 </script>
 
 <style lang="scss" scoped>
-.chat-container {
+.chat-page {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background: #f5f5f5;
+  background: #F5F2EE;
 }
 
-.message-list {
+/* 消息区 */
+.message-area {
   flex: 1;
-  padding: 0 24rpx;
+  overflow: hidden;
 }
 
-.msg-padding {
-  height: 20rpx;
+.msg-list {
+  padding: 20rpx 24rpx;
 }
 
-.msg-padding-bottom {
-  height: 20rpx;
-}
-
+/* 消息行 */
 .msg-row {
   display: flex;
-  flex-direction: column;
-  margin-bottom: 24rpx;
-}
-
-.msg-left {
+  margin-bottom: 28rpx;
   align-items: flex-start;
 }
 
-.msg-right {
+.msg-row.is-mine {
+  flex-direction: row-reverse;
+}
+
+/* 头像 */
+.msg-avatar {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.is-other .msg-avatar {
+  background: #4A5D4E;
+  margin-right: 16rpx;
+}
+
+.is-mine .msg-avatar {
+  background: #2C2C2C;
+  margin-left: 16rpx;
+}
+
+.avatar-text {
+  color: #fff;
+  font-size: 22rpx;
+  font-weight: 500;
+}
+
+/* 消息体 */
+.msg-body {
+  max-width: 65%;
+  display: flex;
+  flex-direction: column;
+}
+
+.is-mine .msg-body {
   align-items: flex-end;
 }
 
+.is-other .msg-body {
+  align-items: flex-start;
+}
+
+/* 气泡 */
 .msg-bubble {
-  max-width: 70%;
   padding: 20rpx 28rpx;
-  border-radius: 4rpx;
+  border-radius: 20rpx;
   word-break: break-all;
+  line-height: 1.5;
 }
 
-.msg-left .msg-bubble {
-  background: #ffffff;
-  border: 1px solid #e8e8e8;
+.is-other .msg-bubble {
+  background: #FFFFFF;
+  border-top-left-radius: 4rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
 }
 
-.msg-right .msg-bubble {
-  background: #1a1a1a;
-  color: #ffffff;
+.is-mine .msg-bubble {
+  background: #4A5D4E;
+  border-top-right-radius: 4rpx;
+}
+
+.is-mine .msg-text {
+  color: #fff;
+}
+
+.is-other .msg-text {
+  color: #333;
 }
 
 .msg-text {
-  font-size: 26rpx;
-  line-height: 1.6;
+  font-size: 28rpx;
   letter-spacing: 1rpx;
 }
 
 .msg-image {
   max-width: 400rpx;
-  border-radius: 4rpx;
+  border-radius: 12rpx;
 }
 
 .msg-time {
-  font-size: 18rpx;
-  color: #999;
+  font-size: 20rpx;
+  color: #aaa;
   margin-top: 8rpx;
   letter-spacing: 1rpx;
 }
 
-.input-bar {
-  display: flex;
-  align-items: center;
+/* 输入区 */
+.input-area {
+  background: #fff;
+  border-top: 1rpx solid #E8E4E0;
   padding: 16rpx 24rpx;
   padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
-  background: #ffffff;
-  border-top: 1px solid #e8e8e8;
+}
+
+.input-row {
+  display: flex;
+  align-items: center;
   gap: 16rpx;
 }
 
-.input-wrap {
+.chat-input {
   flex: 1;
-}
-
-.input {
   height: 72rpx;
-  background: #f5f5f5;
+  background: #F5F2EE;
   padding: 0 24rpx;
-  font-size: 26rpx;
-  border: 1px solid #e8e8e8;
-  border-radius: 0;
+  font-size: 28rpx;
+  border-radius: 36rpx;
+  border: none;
 }
 
-.action-btns {
+.btn-group {
   display: flex;
   align-items: center;
   gap: 12rpx;
+  flex-shrink: 0;
 }
 
 .icon-btn {
@@ -339,24 +363,22 @@ const formatTime = (timeStr) => {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.icon-text {
   font-size: 36rpx;
 }
 
 .send-btn {
   height: 72rpx;
   padding: 0 32rpx;
-  background: #1a1a1a;
+  background: #4A5D4E;
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: 36rpx;
 }
 
 .send-text {
-  color: #ffffff;
-  font-size: 24rpx;
+  color: #fff;
+  font-size: 26rpx;
   letter-spacing: 2rpx;
 }
 </style>

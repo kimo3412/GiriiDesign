@@ -16,6 +16,8 @@ export const Alova = createAlova({
   statesHook: VueHook,
   // 关闭 mock，使用真实后端 API
   requestAdapter: adapterFetch(),
+  // 关闭 GET 请求缓存，确保每次都能拿到最新数据
+  cacheFor: null,
   // 在开发环境开启缓存命中日志
   cacheLogger: process.env.NODE_ENV === 'development',
   beforeRequest(method) {
