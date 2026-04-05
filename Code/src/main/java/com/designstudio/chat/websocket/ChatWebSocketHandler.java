@@ -74,27 +74,33 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         Long orderId = json.getLong("orderId");
         String content = json.getStr("content");
         String msgType = json.getStr("msgType", "text");
+        // sender_type: 0=客户, 1=设计师/管理员
+        int senderTypeInt = "client".equals(userType) ? 0 : 1;
+        // content_type: 0=文本, 1=图片
+        int contentTypeInt = "image".equals(msgType) ? 1 : 0;
 
         // 1. 持久化消息
         DsChatMessage msg = new DsChatMessage();
         msg.setOrderId(orderId);
-        msg.setSenderType(userType);
+        msg.setSenderType(senderTypeInt);
         msg.setSenderId(userId);
         msg.setContent(content);
-        msg.setMsgType(msgType);
+        msg.setContentType(contentTypeInt);
         msg.setIsRead(0);
+        msg.setDelFlag(0);
         msg.setCreateTime(LocalDateTime.now());
         messageMapper.insert(msg);
 
         // 2. 构建推送 JSON
         JSONObject pushJson = new JSONObject();
         pushJson.set("type", "NEW_MSG");
-        pushJson.set("messageId", msg.getMessageId());
+        pushJson.set("messageId", msg.getMsgId());
         pushJson.set("orderId", orderId);
         pushJson.set("senderType", userType);
         pushJson.set("senderId", userId);
         pushJson.set("content", content);
         pushJson.set("msgType", msgType);
+        pushJson.set("contentType", contentTypeInt);
         pushJson.set("createTime", msg.getCreateTime().format(FMT));
 
         String pushText = pushJson.toString();

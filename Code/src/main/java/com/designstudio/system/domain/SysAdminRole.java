@@ -1,5 +1,6 @@
 package com.designstudio.system.domain;
 
+import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -16,7 +17,10 @@ import java.io.Serializable;
 @TableName("sys_admin_role")
 public class SysAdminRole implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     /** 用户ID */
+    @TableId
     private Long adminId;
 
     /** 角色ID */

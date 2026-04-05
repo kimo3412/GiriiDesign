@@ -105,22 +105,28 @@ public class AppAuthController {
     }
 
     @PostMapping("/mock-login")
-    @Operation(summary = "模拟微信登录（固定测试用户，开发调试用）")
+    @Operation(summary = "账号密码登录（开发调试用）")
     public R<LoginVO> mockLogin(@RequestBody LoginDTO dto) {
-        // 固定使用默认测试客户账号
-        String mockOpenid = "wx_test_openid_default";
+        // 校验用户名密码
+        if (StrUtil.isBlank(dto.getUsername()) || StrUtil.isBlank(dto.getPassword())) {
+            return R.fail("请输入用户名和密码");
+        }
+        if (!"123456".equals(dto.getPassword())) {
+            return R.fail("密码错误");
+        }
+
+        // 用 username 作为 openid 的标识来查找用户
+        String mockOpenid = "wx_mock_" + dto.getUsername();
 
         boolean isNew = false;
         DsUser user = userMapper.selectOne(new LambdaQueryWrapper<DsUser>()
                 .eq(DsUser::getOpenid, mockOpenid));
 
         if (user == null) {
-            // 自动创建默认测试用户
             isNew = true;
             user = new DsUser();
             user.setOpenid(mockOpenid);
-            user.setPhone("13888888888");
-            user.setNickname("ZeHana测试客户");
+            user.setNickname(dto.getUsername());
             user.setStatus(1);
             user.setCreateTime(LocalDateTime.now());
             user.setLastLoginTime(LocalDateTime.now());
@@ -137,7 +143,9 @@ public class AppAuthController {
             return R.fail("账号已被禁用");
         }
 
-        String token = jwtUtils.generateToken(user.getUserId(), "client", user.getPhone() != null ? user.getPhone() : "13888888888", user.getNickname() != null ? user.getNickname() : "ZeHana测试客户");
+        String token = jwtUtils.generateToken(user.getUserId(), "client",
+                user.getPhone() != null ? user.getPhone() : dto.getUsername(),
+                user.getNickname() != null ? user.getNickname() : dto.getUsername());
 
         LoginVO vo = new LoginVO();
         vo.setToken(token);
@@ -177,8 +185,10 @@ public class AppAuthController {
 
     @Data
     public static class LoginDTO {
-        private String phone; // 测试用一键登录输入手机号
-        private String code;  // 真实微信登录所需的 jscode
+        private String phone;    // 保留兼容
+        private String code;     // 真实微信登录所需的 jscode
+        private String username; // 账号密码登录-用户名
+        private String password; // 账号密码登录-密码
     }
 
     @Data

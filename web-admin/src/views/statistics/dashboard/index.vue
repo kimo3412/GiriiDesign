@@ -85,13 +85,11 @@
 
     <!-- 第三行：图表 -->
     <n-grid cols="1 s:1 m:2" responsive="screen" :x-gap="16" :y-gap="16" class="mt-4">
-      <!-- 近7天订单趋势 -->
       <n-grid-item>
         <n-card title="近7天订单趋势" size="small" :bordered="false">
           <div ref="trendChartRef" class="chart-box"></div>
         </n-card>
       </n-grid-item>
-      <!-- 订单状态分布 -->
       <n-grid-item>
         <n-card title="订单状态分布" size="small" :bordered="false">
           <div ref="pieChartRef" class="chart-box"></div>
@@ -101,13 +99,11 @@
 
     <!-- 第四行：图表 -->
     <n-grid cols="1 s:1 m:2" responsive="screen" :x-gap="16" :y-gap="16" class="mt-4">
-      <!-- 品类订单排名 -->
       <n-grid-item>
         <n-card title="品类订单排名" size="small" :bordered="false">
           <div ref="barChartRef" class="chart-box"></div>
         </n-card>
       </n-grid-item>
-      <!-- 近6个月营收趋势 -->
       <n-grid-item>
         <n-card title="月度营收趋势" size="small" :bordered="false">
           <div ref="areaChartRef" class="chart-box"></div>
@@ -170,7 +166,7 @@ onMounted(async () => {
 });
 
 function renderCharts(d: any) {
-  // 1. 近7天订单趋势 - 折线图
+  // 1. 近7天订单趋势
   const trendDates = (d.dailyOrderTrend || []).map((i: any) => i.date?.substring(5) || '');
   const trendCounts = (d.dailyOrderTrend || []).map((i: any) => i.order_count || 0);
   const trendRevenue = (d.dailyOrderTrend || []).map((i: any) => Number(i.revenue) || 0);
@@ -205,7 +201,7 @@ function renderCharts(d: any) {
     ],
   });
 
-  // 2. 订单状态分布 - 饼图
+  // 2. 订单状态分布
   const pieData = (d.orderStatusDistribution || []).map((i: any) => ({
     name: STATUS_MAP[i.status] || `状态${i.status}`,
     value: i.count,
@@ -228,7 +224,7 @@ function renderCharts(d: any) {
     ],
   });
 
-  // 3. 品类订单排名 - 横向柱状图
+  // 3. 品类订单排名
   const categoryNames = (d.categoryRank || []).map((i: any) => i.category_name || '未知').reverse();
   const categoryCounts = (d.categoryRank || []).map((i: any) => i.order_count || 0).reverse();
 
@@ -256,7 +252,7 @@ function renderCharts(d: any) {
     ],
   });
 
-  // 4. 月度营收 - 面积图
+  // 4. 月度营收
   const months = (d.monthlyRevenueTrend || []).map((i: any) => i.month || '');
   const monthlyRevenues = (d.monthlyRevenueTrend || []).map((i: any) => Number(i.revenue) || 0);
   const monthlyOrders = (d.monthlyRevenueTrend || []).map((i: any) => i.order_count || 0);

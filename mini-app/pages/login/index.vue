@@ -11,10 +11,37 @@
       微信授权登录
     </button>
 
-    <!-- 模拟登录（本地开发调试用，上线前删除） -->
-    <button class="mock-btn" hover-class="btn-hover" @click="handleMockLogin">
-      开发模式 · 模拟登录
-    </button>
+    <!-- 分割线 -->
+    <view class="divider">
+      <view class="divider-line"></view>
+      <text class="divider-text">或使用账号登录</text>
+      <view class="divider-line"></view>
+    </view>
+
+    <!-- 账号密码登录表单 -->
+    <view class="form-section">
+      <view class="form-item">
+        <input
+          v-model="username"
+          class="form-input"
+          placeholder="请输入用户名"
+          maxlength="20"
+        />
+      </view>
+      <view class="form-item">
+        <input
+          v-model="password"
+          class="form-input"
+          placeholder="请输入密码"
+          password
+          maxlength="20"
+          @confirm="handleAccountLogin"
+        />
+      </view>
+      <button class="account-btn" hover-class="btn-hover" @click="handleAccountLogin">
+        登录
+      </button>
+    </view>
 
     <view class="agreement">
       <text>使用即表示您同意我们的</text>
@@ -27,11 +54,15 @@
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useUserStore } from '@/store/user'
 import { wxLogin } from '@/api/auth'
 import request from '@/utils/request'
 
 const userStore = useUserStore()
+
+const username = ref('')
+const password = ref('')
 
 /**
  * 登录成功后的统一处理
@@ -55,7 +86,7 @@ const handleLoginSuccess = (data) => {
 }
 
 /**
- * 真实微信登录（正式使用）
+ * 真实微信登录
  */
 const handleWxLogin = () => {
   uni.showLoading({ title: '安全连接中...' })
@@ -84,21 +115,33 @@ const handleWxLogin = () => {
 }
 
 /**
- * 模拟登录（本地开发调试，上线前删除）
+ * 账号密码登录
  */
-const handleMockLogin = async () => {
+const handleAccountLogin = async () => {
+  if (!username.value.trim()) {
+    uni.showToast({ title: '请输入用户名', icon: 'none' })
+    return
+  }
+  if (!password.value) {
+    uni.showToast({ title: '请输入密码', icon: 'none' })
+    return
+  }
+
   try {
-    uni.showLoading({ title: '模拟登录中...' })
+    uni.showLoading({ title: '登录中...' })
     const data = await request({
       url: '/v1/app/auth/mock-login',
       method: 'POST',
-      data: { phone: '13888888888' }
+      data: {
+        username: username.value.trim(),
+        password: password.value
+      }
     })
     if (data) handleLoginSuccess(data)
   } catch (err) {
     uni.hideLoading()
     console.error(err)
-    uni.showToast({ title: '模拟登录失败', icon: 'none' })
+    uni.showToast({ title: err.message || '登录失败', icon: 'none' })
   }
 }
 
@@ -127,7 +170,7 @@ const showAgreement = (type) => {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin-top: -100rpx;
+  margin-top: -60rpx;
 }
 
 .title {
@@ -163,24 +206,63 @@ const showAgreement = (type) => {
   letter-spacing: 6rpx;
   border-radius: 0;
   border: none;
-  margin-bottom: 24rpx;
 
   &::after {
     border: none;
   }
 }
 
-.mock-btn {
+.divider {
+  display: flex;
+  align-items: center;
+  margin: 40rpx 0;
+  gap: 20rpx;
+
+  .divider-line {
+    flex: 1;
+    height: 1px;
+    background: #ddd;
+  }
+
+  .divider-text {
+    font-size: 20rpx;
+    color: $text-color-light;
+    letter-spacing: 2rpx;
+    white-space: nowrap;
+  }
+}
+
+.form-section {
+  margin-bottom: 40rpx;
+}
+
+.form-item {
+  margin-bottom: 20rpx;
+}
+
+.form-input {
   width: 100%;
-  height: 80rpx;
-  line-height: 80rpx;
-  background: transparent;
-  color: $text-color-light;
-  font-size: 20rpx;
-  letter-spacing: 4rpx;
+  height: 88rpx;
+  background: $white;
+  border: 1px solid #e0e0e0;
+  padding: 0 28rpx;
+  font-size: 26rpx;
+  letter-spacing: 2rpx;
+  color: $text-color;
+  box-sizing: border-box;
+}
+
+.account-btn {
+  width: 100%;
+  height: 88rpx;
+  line-height: 88rpx;
+  background: $primary-color;
+  color: $white;
+  font-size: 24rpx;
+  letter-spacing: 6rpx;
   border-radius: 0;
-  border: 1px dashed #ccc;
-  margin-bottom: 60rpx;
+  border: none;
+  margin-top: 10rpx;
 
   &::after {
     border: none;

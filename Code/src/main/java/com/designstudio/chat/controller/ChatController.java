@@ -43,7 +43,7 @@ public class ChatController {
         // 标记管理员发给客户的消息为已读
         messageMapper.update(null, new LambdaUpdateWrapper<DsChatMessage>()
                 .eq(DsChatMessage::getOrderId, orderId)
-                .eq(DsChatMessage::getSenderType, "admin")
+                .eq(DsChatMessage::getSenderType, 1)
                 .eq(DsChatMessage::getIsRead, 0)
                 .set(DsChatMessage::getIsRead, 1));
 
@@ -76,7 +76,7 @@ public class ChatController {
     public R<Void> markAsRead(@PathVariable Long orderId) {
         messageMapper.update(null, new LambdaUpdateWrapper<DsChatMessage>()
                 .eq(DsChatMessage::getOrderId, orderId)
-                .eq(DsChatMessage::getSenderType, "client")
+                .eq(DsChatMessage::getSenderType, 0)
                 .eq(DsChatMessage::getIsRead, 0)
                 .set(DsChatMessage::getIsRead, 1));
         return R.ok();
