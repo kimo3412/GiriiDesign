@@ -1,5 +1,6 @@
 package com.designstudio.system.controller;
 
+import com.designstudio.common.annotation.OperLog;
 import com.designstudio.common.exception.BusinessException;
 import com.designstudio.common.result.ErrorCode;
 import com.designstudio.common.result.R;
@@ -37,6 +38,7 @@ public class AuthController {
      */
     @PostMapping("/login")
     @Operation(summary = "后台登录", description = "使用用户名和密码登录，返回 JWT Token")
+    @OperLog("后台登录")
     public R<LoginVO> login(@Valid @RequestBody LoginDTO dto) {
         // 1. 根据用户名查找用户
         SysAdmin admin = adminService.getByUsername(dto.getUsername());
@@ -75,6 +77,7 @@ public class AuthController {
      */
     @PostMapping("/logout")
     @Operation(summary = "登出")
+    @OperLog("后台登出")
     public R<Void> logout(@RequestHeader(value = "Authorization", required = false) String authHeader) {
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             String token = authHeader.substring(7);

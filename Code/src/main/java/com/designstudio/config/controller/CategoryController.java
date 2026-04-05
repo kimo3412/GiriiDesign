@@ -1,6 +1,7 @@
 package com.designstudio.config.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.designstudio.common.annotation.OperLog;
 import com.designstudio.common.result.R;
 import com.designstudio.config.domain.DsCategory;
 import com.designstudio.config.mapper.DsCategoryMapper;
@@ -38,6 +39,7 @@ public class CategoryController {
 
     @PostMapping
     @Operation(summary = "新增品类")
+    @OperLog("新增品类")
     public R<Void> add(@RequestBody DsCategory category) {
         categoryMapper.insert(category);
         return R.ok();
@@ -45,6 +47,7 @@ public class CategoryController {
 
     @PutMapping("/{id}")
     @Operation(summary = "修改品类")
+    @OperLog("修改品类")
     public R<Void> update(@PathVariable Long id, @RequestBody DsCategory category) {
         category.setCategoryId(id);
         categoryMapper.updateById(category);
@@ -53,6 +56,7 @@ public class CategoryController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除品类")
+    @OperLog("删除品类")
     public R<Void> delete(@PathVariable Long id) {
         categoryMapper.deleteById(id);
         return R.ok();

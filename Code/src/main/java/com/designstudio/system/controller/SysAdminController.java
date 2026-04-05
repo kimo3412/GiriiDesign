@@ -1,6 +1,7 @@
 package com.designstudio.system.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.designstudio.common.annotation.OperLog;
 import com.designstudio.common.result.R;
 import com.designstudio.system.domain.SysAdmin;
 import com.designstudio.system.domain.SysAdminRole;
@@ -61,6 +62,7 @@ public class SysAdminController {
     @PostMapping
     @Operation(summary = "新增用户")
     @Transactional(rollbackFor = Exception.class)
+    @OperLog("新增后台用户")
     public R<Void> add(@RequestBody AdminSaveDTO dto) {
         // 检查用户名是否存在
         SysAdmin exist = adminMapper.selectOne(new LambdaQueryWrapper<SysAdmin>().eq(SysAdmin::getUsername, dto.getUsername()));
@@ -93,6 +95,7 @@ public class SysAdminController {
     @PutMapping("/{id}")
     @Operation(summary = "编辑用户")
     @Transactional(rollbackFor = Exception.class)
+    @OperLog("编辑后台用户")
     public R<Void> update(@PathVariable Long id, @RequestBody AdminSaveDTO dto) {
         SysAdmin admin = adminMapper.selectById(id);
         if (admin == null) {
@@ -134,6 +137,7 @@ public class SysAdminController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除用户")
     @Transactional(rollbackFor = Exception.class)
+    @OperLog("删除后台用户")
     public R<Void> delete(@PathVariable Long id) {
         if (id == 1L) {
             return R.fail("超级管理员不可删除");

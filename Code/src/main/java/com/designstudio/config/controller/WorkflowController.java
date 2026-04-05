@@ -1,6 +1,7 @@
 package com.designstudio.config.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.designstudio.common.annotation.OperLog;
 import com.designstudio.common.result.R;
 import com.designstudio.config.domain.DsWorkflow;
 import com.designstudio.config.domain.DsWorkflowStep;
@@ -49,6 +50,7 @@ public class WorkflowController {
     @PostMapping
     @Operation(summary = "保存工作流（含节点，全量覆盖）")
     @Transactional(rollbackFor = Exception.class)
+    @OperLog("保存工作流")
     public R<Void> save(@PathVariable Long categoryId, @RequestBody WorkflowSaveDTO dto) {
         // 查找或创建工作流
         DsWorkflow workflow = workflowMapper.selectOne(

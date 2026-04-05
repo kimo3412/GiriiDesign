@@ -1,6 +1,7 @@
 package com.designstudio.supply.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.designstudio.common.annotation.OperLog;
 import com.designstudio.common.result.R;
 import com.designstudio.supply.domain.DsBomTemplate;
 import com.designstudio.supply.domain.DsBomTemplateItem;
@@ -57,6 +58,7 @@ public class BomTemplateController {
     @PostMapping
     @Operation(summary = "新增BOM模板")
     @Transactional(rollbackFor = Exception.class)
+    @OperLog("新增BOM模板")
     public R<Void> add(@RequestBody BomSaveDTO dto) {
         DsBomTemplate template = new DsBomTemplate();
         template.setName(dto.getName());
@@ -80,6 +82,7 @@ public class BomTemplateController {
     @PutMapping("/{id}")
     @Operation(summary = "修改BOM模板（全量覆盖明细）")
     @Transactional(rollbackFor = Exception.class)
+    @OperLog("修改BOM模板")
     public R<Void> update(@PathVariable Long id, @RequestBody BomSaveDTO dto) {
         DsBomTemplate template = templateMapper.selectById(id);
         if (template == null) return R.fail("模板不存在");
@@ -108,6 +111,7 @@ public class BomTemplateController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除BOM模板")
     @Transactional(rollbackFor = Exception.class)
+    @OperLog("删除BOM模板")
     public R<Void> delete(@PathVariable Long id) {
         templateMapper.deleteById(id);
         itemMapper.delete(new LambdaQueryWrapper<DsBomTemplateItem>()

@@ -1,6 +1,7 @@
 package com.designstudio.portfolio.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.designstudio.common.annotation.OperLog;
 import com.designstudio.common.result.R;
 import com.designstudio.portfolio.domain.DsPortfolio;
 import com.designstudio.portfolio.mapper.DsPortfolioMapper;
@@ -45,6 +46,7 @@ public class PortfolioController {
 
     @PostMapping
     @Operation(summary = "新增作品集")
+    @OperLog("新增作品集")
     public R<Void> add(@RequestBody DsPortfolio portfolio) {
         portfolio.setViewCount(0);
         portfolioMapper.insert(portfolio);
@@ -53,6 +55,7 @@ public class PortfolioController {
 
     @PutMapping("/{id}")
     @Operation(summary = "修改作品集")
+    @OperLog("修改作品集")
     public R<Void> update(@PathVariable Long id, @RequestBody DsPortfolio portfolio) {
         portfolio.setPortfolioId(id);
         portfolioMapper.updateById(portfolio);
@@ -61,6 +64,7 @@ public class PortfolioController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除作品集")
+    @OperLog("删除作品集")
     public R<Void> delete(@PathVariable Long id) {
         portfolioMapper.deleteById(id);
         return R.ok();

@@ -1,6 +1,7 @@
 package com.designstudio.order.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.designstudio.common.annotation.OperLog;
 import com.designstudio.common.result.R;
 import com.designstudio.order.domain.DsOrder;
 import com.designstudio.order.domain.DsOrderRequest;
@@ -57,6 +58,7 @@ public class RequestController {
     @PostMapping("/{requestId}/convert")
     @Operation(summary = "意向转正订单")
     @Transactional(rollbackFor = Exception.class)
+    @OperLog("意向转订单")
     public R<DsOrder> convert(@PathVariable Long requestId, @RequestBody ConvertDTO dto) {
         DsOrderRequest request = requestMapper.selectById(requestId);
         if (request == null) {
@@ -92,6 +94,7 @@ public class RequestController {
 
     @PostMapping("/{requestId}/close")
     @Operation(summary = "关闭意向")
+    @OperLog("关闭意向")
     public R<Void> close(@PathVariable Long requestId, @RequestBody CloseDTO dto) {
         DsOrderRequest request = requestMapper.selectById(requestId);
         if (request == null) {

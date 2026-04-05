@@ -1,6 +1,7 @@
 package com.designstudio.order.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.designstudio.common.annotation.OperLog;
 import com.designstudio.common.result.R;
 import com.designstudio.common.security.LoginHelper;
 import com.designstudio.common.security.LoginUser;
@@ -152,6 +153,7 @@ public class OrderController {
     @PostMapping("/{orderId}/advance")
     @Operation(summary = "推进订单到下一个工作流节点")
     @Transactional(rollbackFor = Exception.class)
+    @OperLog("推进订单节点")
     public R<Void> advance(@PathVariable Long orderId, @RequestBody AdvanceDTO dto) {
         DsOrder order = orderMapper.selectById(orderId);
         if (order == null) return R.fail("订单不存在");
@@ -218,6 +220,7 @@ public class OrderController {
 
     @PostMapping("/{orderId}/block")
     @Operation(summary = "阻塞订单")
+    @OperLog("阻塞订单")
     public R<Void> block(@PathVariable Long orderId, @RequestBody BlockDTO dto) {
         DsOrder order = orderMapper.selectById(orderId);
         if (order == null) return R.fail("订单不存在");
@@ -230,6 +233,7 @@ public class OrderController {
 
     @PostMapping("/{orderId}/unblock")
     @Operation(summary = "解除阻塞")
+    @OperLog("解除订单阻塞")
     public R<Void> unblock(@PathVariable Long orderId) {
         DsOrder order = orderMapper.selectById(orderId);
         if (order == null) return R.fail("订单不存在");
@@ -254,6 +258,7 @@ public class OrderController {
 
     @PostMapping("/{orderId}/progress")
     @Operation(summary = "添加进度记录")
+    @OperLog("添加订单进度")
     public R<Void> addProgress(@PathVariable Long orderId, @RequestBody ProgressDTO dto) {
         DsOrder order = orderMapper.selectById(orderId);
         if (order == null) return R.fail("订单不存在");

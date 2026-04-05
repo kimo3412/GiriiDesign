@@ -1,6 +1,7 @@
 package com.designstudio.system.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.designstudio.common.annotation.OperLog;
 import com.designstudio.common.result.R;
 import com.designstudio.system.domain.SysRole;
 import com.designstudio.system.domain.SysRoleMenu;
@@ -51,6 +52,7 @@ public class SysRoleController {
     @PostMapping
     @Operation(summary = "新增角色")
     @Transactional(rollbackFor = Exception.class)
+    @OperLog("新增角色")
     public R<Void> add(@RequestBody RoleSaveDTO dto) {
         SysRole exist = roleMapper.selectOne(new LambdaQueryWrapper<SysRole>().eq(SysRole::getRoleKey, dto.getRoleKey()));
         if (exist != null) {
@@ -74,6 +76,7 @@ public class SysRoleController {
     @PutMapping("/{id}")
     @Operation(summary = "修改角色")
     @Transactional(rollbackFor = Exception.class)
+    @OperLog("修改角色")
     public R<Void> update(@PathVariable Long id, @RequestBody RoleSaveDTO dto) {
         SysRole role = roleMapper.selectById(id);
         if (role == null) {
@@ -104,6 +107,7 @@ public class SysRoleController {
     @DeleteMapping("/{id}")
     @Operation(summary = "删除角色")
     @Transactional(rollbackFor = Exception.class)
+    @OperLog("删除角色")
     public R<Void> delete(@PathVariable Long id) {
         if (id == 1L || id == 2L) {
             return R.fail("内置角色不可删除");

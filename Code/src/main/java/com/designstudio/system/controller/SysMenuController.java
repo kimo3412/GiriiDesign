@@ -1,6 +1,7 @@
 package com.designstudio.system.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.designstudio.common.annotation.OperLog;
 import com.designstudio.common.result.R;
 import com.designstudio.system.domain.SysMenu;
 import com.designstudio.system.mapper.SysMenuMapper;
@@ -39,6 +40,7 @@ public class SysMenuController {
 
     @PostMapping
     @Operation(summary = "新增菜单")
+    @OperLog("新增菜单")
     public R<Void> add(@RequestBody SysMenu menu) {
         if (menu.getParentId() == null) {
             menu.setParentId(0L);
@@ -49,6 +51,7 @@ public class SysMenuController {
 
     @PutMapping("/{id}")
     @Operation(summary = "修改菜单")
+    @OperLog("修改菜单")
     public R<Void> update(@PathVariable Long id, @RequestBody SysMenu dto) {
         SysMenu menu = menuMapper.selectById(id);
         if (menu == null) return R.fail("菜单不存在");
@@ -69,6 +72,7 @@ public class SysMenuController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "删除菜单")
+    @OperLog("删除菜单")
     public R<Void> delete(@PathVariable Long id) {
         // 检查是否有子节点
         Long count = menuMapper.selectCount(new LambdaQueryWrapper<SysMenu>().eq(SysMenu::getParentId, id));
