@@ -57,7 +57,13 @@
 
     <!-- 底部操作 -->
     <view class="bottom-action">
-      <button class="chat-btn" @click="goToChat">联系设计师</button>
+      <button class="chat-btn" @click="goToChat">专属客服</button>
+      <button v-if="order.status === 0" class="pay-btn" @click="handlePay(0)">
+        支付定金 ¥{{ order.prepayAmount }}
+      </button>
+      <button v-if="order.status === 6" class="pay-btn" @click="handlePay(6)">
+        支付尾款 ¥{{ (order.totalAmount - order.prepayAmount).toFixed(2) }}
+      </button>
       <button v-if="order.status === 2" class="confirm-btn" @click="handleConfirm">
         确认收货
       </button>
@@ -68,7 +74,7 @@
 <script setup>
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { getOrderDetail, getOrderProgress, confirmOrder } from '@/api/order'
+import { getOrderDetail, getOrderProgress, confirmOrder, payOrder } from '@/api/order'
 
 const orderId = ref(0)
 const order = ref({})
@@ -102,7 +108,8 @@ const fetchOrderDetail = async () => {
 const fetchProgress = async () => {
   try {
     const data = await getOrderProgress(orderId.value)
-    progressList.value = (data || []).map(item => ({
+    const list = data.progressList || []
+    progressList.value = list.map(item => ({
       stepName: item.description || '进度更新',
       description: item.description,
       imageUrl: item.imageUrls,
@@ -123,9 +130,11 @@ const getStatusText = (status) => {
   const map = {
     0: '待支付',
     1: '生产中',
-    2: '待收货',
-    3: '已完成',
-    4: '已关闭'
+    2: '待发货',
+    3: '待收货',
+    4: '已完成',
+    5: '已取消',
+    6: '待付尾款'
   }
   return map[status] || '未知'
 }
@@ -135,7 +144,7 @@ const getStatusText = (status) => {
  */
 const goToChat = () => {
   uni.navigateTo({
-    url: `/pages/chat/index?orderId=${orderId.value}`
+    url: `/pages/chat/index`
   })
 }
 
@@ -154,6 +163,34 @@ const handleConfirm = () => {
           fetchOrderDetail()
         } catch (err) {
           uni.showToast({ title: err.message || '操作失败', icon: 'none' })
+        }
+      }
+    }
+  })
+}
+
+/**
+ * 模拟支付
+ */
+const handlePay = (type) => {
+  const typeName = type === 0 ? '定金' : '尾款'
+  const amount = type === 0 ? order.value.prepayAmount : (order.value.totalAmount - order.value.prepayAmount).toFixed(2)
+  
+  uni.showModal({
+    title: `支付${typeName}`,
+    content: `将模拟支付 ¥${amount}，确定要付款吗？`,
+    success: async (res) => {
+      if (res.confirm) {
+        uni.showLoading({ title: '支付中...' })
+        try {
+          await payOrder(orderId.value)
+          uni.hideLoading()
+          uni.showToast({ title: '支付成功', icon: 'success' })
+          fetchOrderDetail()
+          fetchProgress()
+        } catch (err) {
+          uni.hideLoading()
+          uni.showToast({ title: err.message || '支付失败', icon: 'none' })
         }
       }
     }
@@ -272,6 +309,21 @@ onLoad((options) => {
   flex: 1;
   height: 88rpx;
   background: #1a1a1a;
+  color: #fff;
+  font-size: 26rpx;
+  letter-spacing: 2rpx;
+  border-radius: 0;
+  border: none;
+
+  &::after {
+    border: none;
+  }
+}
+
+.pay-btn {
+  flex: 1;
+  height: 88rpx;
+  background: #d32f2f;
   color: #fff;
   font-size: 26rpx;
   letter-spacing: 2rpx;

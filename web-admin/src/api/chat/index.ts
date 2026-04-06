@@ -5,12 +5,17 @@ export const getConversations = () => {
   return Alova.Get<any>('/v1/admin/chat/conversations');
 };
 
-/** 获取某订单的聊天记录 */
-export const getChatMessages = (orderId: number) => {
-  return Alova.Get<any>(`/v1/admin/chat/${orderId}`);
+/** 获取某客户的聊天记录 */
+export const getChatMessages = (userId: number) => {
+  return Alova.Get<any>(`/v1/admin/chat/${userId}`);
 };
 
-/** 标记某订单的客户消息为已读 */
-export const markChatRead = (orderId: number) => {
-  return Alova.Put<any>(`/v1/admin/chat/${orderId}/read`);
+/** 标记某客户的消息为已读 */
+export const markChatRead = (userId: number) => {
+  return Alova.Put<any>(`/v1/admin/chat/${userId}/read`);
+};
+
+/** 获取聊天客户的全景意向/订单一览 */
+export const getUserSummary = (userId: number) => {
+  return Alova.Get<any>(`/v1/admin/chat/user-summary/${userId}`);
 };

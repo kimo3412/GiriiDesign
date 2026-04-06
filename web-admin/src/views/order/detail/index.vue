@@ -122,6 +122,7 @@ const statusMap: any = {
   3: { label: '待收货', type: 'success' },
   4: { label: '已完成', type: 'success' },
   5: { label: '已取消', type: 'error' },
+  6: { label: '待付尾款', type: 'warning' },
 };
 
 const showAdvanceModal = ref(false);

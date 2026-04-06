@@ -46,3 +46,14 @@ export const confirmOrder = (id) => {
     method: 'POST'
   })
 }
+
+/**
+ * 模拟支付订单（定金/尾款）
+ * @param {number} id - 订单ID
+ */
+export const payOrder = (id) => {
+  return request({
+    url: `/v1/app/orders/${id}/pay`,
+    method: 'POST'
+  })
+}

@@ -16,6 +16,11 @@
 
     <!-- 高级感菜单 -->
     <view class="menu-section">
+      <view class="menu-item" @click="goTo('/pages/chat/index')">
+        <text class="menu-text">专属客服</text>
+        <text class="menu-cn">联系您的私人管家</text>
+      </view>
+      <view class="menu-divider"></view>
       <view class="menu-item" @click="goTo('/pages/user/profile/index')">
         <text class="menu-text">编辑资料</text>
         <text class="menu-cn">昵称、头像与手机号</text>
