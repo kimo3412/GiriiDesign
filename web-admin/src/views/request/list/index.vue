@@ -197,6 +197,7 @@ import { ref, computed, onMounted, h } from 'vue';
 import { NButton, NTag, NSpace, NImage, useMessage } from 'naive-ui';
 import { getRequestList, getRequestDetail, convertRequest, closeRequest } from '@/api/order/index';
 import { getCategoryList } from '@/api/config/category';
+import { getFieldList } from '@/api/config/field';
 import { getAdminList } from '@/api/system/adminList';
 
 const message = useMessage();
@@ -246,11 +247,20 @@ const filteredData = computed(() => {
 // 详情抽屉
 const showDetail = ref(false);
 const detailData = ref<any>(null);
+const fieldLabelMap = ref<Record<string, string>>({});
 
+// 将英文 fieldKey 翻译为中文 label
 const parsedCustomData = computed(() => {
   if (!detailData.value?.customData) return null;
-  try { return JSON.parse(detailData.value.customData); }
-  catch { return null; }
+  try {
+    const rawData = JSON.parse(detailData.value.customData);
+    const result: Record<string, any> = {};
+    for (const [key, value] of Object.entries(rawData)) {
+      const label = fieldLabelMap.value[key] || key;
+      result[label] = value;
+    }
+    return result;
+  } catch { return null; }
 });
 
 const parsedImages = computed(() => {
@@ -377,6 +387,15 @@ onMounted(async () => {
 const handleViewDetail = async (row: any) => {
   try {
     detailData.value = await getRequestDetail(row.requestId);
+    // 加载该品类的字段定义，用于 key → label 映射
+    if (detailData.value?.categoryId) {
+      try {
+        const fields = await getFieldList(detailData.value.categoryId);
+        fieldLabelMap.value = Object.fromEntries(
+          (fields || []).map((f: any) => [f.fieldKey, f.label])
+        );
+      } catch (e) { console.error('加载字段定义失败', e); }
+    }
     showDetail.value = true;
   } catch (e) { console.error(e); }
 };

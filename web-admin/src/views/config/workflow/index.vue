@@ -96,6 +96,7 @@
 
 <script lang="ts" setup>
   import { ref, onMounted } from 'vue';
+  import { useRoute } from 'vue-router';
   import { useMessage, useDialog } from 'naive-ui';
   import { MenuOutlined } from '@vicons/antd';
   import draggable from 'vuedraggable';
@@ -104,6 +105,7 @@
 
   const message = useMessage();
   const dialog = useDialog();
+  const route = useRoute();
 
   const loading = ref(false);
   const saving = ref(false);
@@ -134,6 +136,12 @@
         label: item.name,
         value: item.categoryId,
       }));
+      // 如果从品类管理跳转过来，自动选中并加载
+      const qCategoryId = Number(route.query.categoryId);
+      if (qCategoryId) {
+        selectedCategoryId.value = qCategoryId;
+        loadWorkflow();
+      }
     } catch (e) {
       console.error(e);
     }

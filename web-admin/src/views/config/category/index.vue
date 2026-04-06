@@ -58,6 +58,7 @@
 
 <script lang="ts" setup>
   import { ref, h, onMounted } from 'vue';
+  import { useRouter } from 'vue-router';
   import { useMessage, useDialog, NTag, NButton, NSpace } from 'naive-ui';
   import { PlusOutlined } from '@vicons/antd';
   import {
@@ -69,6 +70,7 @@
 
   const message = useMessage();
   const dialog = useDialog();
+  const router = useRouter();
   const loading = ref(false);
   const showModal = ref(false);
   const isEdit = ref(false);
@@ -200,14 +202,14 @@
     });
   };
 
-  // 字段配置（跳转）
+  // 字段配置（跳转到字段配置页并预选品类）
   const handleFields = (row: any) => {
-    message.info(`字段配置 - ${row.name}（功能开发中）`);
+    router.push({ path: '/config/config/field', query: { categoryId: row.categoryId } });
   };
 
-  // 工作流（跳转）
+  // 工作流（跳转到工作流管理页并预选品类）
   const handleWorkflow = (row: any) => {
-    message.info(`工作流管理 - ${row.name}（功能开发中）`);
+    router.push({ path: '/config/config/workflow', query: { categoryId: row.categoryId } });
   };
 
   onMounted(() => {
