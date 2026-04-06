@@ -15,21 +15,15 @@ import java.util.Map;
 public interface DsChatMessageMapper extends BaseMapper<DsChatMessage> {
 
     /**
-     * 查询订单对应的客户 userId（用于精确推送消息）
+     * 查询所有客户沟通会话列表（B端用）
      */
-    @Select("SELECT user_id FROM ds_order WHERE order_id = #{orderId}")
-    Long selectClientUserIdByOrderId(Long orderId);
-
-    /**
-     * 查询有未读消息的订单列表（B端用）
-     */
-    @Select("SELECT m.order_id, o.order_sn AS order_no, " +
-            "COUNT(CASE WHEN m.is_read = 0 AND m.sender_type = 0 THEN 1 END) AS unread_count, " +
-            "MAX(m.create_time) AS last_time, " +
-            "(SELECT content FROM ds_chat_message WHERE order_id = m.order_id ORDER BY create_time DESC LIMIT 1) AS last_content " +
+    @Select("SELECT m.user_id AS userId, u.nickname, u.avatar_url AS avatar, " +
+            "COUNT(CASE WHEN m.is_read = 0 AND m.sender_type = 0 THEN 1 END) AS unreadCount, " +
+            "MAX(m.create_time) AS lastTime, " +
+            "(SELECT content FROM ds_chat_message WHERE user_id = m.user_id ORDER BY create_time DESC LIMIT 1) AS lastContent " +
             "FROM ds_chat_message m " +
-            "LEFT JOIN ds_order o ON m.order_id = o.order_id " +
-            "GROUP BY m.order_id, o.order_sn " +
-            "ORDER BY last_time DESC")
+            "LEFT JOIN ds_user u ON m.user_id = u.user_id " +
+            "GROUP BY m.user_id, u.nickname, u.avatar_url " +
+            "ORDER BY lastTime DESC")
     List<Map<String, Object>> selectConversationList();
 }

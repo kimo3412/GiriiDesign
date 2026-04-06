@@ -298,7 +298,7 @@ CREATE TABLE `ds_bom_item` (
 DROP TABLE IF EXISTS `ds_chat_message`;
 CREATE TABLE `ds_chat_message` (
   `msg_id` BIGINT NOT NULL AUTO_INCREMENT,
-  `order_id` BIGINT NOT NULL COMMENT '所属订单',
+  `user_id` BIGINT NOT NULL COMMENT '所属客户',
   `sender_type` TINYINT(1) NOT NULL COMMENT '0=客户,1=设计师',
   `sender_id` BIGINT NOT NULL COMMENT '发送方ID',
   `content_type` TINYINT(1) DEFAULT 0 COMMENT '0=文本,1=图片',
@@ -307,7 +307,7 @@ CREATE TABLE `ds_chat_message` (
   `create_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
   `del_flag` TINYINT(1) DEFAULT 0,
   PRIMARY KEY (`msg_id`),
-  KEY `idx_order` (`order_id`),
+  KEY `idx_user` (`user_id`),
   KEY `idx_sender` (`sender_type`, `sender_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='聊天记录表';
 

@@ -1,5 +1,7 @@
 package com.designstudio.order.controller;
 
+import java.math.BigDecimal;
+
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.designstudio.common.result.R;
 import com.designstudio.common.security.LoginHelper;
@@ -77,5 +79,48 @@ public class AppOrderController {
     public static class OrderDetailProgressVO {
         private DsOrder order;
         private List<DsOrderProgress> progressList;
+    }
+
+    @PostMapping("/{id}/pay")
+    @Operation(summary = "模拟支付定金/尾款")
+    public R<Void> payOrder(@PathVariable Long id) {
+        Long userId = LoginHelper.getUserId();
+        if (userId == null) return R.fail("未登录");
+
+        DsOrder order = orderMapper.selectById(id);
+        if (order == null || !order.getUserId().equals(userId)) {
+            return R.fail("订单不存在或无权操作");
+        }
+
+        if (order.getStatus() == 0) {
+            // 支付定金
+            order.setStatus(1); // 进入生产中
+            order.setPaidAmount(order.getPrepayAmount());
+            orderMapper.updateById(order);
+
+            // 记录一条进度记录
+            DsOrderProgress progress = new DsOrderProgress();
+            progress.setOrderId(id);
+            progress.setDescription("客户已支付定金：¥" + order.getPrepayAmount());
+            progressMapper.insert(progress);
+
+            return R.ok();
+        } else if (order.getStatus() == 6) {
+            // 支付尾款
+            order.setStatus(2); // 进入待发货
+            order.setPaidAmount(order.getTotalAmount());
+            orderMapper.updateById(order);
+
+            // 记录一条进度记录
+            DsOrderProgress progress = new DsOrderProgress();
+            progress.setOrderId(id);
+            BigDecimal balance = order.getTotalAmount().subtract(order.getPrepayAmount());
+            progress.setDescription("客户已支付尾款：¥" + balance);
+            progressMapper.insert(progress);
+
+            return R.ok();
+        }
+
+        return R.fail("当前订单状态不需要支付");
     }
 }

@@ -69,9 +69,12 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         String type = json.getStr("type");
         if (!"SEND".equals(type)) return;
 
-        Long userId = (Long) session.getAttributes().get("userId");
+        Long currentUserId = (Long) session.getAttributes().get("userId");
         String userType = (String) session.getAttributes().get("userType");
-        Long orderId = json.getLong("orderId");
+        
+        // 归属的客户ID：如果客户发出的，就是他本人；如果管理员发出的，前端传入目标userId
+        Long targetUserId = json.getLong("userId");
+        Long chatUserId = "client".equals(userType) ? currentUserId : targetUserId;
         String content = json.getStr("content");
         String msgType = json.getStr("msgType", "text");
         // sender_type: 0=客户, 1=设计师/管理员
@@ -81,9 +84,9 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
         // 1. 持久化消息
         DsChatMessage msg = new DsChatMessage();
-        msg.setOrderId(orderId);
+        msg.setUserId(chatUserId);
         msg.setSenderType(senderTypeInt);
-        msg.setSenderId(userId);
+        msg.setSenderId(currentUserId);
         msg.setContent(content);
         msg.setContentType(contentTypeInt);
         msg.setIsRead(0);
@@ -95,9 +98,9 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         JSONObject pushJson = new JSONObject();
         pushJson.set("type", "NEW_MSG");
         pushJson.set("messageId", msg.getMsgId());
-        pushJson.set("orderId", orderId);
+        pushJson.set("userId", chatUserId);
         pushJson.set("senderType", userType);
-        pushJson.set("senderId", userId);
+        pushJson.set("senderId", currentUserId);
         pushJson.set("content", content);
         pushJson.set("msgType", msgType);
         pushJson.set("contentType", contentTypeInt);
@@ -106,15 +109,13 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         String pushText = pushJson.toString();
 
         // 3. 推送给对方
-        //    客户发的 → 广播给所有在线 admin（任何管理员都可能处理）
-        //    管理员发的 → 精确推送给该订单的客户
+        //    客户发的 → 广播给所有在线 admin
+        //    管理员发的 → 精确推送给该客户
         if ("client".equals(userType)) {
             sessionManager.broadcastToAdmins(pushText);
         } else {
-            // 查找该订单的客户 userId
-            Long clientUserId = messageMapper.selectClientUserIdByOrderId(orderId);
-            if (clientUserId != null) {
-                String clientKey = sessionManager.buildKey("client", clientUserId);
+            if (chatUserId != null) {
+                String clientKey = sessionManager.buildKey("client", chatUserId);
                 sessionManager.sendTo(clientKey, pushText);
             }
         }
@@ -123,7 +124,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         pushJson.set("type", "SEND_ACK");
         session.sendMessage(new TextMessage(pushJson.toString()));
 
-        log.debug("消息已处理: {} -> orderId={}", userType, orderId);
+        log.debug("消息已处理: {} -> chatUserId={}", userType, chatUserId);
     }
 
     /**

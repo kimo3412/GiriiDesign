@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
  * 聊天消息实体（对齐真实表结构）
  *
  * 表字段:
- *   msg_id, order_id, sender_type(tinyint: 0=客户,1=设计师),
+ *   msg_id, user_id, sender_type(tinyint: 0=客户,1=设计师),
  *   sender_id, content_type(tinyint: 0=文本,1=图片), content,
  *   is_read, create_time, del_flag
  */
@@ -22,8 +22,8 @@ public class DsChatMessage {
     @TableId(type = IdType.AUTO)
     private Long msgId;
 
-    /** 关联订单ID */
-    private Long orderId;
+    /** 关联客户ID */
+    private Long userId;
 
     /** 发送方类型: 0=客户, 1=设计师/管理员 */
     private Integer senderType;

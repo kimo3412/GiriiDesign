@@ -17,22 +17,23 @@
         <div class="conv-scroll">
           <div
             v-for="conv in filteredConversations"
-            :key="conv.order_id"
+            :key="conv.userId"
             class="conv-item"
-            :class="{ active: activeOrderId === conv.order_id }"
+            :class="{ active: activeUserId === conv.userId }"
             @click="selectConversation(conv)"
           >
             <div class="conv-avatar">
-              <span>{{ (conv.order_no || String(conv.order_id)).slice(-2) }}</span>
+              <n-avatar round size="medium" :src="conv.avatar" v-if="conv.avatar" />
+              <div v-else class="text-avatar">{{ String(conv.nickname || conv.username || conv.userId).slice(0, 1) }}</div>
             </div>
             <div class="conv-info">
               <div class="conv-top">
-                <span class="conv-name">订单 #{{ conv.order_no || conv.order_id }}</span>
-                <span class="conv-time-text">{{ formatTime(conv.last_time) }}</span>
+                <span class="conv-name">{{ conv.nickname || conv.username || `用户#${conv.userId}` }}</span>
+                <span class="conv-time-text">{{ formatTime(conv.lastTime) }}</span>
               </div>
               <div class="conv-bottom">
-                <span class="conv-last">{{ conv.last_content || '暂无消息' }}</span>
-                <n-badge :value="conv.unread_count" :max="99" v-if="conv.unread_count > 0" />
+                <span class="conv-last">{{ conv.lastContent || '暂无消息' }}</span>
+                <n-badge :value="conv.unreadCount" :max="99" v-if="conv.unreadCount > 0" />
               </div>
             </div>
           </div>
@@ -43,16 +44,16 @@
       </div>
 
       <!-- 中间：聊天区 -->
-      <div class="panel-center" v-if="activeOrderId">
+      <div class="panel-center" v-if="activeUserId">
         <div class="chat-header">
           <div class="chat-header-left">
-            <span class="chat-title">订单 #{{ activeOrderNo }}</span>
+            <span class="chat-title">{{ activeUserName }}</span>
             <n-tag size="tiny" :type="wsConnected ? 'success' : 'default'" round>
               {{ wsConnected ? '在线' : '离线' }}
             </n-tag>
           </div>
           <n-button size="small" text @click="showOrderPanel = !showOrderPanel">
-            {{ showOrderPanel ? '收起详情' : '查看订单 →' }}
+            {{ showOrderPanel ? '收起档案' : '客户档案 →' }}
           </n-button>
         </div>
 
@@ -107,66 +108,43 @@
         </div>
       </div>
 
-      <!-- 右侧：订单详情面板 -->
+      <!-- 右侧：客户档案面板 -->
       <transition name="slide-right">
-        <div class="panel-right" v-if="activeOrderId && showOrderPanel">
+        <div class="panel-right" v-if="activeUserId && showOrderPanel">
           <div class="panel-header">
-            <span class="panel-title">订单详情</span>
+            <span class="panel-title">客户档案</span>
             <n-button size="tiny" text @click="showOrderPanel = false">✕</n-button>
           </div>
-          <div class="order-detail-scroll" v-if="orderInfo">
-            <!-- 订单状态 -->
-            <div class="order-status-card">
-              <n-tag :type="statusMap[orderInfo.status]?.type" size="medium">
-                {{ statusMap[orderInfo.status]?.label }}
-              </n-tag>
-              <span class="order-sn">{{ orderInfo.orderSn }}</span>
-            </div>
-
-            <!-- 基本信息 -->
-            <div class="detail-section">
-              <div class="detail-label">客户</div>
-              <div class="detail-value">用户 #{{ orderInfo.userId }}</div>
-            </div>
-            <div class="detail-section">
-              <div class="detail-label">品类</div>
-              <div class="detail-value">{{ getCategoryName(orderInfo.categoryId) }}</div>
-            </div>
-            <div class="detail-section" v-if="orderInfo.totalAmount">
-              <div class="detail-label">金额</div>
-              <div class="detail-value amount">¥{{ Number(orderInfo.totalAmount).toLocaleString() }}</div>
-            </div>
-            <div class="detail-section" v-if="orderInfo.prepayAmount">
-              <div class="detail-label">预付</div>
-              <div class="detail-value">¥{{ Number(orderInfo.prepayAmount).toLocaleString() }}</div>
-            </div>
-            <div class="detail-section" v-if="orderInfo.paidAmount">
-              <div class="detail-label">已付</div>
-              <div class="detail-value">¥{{ Number(orderInfo.paidAmount).toLocaleString() }}</div>
-            </div>
-            <div class="detail-section" v-if="orderInfo.expectedDate">
-              <div class="detail-label">交付日期</div>
-              <div class="detail-value">{{ orderInfo.expectedDate }}</div>
-            </div>
-            <div class="detail-section">
-              <div class="detail-label">创建时间</div>
-              <div class="detail-value">{{ orderInfo.createTime }}</div>
-            </div>
-
-            <!-- 定制参数 -->
-            <div v-if="parsedCustomData" class="custom-section">
-              <div class="custom-title">定制参数</div>
-              <div v-for="(val, key) in parsedCustomData" :key="key" class="custom-row">
-                <span class="custom-key">{{ key }}</span>
-                <span class="custom-val">{{ val }}</span>
+          <div class="order-detail-scroll" v-if="userSummary">
+            
+            <div class="summary-block" v-if="userSummary.requests?.length > 0">
+              <div class="summary-title">近期意向</div>
+              <div class="summary-card" v-for="req in userSummary.requests" :key="req.requestId">
+                <div class="summary-row">
+                  <n-tag type="info" size="small">{{ req.status === 0 ? '待处理' : (req.status === 1 ? '已转单' : '已驳回') }}</n-tag>
+                  <span class="summary-date">{{ formatMsgTime(req.createTime) }}</span>
+                </div>
+                <div class="summary-row">
+                  品类: {{ getCategoryName(req.categoryId) }}
+                </div>
               </div>
             </div>
 
-            <!-- 操作 -->
-            <div class="detail-actions">
-              <n-button block size="small" @click="goOrderDetail">
-                查看完整详情 →
-              </n-button>
+            <div class="summary-block" v-if="userSummary.orders?.length > 0">
+              <div class="summary-title">历史订单</div>
+              <div class="summary-card" v-for="ord in userSummary.orders" :key="ord.orderId" @click="router.push(`/order/detail/${ord.orderId}`)" style="cursor: pointer;">
+                <div class="summary-row">
+                  <n-tag :type="statusMap[ord.status]?.type" size="small">{{ statusMap[ord.status]?.label }}</n-tag>
+                  <span class="summary-sn">{{ ord.orderSn }}</span>
+                </div>
+                <div class="summary-row">
+                  金额: ¥{{ ord.totalAmount || '0.00' }}
+                </div>
+              </div>
+            </div>
+
+            <div v-if="!userSummary.requests?.length && !userSummary.orders?.length" class="order-loading">
+              该客户暂无业务记录
             </div>
           </div>
           <div v-else class="order-loading">加载中...</div>
@@ -179,10 +157,8 @@
 <script setup lang="ts">
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { ChatboxEllipsesOutline } from '@vicons/ionicons5';
 import { useUser } from '@/store/modules/user';
-import { getConversations as fetchConvApi, getChatMessages, markChatRead } from '@/api/chat/index';
-import { getOrderDetail as fetchOrderDetailApi } from '@/api/order/index';
+import { getConversations as fetchConvApi, getChatMessages, markChatRead, getUserSummary as fetchUserSummaryApi } from '@/api/chat/index';
 import { getCategoryList } from '@/api/config/category';
 
 const router = useRouter();
@@ -190,14 +166,14 @@ const userStore = useUser();
 
 const searchText = ref('');
 const conversations = ref<any[]>([]);
-const activeOrderId = ref<number | null>(null);
-const activeOrderNo = ref('');
+const activeUserId = ref<number | null>(null);
+const activeUserName = ref('');
 const messages = ref<any[]>([]);
 const inputText = ref('');
 const messagesRef = ref<HTMLElement | null>(null);
 const wsConnected = ref(false);
 const showOrderPanel = ref(true);
-const orderInfo = ref<any>(null);
+const userSummary = ref<any>(null);
 const categoryMap = ref<Record<number, string>>({});
 
 let ws: WebSocket | null = null;
@@ -209,6 +185,7 @@ const statusMap: any = {
   3: { label: '待收货', type: 'success' },
   4: { label: '已完成', type: 'success' },
   5: { label: '已取消', type: 'error' },
+  6: { label: '待付尾款', type: 'warning' },
 };
 
 const getCategoryName = (id: number) => categoryMap.value[id] || `品类#${id}`;
@@ -226,11 +203,7 @@ const filteredConversations = computed(() => {
   );
 });
 
-const parsedCustomData = computed(() => {
-  if (!orderInfo.value?.customDataSnapshot) return null;
-  try { return JSON.parse(orderInfo.value.customDataSnapshot); }
-  catch { return null; }
-});
+
 
 onMounted(async () => {
   fetchConversations();
@@ -253,23 +226,23 @@ const fetchConversations = async () => {
 };
 
 const selectConversation = async (conv: any) => {
-  activeOrderId.value = conv.order_id;
-  activeOrderNo.value = conv.order_no || conv.order_id;
-  orderInfo.value = null;
+  activeUserId.value = conv.userId;
+  activeUserName.value = conv.nickname || conv.username || `用户#${conv.userId}`;
+  userSummary.value = null;
 
   try {
-    const res = await getChatMessages(conv.order_id);
+    const res = await getChatMessages(conv.userId);
     messages.value = res || [];
     scrollToBottom();
-    await markChatRead(conv.order_id);
-    conv.unread_count = 0;
+    await markChatRead(conv.userId);
+    conv.unreadCount = 0;
   } catch (e) { console.error('获取聊天记录失败', e); }
 
-  // 加载订单详情
+  // 加载客户全纪录档案
   try {
-    const detail = await fetchOrderDetailApi(conv.order_id);
-    orderInfo.value = detail?.order || detail;
-  } catch (e) { console.error('获取订单详情失败', e); }
+    const detail = await fetchUserSummaryApi(conv.userId);
+    userSummary.value = detail || null;
+  } catch (e) { console.error('获取档案详情失败', e); }
 };
 
 const connectWS = () => {
@@ -284,7 +257,7 @@ const connectWS = () => {
     try {
       const msg = JSON.parse(event.data);
       if (msg.type === 'NEW_MSG') {
-        if (msg.orderId === activeOrderId.value) {
+        if (msg.userId === activeUserId.value) {
           messages.value.push(msg);
           scrollToBottom();
         }
@@ -303,17 +276,17 @@ const connectWS = () => {
 
 const sendText = () => {
   const text = inputText.value.trim();
-  if (!text || !activeOrderId.value || !ws) return;
+  if (!text || !activeUserId.value || !ws) return;
 
   ws.send(JSON.stringify({
     type: 'SEND',
-    orderId: activeOrderId.value,
+    userId: activeUserId.value,
     content: text,
     msgType: 'text',
   }));
 
   messages.value.push({
-    orderId: activeOrderId.value,
+    userId: activeUserId.value,
     senderType: 'admin',
     content: text,
     msgType: 'text',
@@ -332,11 +305,7 @@ const scrollToBottom = () => {
   });
 };
 
-const goOrderDetail = () => {
-  if (activeOrderId.value) {
-    router.push(`/order/detail/${activeOrderId.value}`);
-  }
-};
+
 
 const formatTime = (timeStr: string) => {
   if (!timeStr) return '';

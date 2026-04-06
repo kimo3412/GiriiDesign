@@ -69,16 +69,14 @@ import { onLoad } from '@dcloudio/uni-app'
 import request from '@/utils/request'
 import storage from '@/utils/storage'
 
-const orderId = ref(0)
 const messages = ref([])
 const inputText = ref('')
 const scrollToId = ref('')
 
 let socketTask = null
 
-onLoad((options) => {
-  orderId.value = Number(options.orderId || 0)
-  uni.setNavigationBarTitle({ title: `订单 #${orderId.value} 沟通` })
+onLoad(() => {
+  uni.setNavigationBarTitle({ title: `专属客服` })
   fetchHistory()
   connectWS()
 })
@@ -93,7 +91,7 @@ onUnmounted(() => {
 const fetchHistory = async () => {
   try {
     const data = await request({
-      url: `/v1/app/chat/${orderId.value}`,
+      url: `/v1/app/chat`,
       method: 'GET'
     })
     messages.value = data || []
@@ -121,7 +119,7 @@ const connectWS = () => {
   socketTask.onMessage((res) => {
     try {
       const msg = JSON.parse(res.data)
-      if (msg.type === 'NEW_MSG' && msg.orderId === orderId.value) {
+      if (msg.type === 'NEW_MSG') {
         messages.value.push(msg)
         scrollToBottom()
       }
@@ -166,14 +164,12 @@ const sendMessage = (content, msgType) => {
   socketTask.send({
     data: JSON.stringify({
       type: 'SEND',
-      orderId: orderId.value,
       content: content,
       msgType: msgType
     })
   })
 
   messages.value.push({
-    orderId: orderId.value,
     senderType: 'client',
     content: content,
     msgType: msgType,
@@ -269,7 +265,7 @@ const isImageMsg = (msg) => {
 
 /* 消息体 */
 .msg-body {
-  max-width: 65%;
+  max-width: 72%;
   display: flex;
   flex-direction: column;
 }
@@ -315,7 +311,7 @@ const isImageMsg = (msg) => {
 }
 
 .msg-image {
-  max-width: 400rpx;
+  max-width: 100%;
   border-radius: 12rpx;
 }
 

@@ -191,8 +191,23 @@ public class OrderController {
         }
 
         if (nextStep == null) {
-            // 已经是最后一步了，标记为完成
-            order.setStatus(2); // 待发货
+            // 已经是最后一步了
+            // 检查是否有尾款未付 (totalAmount > prepayAmount)
+            if (order.getTotalAmount() != null && order.getPrepayAmount() != null &&
+                order.getTotalAmount().compareTo(order.getPrepayAmount()) > 0) {
+                order.setStatus(6); // 待付尾款
+                
+                LoginUser loginUser = LoginHelper.getLoginUser();
+                DsOrderProgress progress = new DsOrderProgress();
+                progress.setOrderId(orderId);
+                progress.setDescription("生产完毕，等待客户支付尾款");
+                progress.setOperatorId(loginUser.getAdminId());
+                progress.setCreateTime(LocalDateTime.now());
+                progressMapper.insert(progress);
+                
+            } else {
+                order.setStatus(2); // 待发货
+            }
             order.setFinishTime(LocalDateTime.now());
             orderMapper.updateById(order);
             return R.ok();

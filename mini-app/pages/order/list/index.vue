@@ -33,6 +33,12 @@
           <view class="order-footer">
             <text class="order-time">{{ order.createTime }}</text>
             <view class="order-actions">
+              <button v-if="order.status === 0" class="action-btn pay-btn" @click.stop="handlePay(order, 0)">
+                支付定金 ¥{{ order.prepayAmount }}
+              </button>
+              <button v-if="order.status === 6" class="action-btn pay-btn" @click.stop="handlePay(order, 6)">
+                支付尾款 ¥{{ (order.totalAmount - order.prepayAmount).toFixed(2) }}
+              </button>
               <button v-if="order.status === 2" class="action-btn" @click.stop="confirmReceive(order.orderId)">
                 确认收货
               </button>
@@ -56,7 +62,7 @@
 
 <script setup>
 import { ref } from 'vue'
-import { getOrderList, confirmOrder } from '@/api/order'
+import { getOrderList, confirmOrder, payOrder } from '@/api/order'
 
 const tabs = [
   { label: '全部', value: '' },
@@ -153,15 +159,44 @@ const confirmReceive = async (id) => {
 }
 
 /**
+ * 模拟支付
+ */
+const handlePay = (order, type) => {
+  const typeName = type === 0 ? '定金' : '尾款'
+  const amount = type === 0 ? order.prepayAmount : (order.totalAmount - order.prepayAmount).toFixed(2)
+  
+  uni.showModal({
+    title: `支付${typeName}`,
+    content: `将模拟支付 ¥${amount}，确定要付款吗？`,
+    success: async (res) => {
+      if (res.confirm) {
+        uni.showLoading({ title: '支付中...' })
+        try {
+          await payOrder(order.orderId)
+          uni.hideLoading()
+          uni.showToast({ title: '支付成功', icon: 'success' })
+          fetchOrders(true)
+        } catch (err) {
+          uni.hideLoading()
+          uni.showToast({ title: err.message || '支付失败', icon: 'none' })
+        }
+      }
+    }
+  })
+}
+
+/**
  * 获取状态文本
  */
 const getStatusText = (status) => {
   const map = {
     0: '待支付',
     1: '生产中',
-    2: '待收货',
-    3: '已完成',
-    4: '已关闭'
+    2: '待发货',
+    3: '待收货',
+    4: '已完成',
+    5: '已取消',
+    6: '待付尾款'
   }
   return map[status] || '未知'
 }
@@ -282,6 +317,9 @@ onShow(() => {
 }
 
 .order-actions {
+  display: flex;
+  gap: 16rpx;
+
   .action-btn {
     padding: 10rpx 28rpx;
     font-size: 24rpx;
@@ -289,10 +327,15 @@ onShow(() => {
     color: #fff;
     border-radius: 4rpx;
     border: none;
+    margin: 0;
 
     &::after {
       border: none;
     }
+  }
+
+  .pay-btn {
+    background: #4A5D4E;
   }
 }
 

@@ -67,6 +67,9 @@
           </view>
         </view>
       </view>
+    <!-- 全局私人管家悬浮按钮 -->
+    <view class="floating-chat" @click="goTo('/pages/chat/index')">
+      <text class="chat-icon">✉</text>
     </view>
   </view>
 </template>
@@ -247,7 +250,9 @@ onLoad(() => {
     flex-direction: column;
     align-items: center;
     margin-bottom: 40rpx;
-    
+  }
+
+
     .section-title {
       font-size: 32rpx;
       font-weight: 400;
@@ -332,6 +337,33 @@ onLoad(() => {
         color: $text-color-light;
       }
     }
+  }
+}
+</style>
+
+<style lang="scss" scoped>
+.floating-chat {
+  position: fixed;
+  right: 40rpx;
+  bottom: 160rpx;
+  width: 100rpx;
+  height: 100rpx;
+  background: #1a1a1a;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10rpx 30rpx rgba(0,0,0,0.15);
+  z-index: 999;
+  transition: transform 0.3s ease;
+
+  &:active {
+    transform: scale(0.9);
+  }
+
+  .chat-icon {
+    color: #fff;
+    font-size: 48rpx;
   }
 }
 </style>

@@ -38,7 +38,7 @@ public class DsOrder extends BaseEntity {
     /** 当前工作流节点 */
     private Long currentStepId;
 
-    /** 0=待支付,1=生产中,2=待发货,3=待收货,4=已完成,5=已取消 */
+    /** 0=待支付,1=生产中,2=待发货,3=待收货,4=已完成,5=已取消,6=待付尾款 */
     private Integer status;
 
     /** 定制参数快照(JSON) */

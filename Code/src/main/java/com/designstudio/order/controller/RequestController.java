@@ -7,6 +7,10 @@ import com.designstudio.order.domain.DsOrder;
 import com.designstudio.order.domain.DsOrderRequest;
 import com.designstudio.order.mapper.DsOrderMapper;
 import com.designstudio.order.mapper.DsOrderRequestMapper;
+import com.designstudio.config.domain.DsWorkflow;
+import com.designstudio.config.domain.DsWorkflowStep;
+import com.designstudio.config.mapper.DsWorkflowMapper;
+import com.designstudio.config.mapper.DsWorkflowStepMapper;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
@@ -32,6 +36,8 @@ public class RequestController {
 
     private final DsOrderRequestMapper requestMapper;
     private final DsOrderMapper orderMapper;
+    private final DsWorkflowMapper workflowMapper;
+    private final DsWorkflowStepMapper workflowStepMapper;
 
     @GetMapping
     @Operation(summary = "获取意向列表")
@@ -80,8 +86,23 @@ public class RequestController {
         order.setPaidAmount(BigDecimal.ZERO);
         order.setExpectedDate(dto.getExpectedDate());
         order.setRemark(dto.getRemark());
-        order.setStatus(1); // 直接进入生产中（简化流程）
+        order.setStatus(0); // 0=待支付（需客户支付定金）
         order.setIsBlocked(0);
+
+        // 获取该品类配置的首个工作流节点
+        DsWorkflow workflow = workflowMapper.selectOne(
+                new LambdaQueryWrapper<DsWorkflow>().eq(DsWorkflow::getCategoryId, request.getCategoryId()));
+        if (workflow != null) {
+            LambdaQueryWrapper<DsWorkflowStep> stepWrapper = new LambdaQueryWrapper<>();
+            stepWrapper.eq(DsWorkflowStep::getWorkflowId, workflow.getWorkflowId());
+            stepWrapper.orderByAsc(DsWorkflowStep::getStepOrder);
+            stepWrapper.last("limit 1");
+            DsWorkflowStep firstStep = workflowStepMapper.selectOne(stepWrapper);
+            if (firstStep != null) {
+                order.setCurrentStepId(firstStep.getStepId());
+            }
+        }
+
         orderMapper.insert(order);
 
         // 2. 更新意向状态
