@@ -1,10 +1,9 @@
 package com.designstudio.order.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.designstudio.common.result.R;
 import com.designstudio.common.security.LoginHelper;
 import com.designstudio.order.domain.DsOrderRequest;
-import com.designstudio.order.mapper.DsOrderRequestMapper;
+import com.designstudio.order.service.RequestService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -21,18 +20,14 @@ import java.util.List;
 @Tag(name = "C端-意向管理")
 public class AppRequestController {
 
-    private final DsOrderRequestMapper requestMapper;
+    private final RequestService requestService;
 
     @PostMapping
     @Operation(summary = "提交定制意向")
     public R<Void> submit(@RequestBody DsOrderRequest request) {
         Long userId = LoginHelper.getUserId();
         if (userId == null) return R.fail("未登录");
-
-        // 绑定当前用户
-        request.setUserId(userId);
-        request.setStatus(0); // 待处理
-        requestMapper.insert(request);
+        requestService.submit(request, userId);
         return R.ok();
     }
 
@@ -41,14 +36,6 @@ public class AppRequestController {
     public R<List<DsOrderRequest>> myRequests(@RequestParam(required = false) Integer status) {
         Long userId = LoginHelper.getUserId();
         if (userId == null) return R.fail("未登录");
-
-        LambdaQueryWrapper<DsOrderRequest> wrapper = new LambdaQueryWrapper<>();
-        wrapper.eq(DsOrderRequest::getUserId, userId);
-        if (status != null) {
-            wrapper.eq(DsOrderRequest::getStatus, status);
-        }
-        wrapper.orderByDesc(DsOrderRequest::getCreateTime);
-
-        return R.ok(requestMapper.selectList(wrapper));
+        return R.ok(requestService.getMyRequests(userId, status));
     }
 }

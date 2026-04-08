@@ -67,6 +67,7 @@
           </view>
         </view>
       </view>
+    </view>
     <!-- 全局私人管家悬浮按钮 -->
     <view class="floating-chat" @click="goTo('/pages/chat/index')">
       <text class="chat-icon">✉</text>
@@ -250,8 +251,6 @@ onLoad(() => {
     flex-direction: column;
     align-items: center;
     margin-bottom: 40rpx;
-  }
-
 
     .section-title {
       font-size: 32rpx;

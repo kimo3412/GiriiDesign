@@ -3,7 +3,7 @@ package com.designstudio.chat.websocket;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.designstudio.chat.domain.DsChatMessage;
-import com.designstudio.chat.mapper.DsChatMessageMapper;
+import com.designstudio.chat.service.ChatService;
 import com.designstudio.common.security.JwtUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -12,7 +12,6 @@ import org.springframework.web.socket.*;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
@@ -26,14 +25,11 @@ import java.util.Map;
 public class ChatWebSocketHandler extends TextWebSocketHandler {
 
     private final SessionManager sessionManager;
-    private final DsChatMessageMapper messageMapper;
+    private final ChatService chatService;
     private final JwtUtils jwtUtils;
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
-    /**
-     * 连接建立：解析 Token，注册在线会话
-     */
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         Map<String, String> params = UriComponentsBuilder.fromUri(session.getUri()).build().getQueryParams().toSingleValueMap();
@@ -49,7 +45,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         String userType = jwtUtils.getUserTypeFromToken(token);
         String key = sessionManager.buildKey(userType, userId);
 
-        // 存入 session 属性供后续使用
         session.getAttributes().put("userId", userId);
         session.getAttributes().put("userType", userType);
         session.getAttributes().put("sessionKey", key);
@@ -58,9 +53,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         log.info("WebSocket 连接建立: {} ({})", key, session.getId());
     }
 
-    /**
-     * 收到消息：解析 JSON，持久化并路由推送
-     */
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         String payload = message.getPayload();
@@ -70,31 +62,20 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         if (!"SEND".equals(type)) return;
 
         Long currentUserId = (Long) session.getAttributes().get("userId");
-        String userType = (String) session.getAttributes().get("userType");
-        
-        // 归属的客户ID：如果客户发出的，就是他本人；如果管理员发出的，前端传入目标userId
+        String userType = (String) session.getAttributes().get("userId") != null
+                ? (String) session.getAttributes().get("userType") : "client";
+
         Long targetUserId = json.getLong("userId");
         Long chatUserId = "client".equals(userType) ? currentUserId : targetUserId;
         String content = json.getStr("content");
         String msgType = json.getStr("msgType", "text");
-        // sender_type: 0=客户, 1=设计师/管理员
         int senderTypeInt = "client".equals(userType) ? 0 : 1;
-        // content_type: 0=文本, 1=图片
         int contentTypeInt = "image".equals(msgType) ? 1 : 0;
 
-        // 1. 持久化消息
-        DsChatMessage msg = new DsChatMessage();
-        msg.setUserId(chatUserId);
-        msg.setSenderType(senderTypeInt);
-        msg.setSenderId(currentUserId);
-        msg.setContent(content);
-        msg.setContentType(contentTypeInt);
-        msg.setIsRead(0);
-        msg.setDelFlag(0);
-        msg.setCreateTime(LocalDateTime.now());
-        messageMapper.insert(msg);
+        // 持久化消息
+        DsChatMessage msg = chatService.saveMessage(chatUserId, senderTypeInt, currentUserId, content, contentTypeInt);
 
-        // 2. 构建推送 JSON
+        // 构建推送 JSON
         JSONObject pushJson = new JSONObject();
         pushJson.set("type", "NEW_MSG");
         pushJson.set("messageId", msg.getMsgId());
@@ -108,9 +89,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
         String pushText = pushJson.toString();
 
-        // 3. 推送给对方
-        //    客户发的 → 广播给所有在线 admin
-        //    管理员发的 → 精确推送给该客户
+        // 推送给对方
         if ("client".equals(userType)) {
             sessionManager.broadcastToAdmins(pushText);
         } else {
@@ -120,16 +99,13 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             }
         }
 
-        // 4. 回声确认给发送方
+        // 回声确认给发送方
         pushJson.set("type", "SEND_ACK");
         session.sendMessage(new TextMessage(pushJson.toString()));
 
         log.debug("消息已处理: {} -> chatUserId={}", userType, chatUserId);
     }
 
-    /**
-     * 连接关闭
-     */
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) {
         String key = (String) session.getAttributes().get("sessionKey");
@@ -139,9 +115,6 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    /**
-     * 异常处理
-     */
     @Override
     public void handleTransportError(WebSocketSession session, Throwable exception) {
         log.error("WebSocket 传输异常: {}", exception.getMessage());
