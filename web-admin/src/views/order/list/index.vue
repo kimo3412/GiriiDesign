@@ -31,6 +31,7 @@ import { NButton, NTag, NSpace, useMessage } from 'naive-ui';
 import { useRouter } from 'vue-router';
 import { getOrderList } from '@/api/order/index';
 import { getCategoryList } from '@/api/config/category';
+import { getAdminList } from '@/api/system/adminList';
 
 const router = useRouter();
 const message = useMessage();
@@ -60,12 +61,29 @@ const statusMap: any = {
 };
 
 const categoryOptions = ref<any[]>([]);
+const categoryMap = ref<Record<number, string>>({});
+const adminMap = ref<Record<number, string>>({});
 
 const columns = [
   { title: '订单号', key: 'orderSn', width: 180 },
-  { title: '品类', key: 'categoryId', width: 80 },
-  { title: '客户', key: 'userId', width: 80 },
-  { title: '设计师', key: 'designerId', width: 80 },
+  {
+    title: '品类', key: 'categoryId', width: 100,
+    render(row: any) {
+      return categoryMap.value[row.categoryId] || row.categoryId || '-';
+    }
+  },
+  {
+    title: '客户', key: 'userId', width: 80,
+    render(row: any) {
+      return `用户#${row.userId}`;
+    }
+  },
+  {
+    title: '设计师', key: 'designerId', width: 100,
+    render(row: any) {
+      return adminMap.value[row.designerId] || row.designerId || '-';
+    }
+  },
   {
     title: '金额',
     key: 'totalAmount',
@@ -124,6 +142,15 @@ onMounted(async () => {
   try {
     const cats = await getCategoryList();
     categoryOptions.value = cats.map((c: any) => ({ label: c.name, value: c.categoryId }));
+    const catMap: any = {};
+    cats.forEach((c: any) => { catMap[c.categoryId] = c.name; });
+    categoryMap.value = catMap;
+  } catch (e) { console.error(e); }
+  try {
+    const admins = await getAdminList();
+    const aMap: any = {};
+    admins.forEach((a: any) => { aMap[a.adminId] = a.nickname || a.username; });
+    adminMap.value = aMap;
   } catch (e) { console.error(e); }
 });
 </script>

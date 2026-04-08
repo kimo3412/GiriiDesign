@@ -121,7 +121,7 @@
               <div class="summary-title">近期意向</div>
               <div class="summary-card" v-for="req in userSummary.requests" :key="req.requestId">
                 <div class="summary-row">
-                  <n-tag type="info" size="small">{{ req.status === 0 ? '待处理' : (req.status === 1 ? '已转单' : '已驳回') }}</n-tag>
+                  <n-tag type="info" size="small">{{ req.status === 0 ? '待处理' : (req.status === 1 ? '已转单' : '已关闭') }}</n-tag>
                   <span class="summary-date">{{ formatMsgTime(req.createTime) }}</span>
                 </div>
                 <div class="summary-row">
