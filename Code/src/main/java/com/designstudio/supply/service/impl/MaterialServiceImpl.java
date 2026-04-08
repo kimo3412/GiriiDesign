@@ -1,0 +1,99 @@
+package com.designstudio.supply.service.impl;
+
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.designstudio.supply.domain.DsMaterial;
+import com.designstudio.supply.mapper.DsMaterialMapper;
+import com.designstudio.supply.service.MaterialService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+/**
+ * 物料业务 Service 实现
+ */
+@Service
+@RequiredArgsConstructor
+public class MaterialServiceImpl implements MaterialService {
+
+    private final DsMaterialMapper materialMapper;
+
+    @Override
+    public List<DsMaterial> listMaterials(String category, String keyword) {
+        LambdaQueryWrapper<DsMaterial> wrapper = new LambdaQueryWrapper<>();
+        if (category != null && !category.isEmpty()) {
+            wrapper.eq(DsMaterial::getCategory, category);
+        }
+        if (keyword != null && !keyword.isEmpty()) {
+            wrapper.and(w -> w.like(DsMaterial::getName, keyword).or().like(DsMaterial::getSku, keyword));
+        }
+        wrapper.orderByDesc(DsMaterial::getCreateTime);
+        return materialMapper.selectList(wrapper);
+    }
+
+    @Override
+    public DsMaterial getMaterial(Long id) {
+        return materialMapper.selectById(id);
+    }
+
+    @Override
+    public void addMaterial(DsMaterial material) {
+        materialMapper.insert(material);
+    }
+
+    @Override
+    public void updateMaterial(Long id, DsMaterial dto) {
+        DsMaterial material = materialMapper.selectById(id);
+        if (material == null) throw new RuntimeException("物料不存在");
+
+        material.setName(dto.getName());
+        material.setSku(dto.getSku());
+        material.setCategory(dto.getCategory());
+        material.setUnit(dto.getUnit());
+        material.setUnitPrice(dto.getUnitPrice());
+        material.setWarningStock(dto.getWarningStock());
+        material.setImageUrl(dto.getImageUrl());
+        material.setRemark(dto.getRemark());
+        materialMapper.updateById(material);
+    }
+
+    @Override
+    public void deleteMaterial(Long id) {
+        materialMapper.deleteById(id);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void stockIn(Long id, BigDecimal quantity) {
+        DsMaterial material = materialMapper.selectById(id);
+        if (material == null) throw new RuntimeException("物料不存在");
+
+        material.setStock(material.getStock().add(quantity));
+        materialMapper.updateById(material);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void stockOut(Long id, BigDecimal quantity) {
+        DsMaterial material = materialMapper.selectById(id);
+        if (material == null) throw new RuntimeException("物料不存在");
+
+        if (material.getStock().compareTo(quantity) < 0) {
+            throw new RuntimeException("库存不足，当前库存：" + material.getStock());
+        }
+
+        material.setStock(material.getStock().subtract(quantity));
+        materialMapper.updateById(material);
+    }
+
+    @Override
+    public List<DsMaterial> getLowStockMaterials() {
+        // 用 SQL 直接过滤，避免全表加载到内存
+        return materialMapper.selectList(
+                new LambdaQueryWrapper<DsMaterial>()
+                        .isNotNull(DsMaterial::getWarningStock)
+                        .apply("stock <= warning_stock"));
+    }
+}
