@@ -12,7 +12,7 @@ const routes: Array<RouteRecordRaw> = [
     redirect: '/dashboard/console',
     component: Layout,
     meta: {
-      title: 'Dashboard',
+      title: '数据看板',
       icon: renderIcon(DashboardOutlined),
       permissions: ['dashboard_console', 'dashboard_console', 'dashboard_workplace'],
       sort: 0,

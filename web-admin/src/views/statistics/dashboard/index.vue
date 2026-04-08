@@ -153,6 +153,7 @@ const STATUS_MAP: Record<number, string> = {
   3: '待收货',
   4: '已完成',
   5: '已取消',
+  6: '待付尾款',
 };
 
 onMounted(async () => {

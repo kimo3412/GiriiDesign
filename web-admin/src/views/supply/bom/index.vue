@@ -45,6 +45,7 @@ const tableData = ref([]);
 
 const filterCategory = ref(null);
 const categoryOptions = ref<any[]>([]);
+const categoryMap = ref<Record<number, string>>({});
 const materialOptions = ref<any[]>([]);
 
 const showModal = ref(false);
@@ -54,7 +55,7 @@ const formData = ref<any>({ name: '', categoryId: null, remark: '', items: [] })
 const columns = [
   { title: 'ID', key: 'templateId', width: 60 },
   { title: '模板名称', key: 'name' },
-  { title: '品类ID', key: 'categoryId', width: 80 },
+  { title: '品类', key: 'categoryId', width: 100, render(row: any) { return categoryMap.value[row.categoryId] || '-'; } },
   { title: '备注', key: 'remark', ellipsis: { tooltip: true } },
   { title: '创建时间', key: 'createTime', width: 170 },
   {
@@ -87,6 +88,9 @@ onMounted(async () => {
   try {
     const cats = await getCategoryList();
     categoryOptions.value = cats.map((c: any) => ({ label: c.name, value: c.categoryId }));
+    const cMap: any = {};
+    cats.forEach((c: any) => { cMap[c.categoryId] = c.name; });
+    categoryMap.value = cMap;
   } catch (e) { console.error(e); }
   try {
     const mats = await getMaterialList({});

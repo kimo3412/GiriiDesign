@@ -80,33 +80,6 @@
               登录
             </n-button>
           </n-form-item>
-          <n-form-item class="default-color other-item">
-            <div class="flex view-account-other">
-              <div class="flex-initial other-text">
-                <span>其它登录方式</span>
-              </div>
-              <div class="social-login">
-                <a href="javascript:" class="social-icon">
-                  <n-icon size="24" color="#909399">
-                    <LogoGithub />
-                  </n-icon>
-                </a>
-                <a href="javascript:" class="social-icon">
-                  <n-icon size="24" color="#909399">
-                    <LogoFacebook />
-                  </n-icon>
-                </a>
-                <a href="javascript:" class="social-icon">
-                  <n-icon size="24" color="#909399">
-                    <LogoWechat />
-                  </n-icon>
-                </a>
-              </div>
-              <div class="flex-initial" style="margin-left: auto">
-                <a href="javascript:" class="register-link">注册账号</a>
-              </div>
-            </div>
-          </n-form-item>
         </n-form>
       </div>
     </div>
@@ -119,7 +92,7 @@
   import { useUserStore } from '@/store/modules/user';
   import { useMessage } from 'naive-ui';
   import { ResultEnum } from '@/enums/httpEnum';
-  import { PersonOutline, LockClosedOutline, LogoGithub, LogoFacebook, LogoWechat } from '@vicons/ionicons5';
+  import { PersonOutline, LockClosedOutline } from '@vicons/ionicons5';
   import { PageEnum } from '@/enums/pageEnum';
   import { websiteConfig } from '@/config/website.config';
   

@@ -2,28 +2,47 @@
   <div class="kanban-page">
     <!-- 顶部统计概览 -->
     <div class="overview-bar">
-      <div
-        v-for="(col, idx) in columns"
-        :key="col.stepId"
-        class="overview-item"
-        :class="{ active: activeStep === col.stepId }"
-        @click="switchStep(col.stepId)"
-      >
-        <div class="overview-count" :style="{ color: stepColors[idx % stepColors.length] }">
-          {{ col.orders.length }}
+      <!-- 单品类：显示步骤 -->
+      <template v-if="isSingleCategory">
+        <div
+          v-for="(col, idx) in columns"
+          :key="col.stepId"
+          class="overview-item"
+          :class="{ active: activeStep === col.stepId }"
+          @click="switchStep(col.stepId)"
+        >
+          <div class="overview-count" :style="{ color: stepColors[idx % stepColors.length] }">
+            {{ col.orders.length }}
+          </div>
+          <div class="overview-name">{{ col.stepName }}</div>
+          <div class="overview-bar-indicator" :style="{ background: activeStep === col.stepId ? stepColors[idx % stepColors.length] : 'transparent' }"></div>
         </div>
-        <div class="overview-name">{{ col.stepName }}</div>
-        <div class="overview-bar-indicator" :style="{ background: activeStep === col.stepId ? stepColors[idx % stepColors.length] : 'transparent' }"></div>
-      </div>
+      </template>
+      <!-- 多品类：显示品类汇总 -->
+      <template v-else>
+        <div
+          v-for="(count, catId, idx) in categoryOrderCounts"
+          :key="catId"
+          class="overview-item"
+          :class="{ active: activeCategory === Number(catId) }"
+          @click="filterByCategory(Number(catId))"
+        >
+          <div class="overview-count" :style="{ color: stepColors[idx % stepColors.length] }">
+            {{ count }}
+          </div>
+          <div class="overview-name">{{ getCategoryName(Number(catId)) }}</div>
+          <div class="overview-bar-indicator" :style="{ background: activeCategory === Number(catId) ? stepColors[idx % stepColors.length] : 'transparent' }"></div>
+        </div>
+      </template>
       <!-- 汇总 -->
       <div
         class="overview-item overview-total"
-        :class="{ active: activeStep === null }"
-        @click="switchStep(null)"
+        :class="{ active: activeStep === null && activeCategory === null }"
+        @click="clearAllFilter"
       >
         <div class="overview-count" style="color: #333;">{{ totalOrders }}</div>
         <div class="overview-name">全部</div>
-        <div class="overview-bar-indicator" :style="{ background: activeStep === null ? '#333' : 'transparent' }"></div>
+        <div class="overview-bar-indicator" :style="{ background: (activeStep === null && activeCategory === null) ? '#333' : 'transparent' }"></div>
       </div>
     </div>
 
@@ -52,6 +71,9 @@
       <n-space align="center" :size="8">
         <n-tag v-if="activeStep !== null" closable @close="switchStep(null)" size="small">
           当前：{{ activeStepName }}
+        </n-tag>
+        <n-tag v-if="activeCategory !== null" closable @close="clearCategoryFilter" size="small">
+          品类：{{ getCategoryName(activeCategory) }}
         </n-tag>
         <n-button size="small" quaternary @click="loadData">
           刷新
@@ -105,10 +127,10 @@
             </div>
           </div>
 
-          <!-- 右侧：工作流进度可视化 -->
+          <!-- 右侧：工作流进度可视化（按品类自己的步骤渲染） -->
           <div class="row-progress">
             <div class="progress-steps">
-              <template v-for="(step, sIdx) in columns" :key="step.stepId">
+              <template v-for="(step, sIdx) in order._steps" :key="step.stepId">
                 <div
                   class="step-dot"
                   :class="{
@@ -120,7 +142,7 @@
                   :title="step.stepName"
                 ></div>
                 <div
-                  v-if="sIdx < columns.length - 1"
+                  v-if="sIdx < order._steps.length - 1"
                   class="step-line"
                   :class="{ done: sIdx < order._stepIdx }"
                   :style="sIdx < order._stepIdx ? { background: getStepColor(order._stepIdx) } : {}"
@@ -143,20 +165,64 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { getKanbanData } from '@/api/order/index';
 import { getCategoryList } from '@/api/config/category';
+import { getWorkflow } from '@/api/config/workflow';
 
 const router = useRouter();
 const loading = ref(false);
-const filterCategory = ref(null);
+const filterCategory = ref<number | null>(null);
 const searchText = ref('');
 const activeStep = ref<number | null>(null);
+const activeCategory = ref<number | null>(null);
 const categoryOptions = ref<any[]>([]);
 const categoryMap = ref<Record<number, string>>({});
 const columns = ref<any[]>([]);
+
+// 品类 → 工作流步骤 的映射（从工作流配置API加载）
+const workflowStepsMap = ref<Record<number, any[]>>({});
 
 const stepColors = ['#5B8C5A', '#4B7BEC', '#E5A84B', '#D35D6E', '#6C5CE7', '#00B894', '#E17055'];
 
 const getStepColor = (idx: number) => stepColors[idx % stepColors.length];
 const getCategoryName = (id: number) => categoryMap.value[id] || `品类#${id}`;
+
+// 构建 stepId → categoryId 的反向映射
+const stepCategoryLookup = computed(() => {
+  const map: Record<number, number> = {};
+  Object.entries(workflowStepsMap.value).forEach(([catId, steps]) => {
+    steps.forEach(step => {
+      map[step.stepId] = Number(catId);
+    });
+  });
+  return map;
+});
+
+// 按品类分组看板列
+const categoryColumnsMap = computed(() => {
+  const map: Record<number, any[]> = {};
+  columns.value.forEach(col => {
+    const catId = col.categoryId || stepCategoryLookup.value[col.stepId];
+    if (!catId) return;
+    if (!map[catId]) map[catId] = [];
+    map[catId].push(col);
+  });
+  return map;
+});
+
+const isSingleCategory = computed(() => {
+  return Object.keys(categoryColumnsMap.value).length <= 1;
+});
+
+// 品类级别的订单数量
+const categoryOrderCounts = computed(() => {
+  const counts: Record<number, number> = {};
+  columns.value.forEach(col => {
+    const catId = col.categoryId || stepCategoryLookup.value[col.stepId];
+    if (catId) {
+      counts[catId] = (counts[catId] || 0) + col.orders.length;
+    }
+  });
+  return counts;
+});
 
 const totalOrders = computed(() => columns.value.reduce((sum, col) => sum + col.orders.length, 0));
 
@@ -165,16 +231,19 @@ const activeStepName = computed(() => {
   return col?.stepName || '';
 });
 
-// 将所有订单扁平化并携带步骤信息
+// 将所有订单扁平化，携带品类专属的步骤信息
 const allOrders = computed(() => {
   const result: any[] = [];
-  columns.value.forEach((col, idx) => {
+  columns.value.forEach((col) => {
     col.orders.forEach((order: any) => {
+      const steps = workflowStepsMap.value[order.categoryId] || [];
+      const stepIdx = steps.findIndex((s: any) => s.stepId === col.stepId);
       result.push({
         ...order,
         _stepId: col.stepId,
         _stepName: col.stepName,
-        _stepIdx: idx,
+        _stepIdx: stepIdx >= 0 ? stepIdx : 0,
+        _steps: steps,
       });
     });
   });
@@ -186,6 +255,9 @@ const filteredOrders = computed(() => {
   if (activeStep.value !== null) {
     list = list.filter(o => o._stepId === activeStep.value);
   }
+  if (activeCategory.value !== null) {
+    list = list.filter(o => o.categoryId === activeCategory.value);
+  }
   if (searchText.value) {
     const kw = searchText.value.toLowerCase();
     list = list.filter(o => o.orderSn?.toLowerCase().includes(kw));
@@ -195,6 +267,20 @@ const filteredOrders = computed(() => {
 
 const switchStep = (stepId: number | null) => {
   activeStep.value = stepId;
+};
+
+const filterByCategory = (catId: number) => {
+  activeCategory.value = activeCategory.value === catId ? null : catId;
+  activeStep.value = null;
+};
+
+const clearCategoryFilter = () => {
+  activeCategory.value = null;
+};
+
+const clearAllFilter = () => {
+  activeStep.value = null;
+  activeCategory.value = null;
 };
 
 const isOverdue = (dateStr: string) => {
@@ -215,7 +301,7 @@ const formatRelativeTime = (timeStr: string) => {
   if (days > 30) return `${Math.floor(days / 30)}月前`;
   if (days > 0) return `${days}天前`;
   const hours = Math.floor(diff / 3600000);
-  if (hours > 0) return `${hours}h前`;
+  if (hours > 0) return `${hours}小时前`;
   return '刚刚';
 };
 
@@ -224,12 +310,26 @@ onMounted(async () => {
     const cats = await getCategoryList();
     categoryOptions.value = cats.map((c: any) => ({ label: c.name, value: c.categoryId }));
     categoryMap.value = Object.fromEntries(cats.map((c: any) => [c.categoryId, c.name]));
+
+    // 加载每个品类的工作流步骤
+    const stepsMap: Record<number, any[]> = {};
+    await Promise.all(cats.map(async (c: any) => {
+      try {
+        const res = await getWorkflow(c.categoryId);
+        if (res.steps?.length) {
+          stepsMap[c.categoryId] = res.steps;
+        }
+      } catch (e) { /* ignore */ }
+    }));
+    workflowStepsMap.value = stepsMap;
   } catch (e) { console.error(e); }
   loadData();
 });
 
 const loadData = async () => {
   loading.value = true;
+  activeStep.value = null;
+  activeCategory.value = null;
   try {
     const params: any = {};
     if (filterCategory.value != null) params.categoryId = filterCategory.value;

@@ -2,7 +2,7 @@
   <n-card title="物料管理" :bordered="false">
     <template #header-extra>
       <n-space>
-        <n-select v-model:value="filterCategory" :options="categoryOptions" placeholder="分类" style="width: 120px" clearable @update:value="loadData" />
+        <n-select v-model:value="filterCategory" :options="categoryOptions" placeholder="品类" style="width: 120px" clearable @update:value="loadData" />
         <n-input v-model:value="keyword" placeholder="搜索名称/编码" clearable @keyup.enter="loadData" style="width: 180px" />
         <n-button type="primary" @click="handleAdd">新增物料</n-button>
       </n-space>
@@ -15,8 +15,8 @@
       <n-form :model="formData" ref="formRef" label-placement="left" label-width="80">
         <n-form-item label="物料名称" path="name"><n-input v-model:value="formData.name" placeholder="物料名称" /></n-form-item>
         <n-form-item label="编码SKU" path="sku"><n-input v-model:value="formData.sku" placeholder="如：FAB-SILK-001" /></n-form-item>
-        <n-form-item label="分类" path="category">
-          <n-select v-model:value="formData.category" :options="categoryOptions" placeholder="选择分类" />
+        <n-form-item label="品类" path="category">
+          <n-select v-model:value="formData.category" :options="categoryOptions" placeholder="选择品类" />
         </n-form-item>
         <n-form-item label="单位" path="unit"><n-input v-model:value="formData.unit" placeholder="米/个/kg" /></n-form-item>
         <n-form-item label="单价" path="unitPrice"><n-input-number v-model:value="formData.unitPrice" :min="0" :precision="2" style="width: 100%" /></n-form-item>
@@ -68,7 +68,7 @@ const stockQty = ref(1);
 const columns = [
   { title: '编码', key: 'sku', width: 140 },
   { title: '名称', key: 'name', ellipsis: { tooltip: true } },
-  { title: '分类', key: 'category', width: 80 },
+  { title: '品类', key: 'category', width: 80 },
   { title: '单位', key: 'unit', width: 60 },
   { title: '单价', key: 'unitPrice', width: 80, render: (r: any) => r.unitPrice ? `¥${r.unitPrice}` : '-' },
   {

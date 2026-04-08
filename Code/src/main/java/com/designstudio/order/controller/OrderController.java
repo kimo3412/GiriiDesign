@@ -124,6 +124,7 @@ public class OrderController {
         private Long stepId;
         private String stepName;
         private Integer stepOrder;
+        private Long categoryId;
         private List<DsOrder> orders;
     }
 

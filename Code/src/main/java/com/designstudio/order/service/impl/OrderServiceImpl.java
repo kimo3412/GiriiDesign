@@ -113,11 +113,17 @@ public class OrderServiceImpl implements OrderService {
                 .filter(o -> o.getCurrentStepId() != null)
                 .collect(Collectors.groupingBy(DsOrder::getCurrentStepId));
 
+        Map<Long, Long> stepCategoryMap = new HashMap<>();
+        for (DsWorkflowStep step : allSteps) {
+            stepCategoryMap.put(step.getStepId(), workflowCategoryMap.get(step.getWorkflowId()));
+        }
+
         return allSteps.stream().map(step -> {
             OrderController.KanbanColumnVO col = new OrderController.KanbanColumnVO();
             col.setStepId(step.getStepId());
             col.setStepName(step.getStepName());
             col.setStepOrder(step.getStepOrder());
+            col.setCategoryId(stepCategoryMap.get(step.getStepId()));
             col.setOrders(ordersByStep.getOrDefault(step.getStepId(), Collections.emptyList()));
             return col;
         }).collect(Collectors.toList());
