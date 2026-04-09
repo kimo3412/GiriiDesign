@@ -40,6 +40,9 @@
         <n-form-item label="分配角色" path="roleIds">
           <n-select v-model:value="formData.roleIds" multiple :options="roleOptions" placeholder="请选择角色" />
         </n-form-item>
+        <n-form-item label="负责品类">
+          <n-select v-model:value="formData.categoryIds" multiple :options="categoryOptions" placeholder="选择设计师负责的品类（可空）" />
+        </n-form-item>
         <n-form-item label="状态" path="status">
           <n-switch v-model:value="formData.status" :checked-value="1" :unchecked-value="0" />
         </n-form-item>
@@ -51,8 +54,9 @@
 <script lang="ts" setup>
 import { ref, onMounted, h } from 'vue';
 import { NButton, NTag, NSpace, useMessage, useDialog } from 'naive-ui';
-import { getAdminList, getAdminDetail, addAdmin, updateAdmin, deleteAdmin, type AdminSaveDTO } from '@/api/system/adminList';
+import { getAdminList, getAdminDetail, addAdmin, updateAdmin, deleteAdmin, updateDesignerCategories, type AdminSaveDTO } from '@/api/system/adminList';
 import { getRoleList } from '@/api/system/roleList';
+import { getCategoryList } from '@/api/config/category';
 
 const message = useMessage();
 const dialog = useDialog();
@@ -61,17 +65,19 @@ const loading = ref(false);
 const tableData = ref([]);
 
 const roleOptions = ref<{label: string, value: number}[]>([]);
+const categoryOptions = ref<{label: string, value: number}[]>([]);
 
 const showModal = ref(false);
 const isEdit = ref(false);
 const formRef = ref();
-const formData = ref<AdminSaveDTO>({
+const formData = ref<AdminSaveDTO & { categoryIds: number[] }>({
   username: '',
   password: '',
   nickname: '',
   phone: '',
   status: 1,
-  roleIds: []
+  roleIds: [],
+  categoryIds: []
 });
 
 const rules = {
@@ -130,7 +136,15 @@ const loadRoles = async () => {
 onMounted(() => {
   loadData();
   loadRoles();
+  loadCategories();
 });
+
+const loadCategories = async () => {
+  try {
+    const res = await getCategoryList();
+    categoryOptions.value = res.map((c: any) => ({ label: c.name, value: c.categoryId }));
+  } catch (e) { console.error(e); }
+};
 
 const handleAdd = () => {
   isEdit.value = false;
@@ -140,7 +154,8 @@ const handleAdd = () => {
     nickname: '',
     phone: '',
     status: 1,
-    roleIds: []
+    roleIds: [],
+    categoryIds: []
   };
   showModal.value = true;
 };
@@ -152,7 +167,8 @@ const handleEdit = async (row: any) => {
     formData.value = {
       ...res.admin,
       password: '', // 密码不回显
-      roleIds: res.roleIds || []
+      roleIds: res.roleIds || [],
+      categoryIds: res.categoryIds || []
     };
     showModal.value = true;
   } catch (e) {
@@ -178,16 +194,28 @@ const handleDelete = (row: any) => {
   });
 };
 
-const handleSubmit = (e: MouseEvent) => {
-  e.preventDefault();
+const handleSubmit = () => {
   formRef.value?.validate(async (errors: any) => {
     if (!errors) {
       try {
         if (isEdit.value) {
           await updateAdmin(formData.value.adminId!, formData.value);
+          // 同步更新设计师-品类关联
+          if (formData.value.categoryIds) {
+            await updateDesignerCategories(formData.value.adminId!, formData.value.categoryIds);
+          }
           message.success('修改成功');
         } else {
           await addAdmin(formData.value);
+          // 新增用户时如果有品类，也需要设置
+          if (formData.value.categoryIds?.length) {
+            // 需要拿到新用户的ID——从列表中取最新的
+            const newList = await getAdminList() as any;
+            const newAdmin = newList.find((a: any) => a.username === formData.value.username);
+            if (newAdmin) {
+              await updateDesignerCategories(newAdmin.adminId, formData.value.categoryIds);
+            }
+          }
           message.success('新增成功');
         }
         showModal.value = false;

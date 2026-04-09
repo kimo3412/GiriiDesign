@@ -48,9 +48,9 @@
     <view v-if="customData" class="info-section">
       <text class="section-title">定制信息</text>
       <view class="info-card">
-        <view v-for="(value, key) in customData" :key="key" class="info-row">
-          <text class="info-label">{{ key }}</text>
-          <text class="info-value">{{ value }}</text>
+        <view v-for="item in customData" :key="item.key" class="info-row">
+          <text class="info-label">{{ item.label }}</text>
+          <text class="info-value">{{ item.display }}</text>
         </view>
       </view>
     </view>
@@ -75,20 +75,41 @@
 import { ref, computed } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getOrderDetail, getOrderProgress, confirmOrder, payOrder } from '@/api/order'
+import { getFormSchema } from '@/api/custom'
 
 const orderId = ref(0)
 const order = ref({})
 const progressList = ref([])
+const fieldMap = ref({}) // fieldKey → { label, unit }
 
-// 解析定制数据
+// 解析定制数据（带中文标签和单位）
 const customData = computed(() => {
   if (!order.value.customDataSnapshot) return null
   try {
-    return JSON.parse(order.value.customDataSnapshot)
+    const raw = JSON.parse(order.value.customDataSnapshot)
+    return Object.entries(raw).map(([key, value]) => {
+      const field = fieldMap.value[key]
+      const label = field?.label || key
+      const unit = field?.unit || ''
+      return { key, label, value, unit, display: unit ? `${value} ${unit}` : String(value) }
+    })
   } catch {
     return null
   }
 })
+
+/**
+ * 加载字段定义（用于定制信息的中文标签和单位映射）
+ */
+const loadFields = async (categoryId) => {
+  if (!categoryId) return
+  try {
+    const fields = await getFormSchema(categoryId)
+    const map = {}
+    ;(fields || []).forEach(f => { map[f.fieldKey] = f })
+    fieldMap.value = map
+  } catch (e) { console.error('加载字段定义失败', e) }
+}
 
 /**
  * 获取订单详情
@@ -97,6 +118,10 @@ const fetchOrderDetail = async () => {
   try {
     const data = await getOrderDetail(orderId.value)
     order.value = data.order || {}
+    // 加载品类字段定义，用于定制信息展示
+    if (order.value.categoryId) {
+      await loadFields(order.value.categoryId)
+    }
   } catch (err) {
     uni.showToast({ title: '获取订单失败', icon: 'none' })
   }

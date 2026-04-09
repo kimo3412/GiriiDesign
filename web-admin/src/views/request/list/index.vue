@@ -198,7 +198,7 @@ import { NButton, NTag, NSpace, NImage, useMessage } from 'naive-ui';
 import { getRequestList, getRequestDetail, convertRequest, closeRequest } from '@/api/order/index';
 import { getCategoryList } from '@/api/config/category';
 import { getFieldList } from '@/api/config/field';
-import { getAdminList } from '@/api/system/adminList';
+import { getDesignersByCategory } from '@/api/system/adminList';
 
 const message = useMessage();
 const loading = ref(false);
@@ -378,10 +378,6 @@ onMounted(async () => {
     categoryOptions.value = cats.map((c: any) => ({ label: c.name, value: c.categoryId }));
     categoryMap.value = Object.fromEntries(cats.map((c: any) => [c.categoryId, c.name]));
   } catch (e) { console.error(e); }
-  try {
-    const admins = await getAdminList();
-    designerOptions.value = admins.map((a: any) => ({ label: a.nickname || a.username, value: a.adminId }));
-  } catch (e) { console.error(e); }
 });
 
 const handleViewDetail = async (row: any) => {
@@ -408,8 +404,20 @@ const handleQuickConvert = async (row: any) => {
   } catch (e) { console.error(e); }
 };
 
-const openConvert = () => {
+const openConvert = async () => {
   convertForm.value = { designerId: null, totalAmount: null, prepayAmount: null, expectedDateTs: null, remark: '' };
+  // 根据意向的品类加载负责该品类的设计师
+  if (detailData.value?.categoryId) {
+    try {
+      const designers = await getDesignersByCategory(detailData.value.categoryId);
+      designerOptions.value = designers.map((d: any) => ({ label: d.nickname || d.username, value: d.adminId }));
+    } catch (e) {
+      console.error('加载设计师失败', e);
+      designerOptions.value = [];
+    }
+  } else {
+    designerOptions.value = [];
+  }
   showConvert.value = true;
 };
 

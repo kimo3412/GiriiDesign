@@ -13,6 +13,11 @@ INSERT INTO `sys_admin` (`username`, `password`, `nickname`, `phone`, `status`) 
 -- 给设计师分配角色（role_id=2 是设计师角色）
 INSERT INTO `sys_admin_role` (`admin_id`, `role_id`) VALUES (2, 2), (3, 2);
 
+-- 设计师-品类关联（李设计师负责服装和皮具，王设计师负责插画）
+INSERT INTO `ds_designer_category` (`admin_id`, `category_id`) VALUES
+(2, 1), (2, 2),
+(3, 3);
+
 -- ========== 2. 模拟小程序客户 ==========
 INSERT INTO `ds_user` (`openid`, `nickname`, `avatar_url`, `phone`) VALUES
 ('wx_test_openid_001', '张小姐', NULL, '13900001001'),

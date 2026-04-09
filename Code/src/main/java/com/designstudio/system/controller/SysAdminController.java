@@ -71,6 +71,14 @@ public class SysAdminController {
         }
     }
 
+    @PutMapping("/{id}/categories")
+    @Operation(summary = "设置设计师负责的品类")
+    @OperLog("设置设计师品类")
+    public R<Void> updateCategories(@PathVariable Long id, @RequestBody List<Long> categoryIds) {
+        adminService.updateDesignerCategories(id, categoryIds);
+        return R.ok();
+    }
+
     @Data
     public static class AdminSaveDTO {
         private String username;
@@ -86,5 +94,6 @@ public class SysAdminController {
     public static class AdminDetailVO {
         private SysAdmin admin;
         private List<Long> roleIds;
+        private List<Long> categoryIds;
     }
 }

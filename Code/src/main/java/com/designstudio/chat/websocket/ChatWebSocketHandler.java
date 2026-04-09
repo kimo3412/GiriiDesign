@@ -62,7 +62,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         if (!"SEND".equals(type)) return;
 
         Long currentUserId = (Long) session.getAttributes().get("userId");
-        String userType = (String) session.getAttributes().get("userId") != null
+        String userType = currentUserId != null
                 ? (String) session.getAttributes().get("userType") : "client";
 
         Long targetUserId = json.getLong("userId");

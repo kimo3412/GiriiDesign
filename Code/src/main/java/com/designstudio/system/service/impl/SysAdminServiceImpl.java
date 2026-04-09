@@ -5,8 +5,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.designstudio.system.controller.SysAdminController;
 import com.designstudio.system.domain.SysAdmin;
 import com.designstudio.system.domain.SysAdminRole;
+import com.designstudio.system.domain.DsDesignerCategory;
 import com.designstudio.system.mapper.SysAdminMapper;
 import com.designstudio.system.mapper.SysAdminRoleMapper;
+import com.designstudio.system.mapper.DesignerCategoryMapper;
 import com.designstudio.system.service.ISysAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -25,6 +28,7 @@ import java.util.stream.Collectors;
 public class SysAdminServiceImpl extends ServiceImpl<SysAdminMapper, SysAdmin> implements ISysAdminService {
 
     private final SysAdminRoleMapper adminRoleMapper;
+    private final DesignerCategoryMapper designerCategoryMapper;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -55,6 +59,7 @@ public class SysAdminServiceImpl extends ServiceImpl<SysAdminMapper, SysAdmin> i
         SysAdminController.AdminDetailVO vo = new SysAdminController.AdminDetailVO();
         vo.setAdmin(admin);
         vo.setRoleIds(roleIds);
+        vo.setCategoryIds(getDesignerCategoryIds(id));
         return vo;
     }
 
@@ -122,5 +127,38 @@ public class SysAdminServiceImpl extends ServiceImpl<SysAdminMapper, SysAdmin> i
         if (id == 1L) throw new RuntimeException("超级管理员不可删除");
         removeById(id);
         adminRoleMapper.delete(new LambdaQueryWrapper<SysAdminRole>().eq(SysAdminRole::getAdminId, id));
+    }
+
+    @Override
+    public List<SysAdmin> getDesignersByCategory(Long categoryId) {
+        if (categoryId == null) return Collections.emptyList();
+        List<DsDesignerCategory> links = designerCategoryMapper.selectList(
+                new LambdaQueryWrapper<DsDesignerCategory>().eq(DsDesignerCategory::getCategoryId, categoryId));
+        if (links.isEmpty()) return Collections.emptyList();
+        List<Long> adminIds = links.stream().map(DsDesignerCategory::getAdminId).collect(Collectors.toList());
+        List<SysAdmin> admins = listByIds(adminIds);
+        admins.forEach(a -> a.setPassword(null));
+        return admins;
+    }
+
+    @Override
+    public List<Long> getDesignerCategoryIds(Long adminId) {
+        List<DsDesignerCategory> links = designerCategoryMapper.selectList(
+                new LambdaQueryWrapper<DsDesignerCategory>().eq(DsDesignerCategory::getAdminId, adminId));
+        return links.stream().map(DsDesignerCategory::getCategoryId).collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void updateDesignerCategories(Long adminId, List<Long> categoryIds) {
+        designerCategoryMapper.delete(new LambdaQueryWrapper<DsDesignerCategory>().eq(DsDesignerCategory::getAdminId, adminId));
+        if (categoryIds != null && !categoryIds.isEmpty()) {
+            for (Long categoryId : categoryIds) {
+                DsDesignerCategory dc = new DsDesignerCategory();
+                dc.setAdminId(adminId);
+                dc.setCategoryId(categoryId);
+                designerCategoryMapper.insert(dc);
+            }
+        }
     }
 }

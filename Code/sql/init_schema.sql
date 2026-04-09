@@ -744,3 +744,11 @@ CREATE TABLE `ds_chat_message` (
   KEY `idx_order_id` (`order_id`),
   KEY `idx_sender` (`sender_type`, `sender_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='聊天消息表';
+
+-- 30. 设计师-品类关联表（多对多）
+DROP TABLE IF EXISTS `ds_designer_category`;
+CREATE TABLE `ds_designer_category` (
+  `admin_id` BIGINT NOT NULL COMMENT '设计师ID(sys_admin)',
+  `category_id` BIGINT NOT NULL COMMENT '品类ID',
+  PRIMARY KEY (`admin_id`, `category_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='设计师-品类关联表';

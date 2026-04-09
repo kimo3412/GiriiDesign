@@ -18,22 +18,13 @@
       <view class="divider-line"></view>
     </view>
 
-    <!-- 账号密码登录表单 -->
+    <!-- 账号登录表单 -->
     <view class="form-section">
       <view class="form-item">
         <input
           v-model="username"
           class="form-input"
           placeholder="请输入用户名"
-          maxlength="20"
-        />
-      </view>
-      <view class="form-item">
-        <input
-          v-model="password"
-          class="form-input"
-          placeholder="请输入密码"
-          password
           maxlength="20"
           @confirm="handleAccountLogin"
         />
@@ -62,7 +53,6 @@ import request from '@/utils/request'
 const userStore = useUserStore()
 
 const username = ref('')
-const password = ref('')
 
 /**
  * 登录成功后的统一处理
@@ -115,15 +105,11 @@ const handleWxLogin = () => {
 }
 
 /**
- * 账号密码登录
+ * 账号登录
  */
 const handleAccountLogin = async () => {
   if (!username.value.trim()) {
     uni.showToast({ title: '请输入用户名', icon: 'none' })
-    return
-  }
-  if (!password.value) {
-    uni.showToast({ title: '请输入密码', icon: 'none' })
     return
   }
 
@@ -133,8 +119,7 @@ const handleAccountLogin = async () => {
       url: '/v1/app/auth/mock-login',
       method: 'POST',
       data: {
-        username: username.value.trim(),
-        password: password.value
+        username: username.value.trim()
       }
     })
     if (data) handleLoginSuccess(data)

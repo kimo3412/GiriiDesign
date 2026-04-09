@@ -3,14 +3,14 @@ package com.designstudio.system.controller;
 import com.designstudio.common.result.R;
 import com.designstudio.common.security.LoginHelper;
 import com.designstudio.common.security.LoginUser;
+import com.designstudio.system.domain.SysAdmin;
+import com.designstudio.system.service.ISysAdminService;
 import com.designstudio.system.service.SysAdminInfoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -24,6 +24,7 @@ import java.util.List;
 public class AdminController {
 
     private final SysAdminInfoService adminInfoService;
+    private final ISysAdminService adminService;
 
     @GetMapping("/info")
     @Operation(summary = "获取当前登录用户信息（含角色和权限标识）")
@@ -42,6 +43,12 @@ public class AdminController {
     public R<List<MenuTreeVO>> menus() {
         LoginUser loginUser = LoginHelper.getLoginUser();
         return R.ok(adminInfoService.getMenuTree(loginUser.getAdminId()));
+    }
+
+    @GetMapping("/designers")
+    @Operation(summary = "根据品类获取设计师列表")
+    public R<List<SysAdmin>> designers(@RequestParam Long categoryId) {
+        return R.ok(adminService.getDesignersByCategory(categoryId));
     }
 
     @Data

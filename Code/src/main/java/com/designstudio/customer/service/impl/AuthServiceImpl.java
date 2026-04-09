@@ -90,11 +90,8 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public AppAuthController.LoginVO mockLogin(String username, String password) {
-        if (StrUtil.isBlank(username) || StrUtil.isBlank(password)) {
-            throw new RuntimeException("请输入用户名和密码");
-        }
-        if (!"123456".equals(password)) {
-            throw new RuntimeException("密码错误");
+        if (StrUtil.isBlank(username)) {
+            throw new RuntimeException("请输入用户名");
         }
 
         DsUser user = userMapper.selectOne(new LambdaQueryWrapper<DsUser>()
