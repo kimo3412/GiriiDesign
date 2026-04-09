@@ -40,6 +40,16 @@ export function getProgressList(orderId: number) {
     return Alova.Get<any>(`/v1/admin/orders/${orderId}/progress`);
 }
 
+/** 鑺傜偣宸ヤ綔鍙版暟鎹? */
+export function getWorkbenchData(categoryId: number, params?: any) {
+    return Alova.Get<any>(`/v1/admin/workbench/categories/${categoryId}`, { params });
+}
+
+/** 鎻愪氦鑺傜偣宸ヤ綔鍙版搷浣? */
+export function submitWorkbenchAction(orderId: number, data: any) {
+    return Alova.Post<any>(`/v1/admin/workbench/orders/${orderId}/action`, data);
+}
+
 /** 意向列表 */
 export function getRequestList(params: any) {
     return Alova.Get<any>('/v1/admin/requests', { params });

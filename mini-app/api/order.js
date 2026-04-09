@@ -23,6 +23,13 @@ export const getOrderDetail = (id) => {
   })
 }
 
+export const getOrderTimeline = (id) => {
+  return request({
+    url: `/v1/app/orders/${id}/timeline`,
+    method: 'GET'
+  })
+}
+
 /**
  * 获取订单进度时间轴
  * @param {number} id - 订单ID

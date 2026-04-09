@@ -6,3 +6,9 @@ import { Alova } from '@/utils/http/alova/index';
 export function adminMenus() {
   return Alova.Get<any>('/v1/admin/menus');
 }
+
+export type ListDate = any;
+
+export function getMenuList() {
+  return Alova.Get<any>('/v1/admin/menu-list');
+}

@@ -71,6 +71,12 @@ public class WorkflowServiceImpl implements WorkflowService {
                 step.setStepOrder(i + 1);
                 step.setIsStartStep(i == 0 ? 1 : 0);
                 step.setIsEndStep(i == steps.size() - 1 ? 1 : 0);
+                if (step.getNeedImageUpload() == null) {
+                    step.setNeedImageUpload(0);
+                }
+                if (step.getVisibleToClient() == null) {
+                    step.setVisibleToClient(1);
+                }
                 stepMapper.insert(step);
             }
         }

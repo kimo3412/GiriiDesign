@@ -32,4 +32,14 @@ public class DsWorkflowStep extends BaseEntity {
 
     /** 是否结束节点 */
     private Integer isEndStep;
+
+    private String nodeDescription;
+
+    private String allowedActions;
+
+    private Integer needImageUpload;
+
+    private Integer visibleToClient;
+
+    private Integer expectedDurationDays;
 }

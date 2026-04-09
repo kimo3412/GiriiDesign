@@ -2,22 +2,22 @@ package com.designstudio.order.controller;
 
 import com.designstudio.common.result.R;
 import com.designstudio.common.security.LoginHelper;
+import com.designstudio.config.domain.DsWorkflowStep;
 import com.designstudio.order.domain.DsOrder;
+import com.designstudio.order.domain.DsOrderProgress;
 import com.designstudio.order.service.OrderService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/**
- * 小程序端 - 我的订单接口
- */
 @RestController
 @RequestMapping("/api/v1/app/orders")
 @RequiredArgsConstructor
-@Tag(name = "C端-我的订单")
+@Tag(name = "C端订单")
 public class AppOrderController {
 
     private final OrderService orderService;
@@ -31,7 +31,7 @@ public class AppOrderController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "订单详情及进度时间轴")
+    @Operation(summary = "订单详情")
     public R<OrderController.OrderDetailVO> detail(@PathVariable Long id) {
         Long userId = LoginHelper.getUserId();
         if (userId == null) return R.fail("未登录");
@@ -41,8 +41,19 @@ public class AppOrderController {
         return R.ok(vo);
     }
 
+    @GetMapping("/{id}/timeline")
+    @Operation(summary = "订单流程时间线")
+    public R<OrderTimelineVO> timeline(@PathVariable Long id) {
+        Long userId = LoginHelper.getUserId();
+        if (userId == null) return R.fail("未登录");
+
+        OrderTimelineVO vo = orderService.getOrderTimeline(id, userId);
+        if (vo == null) return R.fail("订单不存在或无权查看");
+        return R.ok(vo);
+    }
+
     @PostMapping("/{id}/pay")
-    @Operation(summary = "模拟支付定金/尾款")
+    @Operation(summary = "模拟支付定金或尾款")
     public R<Void> payOrder(@PathVariable Long id) {
         Long userId = LoginHelper.getUserId();
         if (userId == null) return R.fail("未登录");
@@ -53,5 +64,13 @@ public class AppOrderController {
         } catch (RuntimeException e) {
             return R.fail(e.getMessage());
         }
+    }
+
+    @Data
+    public static class OrderTimelineVO {
+        private DsOrder order;
+        private List<DsWorkflowStep> workflowSteps;
+        private List<DsOrderProgress> progressList;
+        private Integer currentStepIndex;
     }
 }

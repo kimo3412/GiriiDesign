@@ -7,6 +7,11 @@ export interface WorkflowStep {
   stepOrder?: number;
   isStartStep?: number;
   isEndStep?: number;
+  nodeDescription?: string;
+  allowedActions?: string;
+  needImageUpload?: number;
+  visibleToClient?: number;
+  expectedDurationDays?: number | null;
 }
 
 export interface Workflow {

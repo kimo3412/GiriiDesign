@@ -1,6 +1,8 @@
 package com.designstudio.order.service;
 
+import com.designstudio.order.controller.AppOrderController;
 import com.designstudio.order.controller.OrderController;
+import com.designstudio.order.controller.WorkbenchController;
 import com.designstudio.order.domain.DsOrder;
 import com.designstudio.order.domain.DsOrderProgress;
 
@@ -65,4 +67,10 @@ public interface OrderService {
      * C端 - 订单详情及进度时间轴
      */
     OrderController.OrderDetailVO getAppOrderDetail(Long orderId, Long userId);
+
+    WorkbenchController.WorkbenchVO getWorkbenchData(Long categoryId, Long stepId);
+
+    void handleWorkbenchAction(Long orderId, WorkbenchController.WorkbenchActionDTO dto);
+
+    AppOrderController.OrderTimelineVO getOrderTimeline(Long orderId, Long userId);
 }

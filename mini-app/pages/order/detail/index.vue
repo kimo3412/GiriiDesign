@@ -1,19 +1,55 @@
 <template>
   <view class="order-detail-container">
-    <!-- 订单状态 -->
     <view class="status-card">
       <text class="status-text">{{ getStatusText(order.status) }}</text>
-      <text v-if="order.status === 1" class="status-desc">正在紧张制作中...</text>
-      <text v-else-if="order.status === 2" class="status-desc">等待您确认收货</text>
+      <text class="status-desc">{{ currentStepText }}</text>
     </view>
 
-    <!-- 进度时间轴 -->
+    <view class="timeline-section">
+      <text class="section-title">流程进度</text>
+      <view class="timeline-card">
+        <view
+          v-for="(step, index) in workflowSteps"
+          :key="step.stepId || index"
+          class="timeline-item"
+        >
+          <view class="timeline-left">
+            <view
+              class="timeline-dot"
+              :class="{
+                done: index < currentStepIndex,
+                current: index === currentStepIndex,
+                pending: index > currentStepIndex
+              }"
+            ></view>
+            <view v-if="index < workflowSteps.length - 1" class="timeline-line"></view>
+          </view>
+          <view class="timeline-body">
+            <view class="timeline-top">
+              <text class="timeline-name">{{ step.stepName }}</text>
+              <text v-if="step.expectedDurationDays != null" class="timeline-days">
+                {{ step.expectedDurationDays }}天
+              </text>
+            </view>
+            <text class="timeline-desc">{{ step.nodeDescription || '暂无节点说明' }}</text>
+            <text v-if="getProgressAtStep(step.stepId)" class="timeline-time">
+              {{ getProgressAtStep(step.stepId).createTime }}
+            </text>
+          </view>
+        </view>
+      </view>
+    </view>
+
     <view class="progress-section">
-      <text class="section-title">进度追踪</text>
-      <timeline :list="progressList" />
+      <text class="section-title">最新进度</text>
+      <view class="timeline-card">
+        <view v-for="item in progressList" :key="item.progressId" class="progress-item">
+          <text class="progress-time">{{ item.createTime }}</text>
+          <text class="progress-desc">{{ item.description }}</text>
+        </view>
+      </view>
     </view>
 
-    <!-- 订单信息 -->
     <view class="info-section">
       <text class="section-title">订单信息</text>
       <view class="info-card">
@@ -22,135 +58,72 @@
           <text class="info-value">{{ order.orderSn }}</text>
         </view>
         <view class="info-row">
-          <text class="info-label">定制品类</text>
-          <text class="info-value">{{ order.categoryName }}</text>
-        </view>
-        <view class="info-row">
           <text class="info-label">订单金额</text>
-          <text class="info-value price">¥{{ order.totalAmount }}</text>
+          <text class="info-value price">￥{{ order.totalAmount }}</text>
         </view>
         <view class="info-row">
           <text class="info-label">已付金额</text>
-          <text class="info-value">¥{{ order.paidAmount }}</text>
+          <text class="info-value">￥{{ order.paidAmount }}</text>
         </view>
         <view v-if="order.expectedDate" class="info-row">
           <text class="info-label">预计完成</text>
           <text class="info-value">{{ order.expectedDate }}</text>
         </view>
-        <view v-if="order.createTime" class="info-row">
-          <text class="info-label">创建时间</text>
-          <text class="info-value">{{ order.createTime }}</text>
+        <view v-if="order.remark" class="info-row">
+          <text class="info-label">备注</text>
+          <text class="info-value">{{ order.remark }}</text>
         </view>
       </view>
     </view>
 
-    <!-- 定制信息快照 -->
-    <view v-if="customData" class="info-section">
-      <text class="section-title">定制信息</text>
-      <view class="info-card">
-        <view v-for="item in customData" :key="item.key" class="info-row">
-          <text class="info-label">{{ item.label }}</text>
-          <text class="info-value">{{ item.display }}</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 底部操作 -->
     <view class="bottom-action">
-      <button class="chat-btn" @click="goToChat">专属客服</button>
+      <button class="chat-btn" @click="goToChat">联系设计师</button>
       <button v-if="order.status === 0" class="pay-btn" @click="handlePay(0)">
-        支付定金 ¥{{ order.prepayAmount }}
+        支付定金 ￥{{ order.prepayAmount }}
       </button>
       <button v-if="order.status === 6" class="pay-btn" @click="handlePay(6)">
-        支付尾款 ¥{{ (order.totalAmount - order.prepayAmount).toFixed(2) }}
-      </button>
-      <button v-if="order.status === 2" class="confirm-btn" @click="handleConfirm">
-        确认收货
+        支付尾款 ￥{{ balanceAmount }}
       </button>
     </view>
   </view>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { getOrderDetail, getOrderProgress, confirmOrder, payOrder } from '@/api/order'
-import { getFormSchema } from '@/api/custom'
+import { getOrderTimeline, payOrder } from '@/api/order'
 
 const orderId = ref(0)
 const order = ref({})
+const workflowSteps = ref([])
 const progressList = ref([])
-const fieldMap = ref({}) // fieldKey → { label, unit }
+const currentStepIndex = ref(-1)
 
-// 解析定制数据（带中文标签和单位）
-const customData = computed(() => {
-  if (!order.value.customDataSnapshot) return null
-  try {
-    const raw = JSON.parse(order.value.customDataSnapshot)
-    return Object.entries(raw).map(([key, value]) => {
-      const field = fieldMap.value[key]
-      const label = field?.label || key
-      const unit = field?.unit || ''
-      return { key, label, value, unit, display: unit ? `${value} ${unit}` : String(value) }
-    })
-  } catch {
-    return null
+const currentStepText = computed(() => {
+  if (currentStepIndex.value < 0 || !workflowSteps.value[currentStepIndex.value]) {
+    return '等待系统分配生产节点'
   }
+  return `当前节点：${workflowSteps.value[currentStepIndex.value].stepName}`
 })
 
-/**
- * 加载字段定义（用于定制信息的中文标签和单位映射）
- */
-const loadFields = async (categoryId) => {
-  if (!categoryId) return
-  try {
-    const fields = await getFormSchema(categoryId)
-    const map = {}
-    ;(fields || []).forEach(f => { map[f.fieldKey] = f })
-    fieldMap.value = map
-  } catch (e) { console.error('加载字段定义失败', e) }
-}
+const balanceAmount = computed(() => {
+  const total = Number(order.value.totalAmount || 0)
+  const prepay = Number(order.value.prepayAmount || 0)
+  return (total - prepay).toFixed(2)
+})
 
-/**
- * 获取订单详情
- */
-const fetchOrderDetail = async () => {
+const fetchTimeline = async () => {
   try {
-    const data = await getOrderDetail(orderId.value)
+    const data = await getOrderTimeline(orderId.value)
     order.value = data.order || {}
-    // 加载品类字段定义，用于定制信息展示
-    if (order.value.categoryId) {
-      await loadFields(order.value.categoryId)
-    }
+    workflowSteps.value = data.workflowSteps || []
+    progressList.value = data.progressList || []
+    currentStepIndex.value = data.currentStepIndex ?? -1
   } catch (err) {
     uni.showToast({ title: '获取订单失败', icon: 'none' })
   }
 }
 
-/**
- * 获取进度时间轴
- */
-const fetchProgress = async () => {
-  try {
-    const data = await getOrderProgress(orderId.value)
-    const list = data.progressList || []
-    progressList.value = list.map(item => ({
-      stepName: item.description || '进度更新',
-      description: item.description,
-      imageUrl: item.imageUrls,
-      imageUrls: item.imageUrls ? item.imageUrls.split(',') : [],
-      createTime: item.createTime,
-      isCompleted: true,
-      isCurrent: false
-    }))
-  } catch (err) {
-    console.error('获取进度失败', err)
-  }
-}
-
-/**
- * 获取状态文本
- */
 const getStatusText = (status) => {
   const map = {
     0: '待支付',
@@ -161,202 +134,235 @@ const getStatusText = (status) => {
     5: '已取消',
     6: '待付尾款'
   }
-  return map[status] || '未知'
+  return map[status] || '未知状态'
 }
 
-/**
- * 联系设计师（跳转聊天页）
- */
+const getProgressAtStep = (stepId) => {
+  return progressList.value.find((item) => item.stepId === stepId)
+}
+
 const goToChat = () => {
-  uni.navigateTo({
-    url: `/pages/chat/index`
-  })
+  uni.navigateTo({ url: '/pages/chat/index' })
 }
 
-/**
- * 确认收货
- */
-const handleConfirm = () => {
-  uni.showModal({
-    title: '确认收货',
-    content: '确定已收到货物吗？',
-    success: async (res) => {
-      if (res.confirm) {
-        try {
-          await confirmOrder(orderId.value)
-          uni.showToast({ title: '操作成功', icon: 'success' })
-          fetchOrderDetail()
-        } catch (err) {
-          uni.showToast({ title: err.message || '操作失败', icon: 'none' })
-        }
-      }
-    }
-  })
-}
-
-/**
- * 模拟支付
- */
-const handlePay = (type) => {
-  const typeName = type === 0 ? '定金' : '尾款'
-  const amount = type === 0 ? order.value.prepayAmount : (order.value.totalAmount - order.value.prepayAmount).toFixed(2)
-  
-  uni.showModal({
-    title: `支付${typeName}`,
-    content: `将模拟支付 ¥${amount}，确定要付款吗？`,
-    success: async (res) => {
-      if (res.confirm) {
-        uni.showLoading({ title: '支付中...' })
-        try {
-          await payOrder(orderId.value)
-          uni.hideLoading()
-          uni.showToast({ title: '支付成功', icon: 'success' })
-          fetchOrderDetail()
-          fetchProgress()
-        } catch (err) {
-          uni.hideLoading()
-          uni.showToast({ title: err.message || '支付失败', icon: 'none' })
-        }
-      }
-    }
-  })
+const handlePay = () => {
+  uni.showLoading({ title: '支付中...' })
+  payOrder(orderId.value)
+    .then(() => {
+      uni.hideLoading()
+      uni.showToast({ title: '支付成功', icon: 'success' })
+      fetchTimeline()
+    })
+    .catch((err) => {
+      uni.hideLoading()
+      uni.showToast({ title: err.message || '支付失败', icon: 'none' })
+    })
 }
 
 onLoad((options) => {
   orderId.value = Number(options.id) || 0
-  fetchOrderDetail()
-  fetchProgress()
+  fetchTimeline()
 })
 </script>
 
 <style lang="scss" scoped>
 .order-detail-container {
   min-height: 100vh;
-  background: #f8f8f8;
+  background: #f5f2ee;
   padding-bottom: 120rpx;
 }
 
 .status-card {
-  background: #4A5D4E;
-  padding: 60rpx 30rpx;
-  text-align: center;
+  background: #4a5d4e;
+  padding: 56rpx 32rpx;
 
   .status-text {
     display: block;
-    font-size: 36rpx;
-    font-weight: bold;
+    font-size: 38rpx;
     color: #fff;
-    margin-bottom: 10rpx;
+    font-weight: 600;
   }
 
   .status-desc {
-    font-size: 26rpx;
+    display: block;
+    margin-top: 12rpx;
     color: rgba(255, 255, 255, 0.8);
+    font-size: 24rpx;
   }
 }
 
+.timeline-section,
 .progress-section,
 .info-section {
-  background: #fff;
-  margin-bottom: 20rpx;
-  padding: 30rpx;
+  margin-top: 20rpx;
+  padding: 0 24rpx;
 }
 
 .section-title {
   display: block;
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
-  margin-bottom: 24rpx;
+  margin-bottom: 18rpx;
+  font-size: 30rpx;
+  color: #2c2c2c;
+  font-weight: 600;
 }
 
+.timeline-card,
 .info-card {
-  background: #fafafa;
-  border-radius: 12rpx;
-  padding: 20rpx;
+  background: #fff;
+  border-radius: 18rpx;
+  padding: 24rpx;
+}
+
+.timeline-item {
+  display: flex;
+  gap: 20rpx;
+}
+
+.timeline-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.timeline-dot {
+  width: 22rpx;
+  height: 22rpx;
+  border-radius: 50%;
+  background: #d9d9d9;
+
+  &.done {
+    background: #4a5d4e;
+  }
+
+  &.current {
+    background: #c4785b;
+    box-shadow: 0 0 0 8rpx rgba(196, 120, 91, 0.18);
+  }
+}
+
+.timeline-line {
+  width: 2rpx;
+  flex: 1;
+  background: #e8e4e0;
+  min-height: 60rpx;
+}
+
+.timeline-body {
+  flex: 1;
+  padding-bottom: 28rpx;
+}
+
+.timeline-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.timeline-name {
+  font-size: 28rpx;
+  color: #1f1f1f;
+  font-weight: 600;
+}
+
+.timeline-days,
+.timeline-time {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.timeline-desc {
+  display: block;
+  margin-top: 10rpx;
+  color: #666;
+  font-size: 24rpx;
+  line-height: 1.6;
+}
+
+.progress-item {
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #f1f1f1;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.progress-time {
+  display: block;
+  color: #999;
+  font-size: 22rpx;
+}
+
+.progress-desc {
+  display: block;
+  margin-top: 8rpx;
+  color: #333;
+  font-size: 26rpx;
+  line-height: 1.6;
 }
 
 .info-row {
   display: flex;
   justify-content: space-between;
-  padding: 16rpx 0;
-  border-bottom: 1rpx solid #f0f0f0;
+  padding: 18rpx 0;
+  border-bottom: 1rpx solid #f1f1f1;
 
   &:last-child {
     border-bottom: none;
   }
+}
 
-  .info-label {
-    font-size: 26rpx;
-    color: #999;
-  }
+.info-label {
+  color: #999;
+  font-size: 24rpx;
+}
 
-  .info-value {
-    font-size: 26rpx;
-    color: #333;
+.info-value {
+  max-width: 60%;
+  text-align: right;
+  color: #333;
+  font-size: 24rpx;
+}
 
-    &.price {
-      color: #e74c3c;
-      font-weight: bold;
-    }
-  }
+.price {
+  color: #d35d6e;
+  font-weight: 600;
 }
 
 .bottom-action {
   position: fixed;
-  bottom: 0;
   left: 0;
   right: 0;
-  background: #fff;
-  padding: 20rpx 30rpx;
-  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.05);
+  bottom: 0;
   display: flex;
   gap: 20rpx;
+  padding: 20rpx 24rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.95);
 }
 
-.chat-btn {
-  flex: 1;
-  height: 88rpx;
-  background: transparent;
-  color: #1a1a1a;
-  font-size: 26rpx;
-  letter-spacing: 2rpx;
-  border-radius: 0;
-  border: 1px solid #1a1a1a;
-
-  &::after {
-    border: none;
-  }
-}
-
-.confirm-btn {
-  flex: 1;
-  height: 88rpx;
-  background: #1a1a1a;
-  color: #fff;
-  font-size: 26rpx;
-  letter-spacing: 2rpx;
-  border-radius: 0;
-  border: none;
-
-  &::after {
-    border: none;
-  }
-}
-
+.chat-btn,
 .pay-btn {
   flex: 1;
   height: 88rpx;
-  background: #d32f2f;
-  color: #fff;
+  line-height: 88rpx;
+  border-radius: 44rpx;
   font-size: 26rpx;
-  letter-spacing: 2rpx;
-  border-radius: 0;
   border: none;
 
   &::after {
     border: none;
   }
+}
+
+.chat-btn {
+  background: #fff;
+  color: #2c2c2c;
+  border: 1rpx solid #2c2c2c;
+}
+
+.pay-btn {
+  background: #2c2c2c;
+  color: #fff;
 }
 </style>
