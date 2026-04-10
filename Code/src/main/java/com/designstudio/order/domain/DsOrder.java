@@ -69,12 +69,20 @@ public class DsOrder extends BaseEntity {
     /** 阻塞原因 */
     private String blockReason;
 
+    private String cancelReason;
+
+    private String delayReason;
+
     /** 版本号(乐观锁) */
     @Version
     private Integer version;
 
     /** 完成时间 */
     private LocalDateTime finishTime;
+
+    private LocalDateTime deliveryTime;
+
+    private LocalDateTime confirmTime;
 
     @TableField(exist = false)
     private String customerName;

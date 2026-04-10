@@ -43,6 +43,12 @@ public interface OrderService {
      */
     void unblock(Long orderId);
 
+    void cancel(Long orderId, String cancelReason);
+
+    void delay(Long orderId, OrderController.DelayDTO dto);
+
+    void ship(Long orderId, String description);
+
     /**
      * 获取订单进度时间轴
      */
@@ -57,6 +63,8 @@ public interface OrderService {
      * 模拟支付定金/尾款（C端）
      */
     void payOrder(Long orderId, Long userId);
+
+    void confirm(Long orderId, Long userId);
 
     /**
      * C端 - 我的订单列表

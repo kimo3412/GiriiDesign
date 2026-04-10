@@ -249,6 +249,88 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void confirm(Long orderId, Long userId) {
+        DsOrder order = requireOrder(orderId);
+        if (!Objects.equals(order.getUserId(), userId)) {
+            throw new RuntimeException("订单不存在或无权操作");
+        }
+        if (order.getStatus() == null || (order.getStatus() != 3 && order.getStatus() != 2)) {
+            throw new RuntimeException("当前订单还不能确认收货");
+        }
+
+        order.setStatus(4);
+        order.setConfirmTime(LocalDateTime.now());
+        order.setFinishTime(LocalDateTime.now());
+        touchOrderForUpdate(order);
+        orderMapper.updateById(order);
+        recordProgress(orderId, order.getCurrentStepId(), "客户已确认收货，订单已完成", null, null);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void cancel(Long orderId, String cancelReason) {
+        DsOrder order = requireOrder(orderId);
+        if (Objects.equals(order.getStatus(), 4) || Objects.equals(order.getStatus(), 5)) {
+            throw new RuntimeException("当前订单不能取消");
+        }
+        if (!StringUtils.hasText(cancelReason)) {
+            throw new RuntimeException("请输入取消原因");
+        }
+
+        order.setStatus(5);
+        order.setCancelReason(cancelReason);
+        order.setIsBlocked(0);
+        order.setBlockReason(null);
+        order.setFinishTime(LocalDateTime.now());
+        touchOrderForUpdate(order);
+        orderMapper.updateById(order);
+        recordProgress(orderId, order.getCurrentStepId(), "订单已取消：" + cancelReason, null, null);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void delay(Long orderId, OrderController.DelayDTO dto) {
+        DsOrder order = requireOrder(orderId);
+        if (Objects.equals(order.getStatus(), 4) || Objects.equals(order.getStatus(), 5)) {
+            throw new RuntimeException("当前订单不能登记延期");
+        }
+        if (dto == null || !StringUtils.hasText(dto.getDelayReason())) {
+            throw new RuntimeException("请输入延期原因");
+        }
+        if (dto.getExpectedDate() == null) {
+            throw new RuntimeException("请选择新的预计交付时间");
+        }
+
+        order.setExpectedDate(dto.getExpectedDate());
+        order.setDelayReason(dto.getDelayReason());
+        touchOrderForUpdate(order);
+        orderMapper.updateById(order);
+        String description = StringUtils.hasText(dto.getDescription())
+                ? dto.getDescription()
+                : "订单延期至 " + dto.getExpectedDate() + "，原因：" + dto.getDelayReason();
+        recordProgress(orderId, order.getCurrentStepId(), description, null, null);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void ship(Long orderId, String description) {
+        DsOrder order = requireOrder(orderId);
+        if (!Objects.equals(order.getStatus(), 2)) {
+            throw new RuntimeException("只有待发货订单才能执行发货");
+        }
+
+        order.setStatus(3);
+        order.setDeliveryTime(LocalDateTime.now());
+        touchOrderForUpdate(order);
+        orderMapper.updateById(order);
+        recordProgress(orderId, order.getCurrentStepId(),
+                StringUtils.hasText(description) ? description : "订单已发货，等待客户确认收货",
+                null,
+                null);
+    }
+
+    @Override
     public List<DsOrder> getMyOrders(Long userId, Integer status) {
         LambdaQueryWrapper<DsOrder> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(DsOrder::getUserId, userId);
@@ -582,7 +664,7 @@ public class OrderServiceImpl implements OrderService {
         int lastStepIndex = -1;
         for (DsOrderProgress progress : progressList) {
             int currentIndex = findCurrentStepIndex(steps, progress.getStepId());
-            String eventType = resolveTimelineEventType(progress, currentIndex, lastStepIndex);
+            String eventType = resolveTimelineEventTypeV2(progress, currentIndex, lastStepIndex);
 
             AppOrderController.TimelineEventVO event = new AppOrderController.TimelineEventVO();
             event.setProgressId(progress.getProgressId());
@@ -592,7 +674,7 @@ public class OrderServiceImpl implements OrderService {
             event.setImageUrls(progress.getImageUrls());
             event.setCreateTime(progress.getCreateTime());
             event.setEventType(eventType);
-            event.setEventLabel(resolveTimelineEventLabel(eventType));
+            event.setEventLabel(resolveTimelineEventLabelV2(eventType));
             event.setFormEntries(buildFormEntries(progress.getFormData(), categoryFieldMap));
             event.setOperatorName(operatorNameMap.getOrDefault(progress.getOperatorId(), null));
             events.add(event);
@@ -632,6 +714,61 @@ public class OrderServiceImpl implements OrderService {
                 return "阻塞";
             case "unblock":
                 return "恢复";
+            case "payment":
+                return "支付";
+            default:
+                return "进度";
+        }
+    }
+
+    private String resolveTimelineEventTypeV2(DsOrderProgress progress, int currentIndex, int lastStepIndex) {
+        String description = progress.getDescription() == null ? "" : progress.getDescription();
+        if (description.contains("解除阻塞")) {
+            return "unblock";
+        }
+        if (description.contains("阻塞")) {
+            return "block";
+        }
+        if (description.contains("已取消")) {
+            return "cancel";
+        }
+        if (description.contains("延期")) {
+            return "delay";
+        }
+        if (description.contains("已发货")) {
+            return "shipment";
+        }
+        if (description.contains("确认收货") || description.contains("订单已完成")) {
+            return "confirm";
+        }
+        if (description.contains("退回")) {
+            return "rollback";
+        }
+        if (description.contains("支付")) {
+            return "payment";
+        }
+        if (currentIndex >= 0 && lastStepIndex >= 0 && currentIndex < lastStepIndex) {
+            return "rollback";
+        }
+        return "progress";
+    }
+
+    private String resolveTimelineEventLabelV2(String eventType) {
+        switch (eventType) {
+            case "rollback":
+                return "返工";
+            case "block":
+                return "阻塞";
+            case "unblock":
+                return "恢复";
+            case "cancel":
+                return "取消";
+            case "delay":
+                return "延期";
+            case "shipment":
+                return "发货";
+            case "confirm":
+                return "完成";
             case "payment":
                 return "支付";
             default:

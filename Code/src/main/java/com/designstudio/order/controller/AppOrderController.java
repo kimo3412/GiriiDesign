@@ -27,7 +27,9 @@ public class AppOrderController {
     @Operation(summary = "我的订单列表")
     public R<List<DsOrder>> myOrders(@RequestParam(required = false) Integer status) {
         Long userId = LoginHelper.getUserId();
-        if (userId == null) return R.fail("未登录");
+        if (userId == null) {
+            return R.fail("未登录");
+        }
         return R.ok(orderService.getMyOrders(userId, status));
     }
 
@@ -35,10 +37,14 @@ public class AppOrderController {
     @Operation(summary = "订单详情")
     public R<OrderController.OrderDetailVO> detail(@PathVariable Long id) {
         Long userId = LoginHelper.getUserId();
-        if (userId == null) return R.fail("未登录");
+        if (userId == null) {
+            return R.fail("未登录");
+        }
 
         OrderController.OrderDetailVO vo = orderService.getAppOrderDetail(id, userId);
-        if (vo == null) return R.fail("订单不存在或无权查看");
+        if (vo == null) {
+            return R.fail("订单不存在或无权查看");
+        }
         return R.ok(vo);
     }
 
@@ -46,10 +52,14 @@ public class AppOrderController {
     @Operation(summary = "订单流程时间线")
     public R<OrderTimelineVO> timeline(@PathVariable Long id) {
         Long userId = LoginHelper.getUserId();
-        if (userId == null) return R.fail("未登录");
+        if (userId == null) {
+            return R.fail("未登录");
+        }
 
         OrderTimelineVO vo = orderService.getOrderTimeline(id, userId);
-        if (vo == null) return R.fail("订单不存在或无权查看");
+        if (vo == null) {
+            return R.fail("订单不存在或无权查看");
+        }
         return R.ok(vo);
     }
 
@@ -57,10 +67,28 @@ public class AppOrderController {
     @Operation(summary = "模拟支付定金或尾款")
     public R<Void> payOrder(@PathVariable Long id) {
         Long userId = LoginHelper.getUserId();
-        if (userId == null) return R.fail("未登录");
+        if (userId == null) {
+            return R.fail("未登录");
+        }
 
         try {
             orderService.payOrder(id, userId);
+            return R.ok();
+        } catch (RuntimeException e) {
+            return R.fail(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{id}/confirm")
+    @Operation(summary = "确认收货并完成订单")
+    public R<Void> confirmOrder(@PathVariable Long id) {
+        Long userId = LoginHelper.getUserId();
+        if (userId == null) {
+            return R.fail("未登录");
+        }
+
+        try {
+            orderService.confirm(id, userId);
             return R.ok();
         } catch (RuntimeException e) {
             return R.fail(e.getMessage());
@@ -77,15 +105,10 @@ public class AppOrderController {
         private String currentStepName;
         private Integer hasRollback;
         private List<FormEntryVO> currentStepFormEntries;
-        /** 是否逾期 */
         private Boolean isOverdue;
-        /** 逾期天数（正数表示逾期） */
         private Integer overdueDays;
-        /** 预计日期文案，如"还剩3天"、"逾期2天" */
         private String expectedDateText;
-        /** 当前步骤已耗时天数 */
         private Integer currentStepElapsedDays;
-        /** 当前步骤预计天数 */
         private Integer currentStepExpectedDays;
     }
 
@@ -100,7 +123,6 @@ public class AppOrderController {
         private String eventType;
         private String eventLabel;
         private List<FormEntryVO> formEntries;
-        /** 操作者名称 */
         private String operatorName;
     }
 

@@ -90,6 +90,42 @@ public class OrderController {
         }
     }
 
+    @PostMapping("/{orderId}/cancel")
+    @Operation(summary = "取消订单")
+    @OperLog("取消订单")
+    public R<Void> cancel(@PathVariable Long orderId, @RequestBody CancelDTO dto) {
+        try {
+            orderService.cancel(orderId, dto.getCancelReason());
+            return R.ok();
+        } catch (RuntimeException e) {
+            return R.fail(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{orderId}/delay")
+    @Operation(summary = "登记延期原因并调整预计交付时间")
+    @OperLog("订单延期")
+    public R<Void> delay(@PathVariable Long orderId, @RequestBody DelayDTO dto) {
+        try {
+            orderService.delay(orderId, dto);
+            return R.ok();
+        } catch (RuntimeException e) {
+            return R.fail(e.getMessage());
+        }
+    }
+
+    @PostMapping("/{orderId}/ship")
+    @Operation(summary = "标记订单已发货")
+    @OperLog("订单发货")
+    public R<Void> ship(@PathVariable Long orderId, @RequestBody(required = false) ActionDTO dto) {
+        try {
+            orderService.ship(orderId, dto != null ? dto.getDescription() : null);
+            return R.ok();
+        } catch (RuntimeException e) {
+            return R.fail(e.getMessage());
+        }
+    }
+
     // ==================== 进度管理 ====================
 
     @GetMapping("/{orderId}/progress")
@@ -138,6 +174,23 @@ public class OrderController {
     @Data
     public static class BlockDTO {
         private String blockReason;
+    }
+
+    @Data
+    public static class CancelDTO {
+        private String cancelReason;
+    }
+
+    @Data
+    public static class DelayDTO {
+        private String delayReason;
+        private java.time.LocalDate expectedDate;
+        private String description;
+    }
+
+    @Data
+    public static class ActionDTO {
+        private String description;
     }
 
     @Data

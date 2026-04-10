@@ -20,6 +20,14 @@
         <text class="status-alert__label">当前暂停</text>
         <text class="status-alert__text">{{ order.blockReason }}</text>
       </view>
+      <view v-if="order.delayReason" class="status-alert status-alert--warm">
+        <text class="status-alert__label">延期说明</text>
+        <text class="status-alert__text">{{ order.delayReason }}</text>
+      </view>
+      <view v-if="order.status === 5 && order.cancelReason" class="status-alert status-alert--cancel">
+        <text class="status-alert__label">取消原因</text>
+        <text class="status-alert__text">{{ order.cancelReason }}</text>
+      </view>
     </view>
 
     <view v-if="currentStepEntries.length" class="section">
@@ -149,6 +157,14 @@
         <view v-if="order.expectedDate" class="info-row">
           <text class="info-label">预计完成</text>
           <text class="info-value">{{ order.expectedDate }}</text>
+        </view>
+        <view v-if="order.deliveryTime" class="info-row">
+          <text class="info-label">发货时间</text>
+          <text class="info-value">{{ order.deliveryTime }}</text>
+        </view>
+        <view v-if="order.confirmTime" class="info-row">
+          <text class="info-label">完成确认</text>
+          <text class="info-value">{{ order.confirmTime }}</text>
         </view>
         <view v-if="order.remark" class="info-row">
           <text class="info-label">备注</text>
@@ -385,6 +401,14 @@ onLoad((options) => {
   color: #fff;
   font-size: 24rpx;
   line-height: 1.5;
+}
+
+.status-alert--warm {
+  background: rgba(255, 214, 153, 0.18);
+}
+
+.status-alert--cancel {
+  background: rgba(255, 180, 180, 0.18);
 }
 
 .section {
