@@ -30,6 +30,21 @@ export function unblockOrder(orderId: number) {
     return Alova.Post<any>(`/v1/admin/orders/${orderId}/unblock`);
 }
 
+export function cancelOrder(orderId: number, data: { cancelReason: string }) {
+    return Alova.Post<any>(`/v1/admin/orders/${orderId}/cancel`, data);
+}
+
+export function delayOrder(
+    orderId: number,
+    data: { delayReason: string; expectedDate: string; description?: string | null }
+) {
+    return Alova.Post<any>(`/v1/admin/orders/${orderId}/delay`, data);
+}
+
+export function shipOrder(orderId: number, data?: { description?: string | null }) {
+    return Alova.Post<any>(`/v1/admin/orders/${orderId}/ship`, data || {});
+}
+
 /** 添加进度记录 */
 export function addProgress(orderId: number, data: any) {
     return Alova.Post<any>(`/v1/admin/orders/${orderId}/progress`, data);

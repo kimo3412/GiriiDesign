@@ -49,7 +49,7 @@ export const getOrderProgress = (id) => {
  */
 export const confirmOrder = (id) => {
   return request({
-    url: `/api/v1/orders/${id}/confirm`,
+    url: `/v1/app/orders/${id}/confirm`,
     method: 'POST'
   })
 }

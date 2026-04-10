@@ -39,7 +39,7 @@
               <button v-if="order.status === 6" class="action-btn pay-btn" @click.stop="handlePay(order, 6)">
                 支付尾款 ¥{{ (order.totalAmount - order.prepayAmount).toFixed(2) }}
               </button>
-              <button v-if="order.status === 2" class="action-btn" @click.stop="confirmReceive(order.orderId)">
+              <button v-if="order.status === 3" class="action-btn" @click.stop="confirmReceive(order.orderId)">
                 确认收货
               </button>
             </view>
@@ -67,8 +67,8 @@ import { getOrderList, confirmOrder, payOrder } from '@/api/order'
 const tabs = [
   { label: '全部', value: '' },
   { label: '进行中', value: '1' },
-  { label: '待收货', value: '2' },
-  { label: '已完成', value: '3' }
+  { label: '待收货', value: '3' },
+  { label: '已完成', value: '4' }
 ]
 
 const currentTab = ref('')
