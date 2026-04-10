@@ -21,8 +21,12 @@ export const transformMenuToRoute = (menus: any[], parent?: any): any[] => {
   return menus
     .filter((item) => item.menuType !== 'F') // 过滤按钮类型，只保留目录(M)和菜单(C)
     .map((item) => {
+      const routePath =
+        item.path && item.path.startsWith('/')
+          ? item.path
+          : `${(parent && parent.path) || ''}/${item.path || ''}`.replace('//', '/');
       const currentRoute: any = {
-        path: `${(parent && parent.path) || ''}/${item.path}`.replace('//', '/'),
+        path: routePath,
         name: item.path?.replace(/\//g, '-')?.replace(/^-/, '') || `menu-${item.menuId}`,
         component: item.menuType === 'M' ? 'LAYOUT' : (item.component || item.path),
         meta: {

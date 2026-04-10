@@ -1,92 +1,62 @@
 <template>
   <div class="dashboard">
-    <!-- 统计卡片 -->
     <n-grid cols="1 s:2 m:4" responsive="screen" :x-gap="16" :y-gap="16">
-      <n-grid-item>
+      <n-grid-item v-for="card in topCards" :key="card.label">
         <n-card size="small" :bordered="false" class="stat-card">
-          <div class="stat-icon" style="background: linear-gradient(135deg, #667eea, #764ba2)">
-            <n-icon size="24" color="#fff"><UsergroupAddOutlined /></n-icon>
+          <div class="stat-icon" :style="{ background: card.bg }">
+            <n-icon size="24" color="#fff">
+              <component :is="card.icon" />
+            </n-icon>
           </div>
           <div class="stat-info">
-            <span class="stat-label">总客户数</span>
-            <CountTo :startVal="0" :endVal="data.totalUsers" class="stat-value" />
-          </div>
-        </n-card>
-      </n-grid-item>
-      <n-grid-item>
-        <n-card size="small" :bordered="false" class="stat-card">
-          <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c)">
-            <n-icon size="24" color="#fff"><ShoppingCartOutlined /></n-icon>
-          </div>
-          <div class="stat-info">
-            <span class="stat-label">总订单数</span>
-            <CountTo :startVal="0" :endVal="data.totalOrders" class="stat-value" />
-          </div>
-        </n-card>
-      </n-grid-item>
-      <n-grid-item>
-        <n-card size="small" :bordered="false" class="stat-card">
-          <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe)">
-            <n-icon size="24" color="#fff"><AccountBookOutlined /></n-icon>
-          </div>
-          <div class="stat-info">
-            <span class="stat-label">总营收</span>
-            <CountTo prefix="¥" :startVal="0" :endVal="data.totalRevenue" :decimals="2" class="stat-value" />
-          </div>
-        </n-card>
-      </n-grid-item>
-      <n-grid-item>
-        <n-card size="small" :bordered="false" class="stat-card">
-          <div class="stat-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7)">
-            <n-icon size="24" color="#fff"><BarChartOutlined /></n-icon>
-          </div>
-          <div class="stat-info">
-            <span class="stat-label">进行中订单</span>
-            <CountTo :startVal="0" :endVal="data.activeOrders" class="stat-value" />
+            <span class="stat-label">{{ card.label }}</span>
+            <CountTo
+              :startVal="0"
+              :endVal="card.value"
+              :decimals="card.decimals || 0"
+              :prefix="card.prefix || ''"
+              :suffix="card.suffix || ''"
+              class="stat-value"
+            />
           </div>
         </n-card>
       </n-grid-item>
     </n-grid>
 
-    <!-- 第二行：小指标卡片 -->
     <n-grid cols="1 s:2 m:4" responsive="screen" :x-gap="16" :y-gap="16" class="mt-4">
       <n-grid-item>
         <n-card size="small" :bordered="false">
-          <n-statistic label="本月新增订单" :value="data.monthOrders" />
+          <n-statistic label="本月新增订单" :value="data.monthOrders || 0" />
         </n-card>
       </n-grid-item>
       <n-grid-item>
         <n-card size="small" :bordered="false">
-          <n-statistic label="本月营收">
+          <n-statistic label="本月营收" :value="Number(data.monthRevenue || 0)">
             <template #prefix>¥</template>
-            {{ data.monthRevenue?.toFixed(2) || '0.00' }}
           </n-statistic>
         </n-card>
       </n-grid-item>
       <n-grid-item>
         <n-card size="small" :bordered="false">
-          <n-statistic label="待处理意向" :value="data.pendingRequests">
-            <template #suffix>
-              <n-tag v-if="data.pendingRequests > 0" type="warning" size="small">需关注</n-tag>
-            </template>
+          <n-statistic label="平均客单价" :value="Number(data.averageOrderAmount || 0)">
+            <template #prefix>¥</template>
           </n-statistic>
         </n-card>
       </n-grid-item>
       <n-grid-item>
         <n-card size="small" :bordered="false">
-          <n-statistic label="低库存物料" :value="data.lowStockMaterials">
+          <n-statistic label="复购客户" :value="data.repeatCustomers || 0">
             <template #suffix>
-              <n-tag v-if="data.lowStockMaterials > 0" type="error" size="small">预警</n-tag>
+              <n-tag type="info" size="small">{{ Number(data.repeatCustomerRate || 0).toFixed(2) }}%</n-tag>
             </template>
           </n-statistic>
         </n-card>
       </n-grid-item>
     </n-grid>
 
-    <!-- 第三行：图表 -->
     <n-grid cols="1 s:1 m:2" responsive="screen" :x-gap="16" :y-gap="16" class="mt-4">
       <n-grid-item>
-        <n-card title="近7天订单趋势" size="small" :bordered="false">
+        <n-card title="近 7 天订单趋势" size="small" :bordered="false">
           <div ref="trendChartRef" class="chart-box"></div>
         </n-card>
       </n-grid-item>
@@ -97,7 +67,6 @@
       </n-grid-item>
     </n-grid>
 
-    <!-- 第四行：图表 -->
     <n-grid cols="1 s:1 m:2" responsive="screen" :x-gap="16" :y-gap="16" class="mt-4">
       <n-grid-item>
         <n-card title="品类订单排名" size="small" :bordered="false">
@@ -110,41 +79,62 @@
         </n-card>
       </n-grid-item>
     </n-grid>
+
+    <n-grid cols="1 s:1 m:2" responsive="screen" :x-gap="16" :y-gap="16" class="mt-4">
+      <n-grid-item>
+        <n-card title="品类转化率" size="small" :bordered="false">
+          <div ref="conversionChartRef" class="chart-box"></div>
+        </n-card>
+      </n-grid-item>
+      <n-grid-item>
+        <n-card title="流程瓶颈节点" size="small" :bordered="false">
+          <div ref="bottleneckChartRef" class="chart-box"></div>
+        </n-card>
+      </n-grid-item>
+    </n-grid>
+
+    <n-grid cols="1 s:1 m:2" responsive="screen" :x-gap="16" :y-gap="16" class="mt-4">
+      <n-grid-item>
+        <n-card title="设计师效率" size="small" :bordered="false">
+          <n-data-table :columns="designerColumns" :data="designerTableData" :pagination="false" />
+        </n-card>
+      </n-grid-item>
+      <n-grid-item>
+        <n-card title="品类转化明细" size="small" :bordered="false">
+          <n-data-table :columns="conversionColumns" :data="conversionTableData" :pagination="false" />
+        </n-card>
+      </n-grid-item>
+    </n-grid>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, Ref } from 'vue';
-import { getDashboardData } from '@/api/dashboard/console';
-import { useECharts } from '@/hooks/web/useECharts';
+import { computed, onMounted, ref, type Ref } from 'vue';
+import { getDashboardData, type DashboardData } from '@/api/dashboard/console';
 import { CountTo } from '@/components/CountTo/index';
+import { useECharts } from '@/hooks/web/useECharts';
 import {
-  UsergroupAddOutlined,
-  ShoppingCartOutlined,
   AccountBookOutlined,
   BarChartOutlined,
+  RiseOutlined,
+  ShoppingCartOutlined,
 } from '@vicons/antd';
 
-const data = ref<any>({
-  totalUsers: 0,
-  totalOrders: 0,
-  totalRevenue: 0,
-  activeOrders: 0,
-  monthOrders: 0,
-  monthRevenue: 0,
-  pendingRequests: 0,
-  lowStockMaterials: 0,
-});
+const data = ref<Partial<DashboardData>>({});
 
 const trendChartRef = ref<HTMLDivElement | null>(null);
 const pieChartRef = ref<HTMLDivElement | null>(null);
 const barChartRef = ref<HTMLDivElement | null>(null);
 const areaChartRef = ref<HTMLDivElement | null>(null);
+const conversionChartRef = ref<HTMLDivElement | null>(null);
+const bottleneckChartRef = ref<HTMLDivElement | null>(null);
 
 const { setOptions: setTrendOptions } = useECharts(trendChartRef as Ref<HTMLDivElement>);
 const { setOptions: setPieOptions } = useECharts(pieChartRef as Ref<HTMLDivElement>);
 const { setOptions: setBarOptions } = useECharts(barChartRef as Ref<HTMLDivElement>);
 const { setOptions: setAreaOptions } = useECharts(areaChartRef as Ref<HTMLDivElement>);
+const { setOptions: setConversionOptions } = useECharts(conversionChartRef as Ref<HTMLDivElement>);
+const { setOptions: setBottleneckOptions } = useECharts(bottleneckChartRef as Ref<HTMLDivElement>);
 
 const STATUS_MAP: Record<number, string> = {
   0: '待支付',
@@ -156,141 +146,191 @@ const STATUS_MAP: Record<number, string> = {
   6: '待付尾款',
 };
 
+const topCards = computed(() => [
+  {
+    label: '总订单数',
+    value: Number(data.value.totalOrders || 0),
+    icon: ShoppingCartOutlined,
+    bg: 'linear-gradient(135deg, #667eea, #764ba2)',
+  },
+  {
+    label: '总营收',
+    value: Number(data.value.totalRevenue || 0),
+    icon: AccountBookOutlined,
+    bg: 'linear-gradient(135deg, #4facfe, #00f2fe)',
+    prefix: '¥',
+    decimals: 2,
+  },
+  {
+    label: '进行中订单',
+    value: Number(data.value.activeOrders || 0),
+    icon: BarChartOutlined,
+    bg: 'linear-gradient(135deg, #43e97b, #38f9d7)',
+  },
+  {
+    label: '复购率',
+    value: Number(data.value.repeatCustomerRate || 0),
+    icon: RiseOutlined,
+    bg: 'linear-gradient(135deg, #f093fb, #f5576c)',
+    suffix: '%',
+    decimals: 2,
+  },
+]);
+
+const conversionTableData = computed(() =>
+  (data.value.conversionMetrics || []).map((item) => {
+    const requestCount = Number(item.request_count || 0);
+    const convertedCount = Number(item.converted_count || 0);
+    const completedCount = Number(item.completed_count || 0);
+    return {
+      ...item,
+      conversionRate: requestCount > 0 ? Number(((convertedCount / requestCount) * 100).toFixed(2)) : 0,
+      completionRate: convertedCount > 0 ? Number(((completedCount / convertedCount) * 100).toFixed(2)) : 0,
+    };
+  })
+);
+
+const designerTableData = computed(() =>
+  (data.value.designerEfficiency || []).map((item) => ({
+    ...item,
+    overtimeText: Number(item.overtime_count || 0) > 0 ? `${item.overtime_count} 单` : '0 单',
+    avgCycleText: Number(item.avg_cycle_days || 0).toFixed(2),
+  }))
+);
+
+const designerColumns = [
+  { title: '设计师', key: 'designer_name' },
+  { title: '订单数', key: 'total_orders' },
+  { title: '平均工期(天)', key: 'avgCycleText' },
+  { title: '逾期单', key: 'overtimeText' },
+];
+
+const conversionColumns = [
+  { title: '品类', key: 'category_name' },
+  { title: '意向数', key: 'request_count' },
+  { title: '转单数', key: 'converted_count' },
+  { title: '完成单', key: 'completed_count' },
+  {
+    title: '转化率',
+    key: 'conversionRate',
+    render(row: any) {
+      return `${Number(row.conversionRate || 0).toFixed(2)}%`;
+    },
+  },
+  {
+    title: '完成率',
+    key: 'completionRate',
+    render(row: any) {
+      return `${Number(row.completionRate || 0).toFixed(2)}%`;
+    },
+  },
+];
+
 onMounted(async () => {
-  try {
-    const res = await getDashboardData();
-    data.value = res;
-    renderCharts(res);
-  } catch (e) {
-    console.error('获取看板数据失败', e);
-  }
+  const res = await getDashboardData();
+  data.value = res;
+  renderCharts(res);
 });
 
-function renderCharts(d: any) {
-  // 1. 近7天订单趋势
-  const trendDates = (d.dailyOrderTrend || []).map((i: any) => i.date?.substring(5) || '');
-  const trendCounts = (d.dailyOrderTrend || []).map((i: any) => i.order_count || 0);
-  const trendRevenue = (d.dailyOrderTrend || []).map((i: any) => Number(i.revenue) || 0);
+function renderCharts(d: Partial<DashboardData>) {
+  const trendDates = (d.dailyOrderTrend || []).map((item) => item.date?.substring(5) || '');
+  const trendCounts = (d.dailyOrderTrend || []).map((item) => Number(item.order_count || 0));
+  const trendRevenue = (d.dailyOrderTrend || []).map((item) => Number(item.revenue || 0));
 
   setTrendOptions({
     tooltip: { trigger: 'axis' },
-    legend: { data: ['订单数', '营收(¥)'], bottom: 0 },
-    grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
+    legend: { data: ['订单数', '营收'], bottom: 0 },
+    grid: { left: '3%', right: '4%', bottom: '15%', containLabel: true },
     xAxis: { type: 'category', data: trendDates, boundaryGap: false },
-    yAxis: [
-      { type: 'value', name: '订单', position: 'left' },
-      { type: 'value', name: '¥', position: 'right' },
-    ],
+    yAxis: [{ type: 'value', name: '订单' }, { type: 'value', name: '元' }],
     series: [
-      {
-        name: '订单数',
-        type: 'line',
-        smooth: true,
-        data: trendCounts,
-        itemStyle: { color: '#667eea' },
-        areaStyle: { color: 'rgba(102, 126, 234, 0.15)' },
-      },
-      {
-        name: '营收(¥)',
-        type: 'line',
-        smooth: true,
-        yAxisIndex: 1,
-        data: trendRevenue,
-        itemStyle: { color: '#f5576c' },
-        areaStyle: { color: 'rgba(245, 87, 108, 0.1)' },
-      },
+      { name: '订单数', type: 'line', smooth: true, data: trendCounts },
+      { name: '营收', type: 'line', smooth: true, data: trendRevenue, yAxisIndex: 1 },
     ],
   });
-
-  // 2. 订单状态分布
-  const pieData = (d.orderStatusDistribution || []).map((i: any) => ({
-    name: STATUS_MAP[i.status] || `状态${i.status}`,
-    value: i.count,
-  }));
 
   setPieOptions({
     tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
-    legend: { bottom: 0, type: 'scroll' },
+    legend: { bottom: 0 },
     series: [
       {
         type: 'pie',
-        radius: ['40%', '65%'],
-        center: ['50%', '45%'],
-        avoidLabelOverlap: true,
-        itemStyle: { borderRadius: 6, borderColor: '#fff', borderWidth: 2 },
-        label: { show: true, formatter: '{b}\n{c}单' },
-        data: pieData,
-        color: ['#95afc0', '#667eea', '#f093fb', '#43e97b', '#4facfe', '#ffd93d'],
+        radius: ['40%', '66%'],
+        center: ['50%', '42%'],
+        data: (d.orderStatusDistribution || []).map((item) => ({
+          name: STATUS_MAP[item.status] || `状态${item.status}`,
+          value: item.count,
+        })),
       },
     ],
   });
-
-  // 3. 品类订单排名
-  const categoryNames = (d.categoryRank || []).map((i: any) => i.category_name || '未知').reverse();
-  const categoryCounts = (d.categoryRank || []).map((i: any) => i.order_count || 0).reverse();
 
   setBarOptions({
     tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-    grid: { left: '3%', right: '10%', bottom: '3%', top: '3%', containLabel: true },
+    grid: { left: '3%', right: '8%', bottom: '3%', containLabel: true },
     xAxis: { type: 'value' },
-    yAxis: { type: 'category', data: categoryNames },
+    yAxis: {
+      type: 'category',
+      data: (d.categoryRank || []).map((item) => item.category_name || '未命名').reverse(),
+    },
     series: [
       {
         type: 'bar',
-        data: categoryCounts,
+        data: (d.categoryRank || []).map((item) => Number(item.order_count || 0)).reverse(),
         barWidth: '50%',
-        itemStyle: {
-          borderRadius: [0, 4, 4, 0],
-          color: {
-            type: 'linear', x: 0, y: 0, x2: 1, y2: 0,
-            colorStops: [
-              { offset: 0, color: '#667eea' },
-              { offset: 1, color: '#764ba2' },
-            ],
-          } as any,
-        },
       },
     ],
   });
 
-  // 4. 月度营收
-  const months = (d.monthlyRevenueTrend || []).map((i: any) => i.month || '');
-  const monthlyRevenues = (d.monthlyRevenueTrend || []).map((i: any) => Number(i.revenue) || 0);
-  const monthlyOrders = (d.monthlyRevenueTrend || []).map((i: any) => i.order_count || 0);
-
   setAreaOptions({
     tooltip: { trigger: 'axis' },
-    legend: { data: ['营收(¥)', '订单数'], bottom: 0 },
-    grid: { left: '3%', right: '4%', bottom: '15%', top: '10%', containLabel: true },
-    xAxis: { type: 'category', data: months, boundaryGap: false },
-    yAxis: [
-      { type: 'value', name: '¥', position: 'left' },
-      { type: 'value', name: '订单', position: 'right' },
-    ],
+    legend: { data: ['营收', '订单数'], bottom: 0 },
+    grid: { left: '3%', right: '4%', bottom: '15%', containLabel: true },
+    xAxis: { type: 'category', data: (d.monthlyRevenueTrend || []).map((item) => item.month || '') },
+    yAxis: [{ type: 'value', name: '元' }, { type: 'value', name: '订单' }],
     series: [
       {
-        name: '营收(¥)',
+        name: '营收',
         type: 'line',
         smooth: true,
-        data: monthlyRevenues,
-        areaStyle: {
-          color: {
-            type: 'linear', x: 0, y: 0, x2: 0, y2: 1,
-            colorStops: [
-              { offset: 0, color: 'rgba(67, 233, 123, 0.5)' },
-              { offset: 1, color: 'rgba(67, 233, 123, 0.02)' },
-            ],
-          } as any,
-        },
-        itemStyle: { color: '#43e97b' },
+        data: (d.monthlyRevenueTrend || []).map((item) => Number(item.revenue || 0)),
+        areaStyle: {},
       },
       {
         name: '订单数',
         type: 'bar',
         yAxisIndex: 1,
-        data: monthlyOrders,
-        barWidth: '30%',
-        itemStyle: { color: 'rgba(102, 126, 234, 0.6)', borderRadius: [4, 4, 0, 0] },
+        data: (d.monthlyRevenueTrend || []).map((item) => Number(item.order_count || 0)),
+      },
+    ],
+  });
+
+  const conversionData = conversionTableData.value;
+  setConversionOptions({
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['转化率', '完成率'], bottom: 0 },
+    grid: { left: '3%', right: '4%', bottom: '15%', containLabel: true },
+    xAxis: { type: 'category', data: conversionData.map((item) => item.category_name || '未命名') },
+    yAxis: { type: 'value', axisLabel: { formatter: '{value}%' } },
+    series: [
+      { name: '转化率', type: 'bar', data: conversionData.map((item) => Number(item.conversionRate || 0)) },
+      { name: '完成率', type: 'line', smooth: true, data: conversionData.map((item) => Number(item.completionRate || 0)) },
+    ],
+  });
+
+  setBottleneckOptions({
+    tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+    grid: { left: '3%', right: '8%', bottom: '3%', containLabel: true },
+    xAxis: { type: 'value', name: '天' },
+    yAxis: {
+      type: 'category',
+      data: (d.workflowBottlenecks || []).map((item) => item.step_name || '未知节点').reverse(),
+    },
+    series: [
+      {
+        type: 'bar',
+        data: (d.workflowBottlenecks || []).map((item) => Number(item.avg_stay_days || 0)).reverse(),
+        barWidth: '50%',
       },
     ],
   });

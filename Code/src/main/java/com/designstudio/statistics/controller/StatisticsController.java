@@ -45,5 +45,11 @@ public class StatisticsController {
         private List<Map<String, Object>> dailyOrderTrend;
         private List<Map<String, Object>> categoryRank;
         private List<Map<String, Object>> monthlyRevenueTrend;
+        private BigDecimal averageOrderAmount;
+        private Integer repeatCustomers;
+        private BigDecimal repeatCustomerRate;
+        private List<Map<String, Object>> conversionMetrics;
+        private List<Map<String, Object>> designerEfficiency;
+        private List<Map<String, Object>> workflowBottlenecks;
     }
 }
