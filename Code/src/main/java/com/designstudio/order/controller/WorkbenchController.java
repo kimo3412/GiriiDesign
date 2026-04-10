@@ -54,5 +54,6 @@ public class WorkbenchController {
         private String description;
         private String imageUrls;
         private String blockReason;
+        private Long rollbackTargetStepId;
     }
 }

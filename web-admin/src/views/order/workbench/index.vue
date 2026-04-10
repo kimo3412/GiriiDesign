@@ -17,8 +17,12 @@
           <n-tag v-if="selectedStep?.expectedDurationDays" type="warning" size="medium">
             预计 {{ selectedStep.expectedDurationDays }} 天
           </n-tag>
-          <n-tag v-if="selectedStep?.needImageUpload === 1" type="error" size="medium">需上传图片</n-tag>
-          <n-tag v-if="selectedStep?.visibleToClient === 1" type="success" size="medium">客户端可见</n-tag>
+          <n-tag v-if="selectedStep?.needImageUpload === 1" type="error" size="medium">
+            需上传图片
+          </n-tag>
+          <n-tag v-if="selectedStep?.visibleToClient === 1" type="success" size="medium">
+            客户端可见
+          </n-tag>
         </n-space>
       </n-space>
 
@@ -46,24 +50,19 @@
 
           <n-spin :show="loadingWorkbench">
             <n-empty v-if="!selectedCategoryId" description="请先选择一个品类" />
-            <n-empty
-              v-else-if="workflowSteps.length === 0"
-              description="当前品类还没有配置工作流"
-            />
+            <n-empty v-else-if="workflowSteps.length === 0" description="当前品类还没有配置工作流" />
             <n-empty
               v-else-if="orders.length === 0"
               :description="`${selectedStep?.stepName || '当前节点'} 暂无订单`"
             />
+
             <div v-else class="order-list">
               <button
                 v-for="order in orders"
                 :key="order.orderId"
                 type="button"
                 class="order-card"
-                :class="{
-                  active: order.orderId === activeOrderId,
-                  blocked: order.isBlocked === 1,
-                }"
+                :class="{ active: order.orderId === activeOrderId, blocked: order.isBlocked === 1 }"
                 @click="selectOrder(order.orderId)"
               >
                 <div class="order-card__head">
@@ -74,12 +73,10 @@
                   <n-tag v-if="order.isBlocked === 1" type="error" size="small">已阻塞</n-tag>
                 </div>
                 <div class="order-card__meta">
-                  <span>用户 #{{ order.userId }}</span>
-                  <span>设计师 #{{ order.designerId || '-' }}</span>
+                  <span>{{ getCustomerLabel(order) }}</span>
+                  <span>{{ getDesignerLabel(order) }}</span>
                 </div>
-                <div v-if="order.blockReason" class="order-card__reason">
-                  {{ order.blockReason }}
-                </div>
+                <div v-if="order.blockReason" class="order-card__reason">{{ order.blockReason }}</div>
               </button>
             </div>
           </n-spin>
@@ -90,9 +87,10 @@
         <n-card :bordered="false" :title="activeOrder ? `订单 ${activeOrder.orderSn}` : '节点执行面板'">
           <n-spin :show="loadingDetail">
             <n-empty v-if="!activeOrder" description="选择左侧订单后即可处理当前节点" />
+
             <div v-else class="workbench-panel">
               <div class="workbench-summary">
-                <div class="summary-main">
+                <div>
                   <div class="summary-title">{{ selectedStep?.stepName || '当前节点' }}</div>
                   <div class="summary-desc">
                     {{ selectedStep?.nodeDescription || '该节点暂无额外说明。' }}
@@ -105,6 +103,9 @@
                   <n-tag v-if="activeOrder.expectedDate" type="warning">
                     预计交付 {{ activeOrder.expectedDate }}
                   </n-tag>
+                  <n-tag v-if="rollbackTargetLabel" type="default">
+                    默认退回：{{ rollbackTargetLabel }}
+                  </n-tag>
                 </n-space>
               </div>
 
@@ -116,6 +117,7 @@
               >
                 当前订单阻塞原因：{{ activeOrder.blockReason }}
               </n-alert>
+
               <n-alert
                 v-if="selectedStep?.needImageUpload === 1"
                 type="warning"
@@ -128,11 +130,11 @@
               <n-grid :cols="2" :x-gap="12" class="summary-grid">
                 <n-gi>
                   <div class="summary-label">客户</div>
-                  <div class="summary-value">#{{ activeOrder.userId }}</div>
+                  <div class="summary-value">{{ getCustomerLabel(activeOrder) }}</div>
                 </n-gi>
                 <n-gi>
                   <div class="summary-label">设计师</div>
-                  <div class="summary-value">#{{ activeOrder.designerId || '-' }}</div>
+                  <div class="summary-value">{{ getDesignerLabel(activeOrder) }}</div>
                 </n-gi>
                 <n-gi>
                   <div class="summary-label">总金额</div>
@@ -151,6 +153,30 @@
                     type="textarea"
                     :autosize="{ minRows: 3, maxRows: 5 }"
                     placeholder="填写当前节点产出、沟通结果或处理说明"
+                  />
+                </n-form-item>
+
+                <n-alert
+                  v-if="canRenderAction('rollback')"
+                  type="info"
+                  :show-icon="false"
+                  class="panel-alert"
+                >
+                  <template v-if="rollbackOptions.length">
+                    当前位于「{{ currentOrderStepName }}」，可退回到：{{ rollbackOptionText }}。
+                    当前将退回到「{{ rollbackTargetLabel }}」。
+                  </template>
+                  <template v-else>
+                    当前订单已经在流程第一步，不能继续退回。
+                  </template>
+                </n-alert>
+
+                <n-form-item v-if="canRenderAction('rollback')" label="退回目标节点">
+                  <n-select
+                    v-model:value="actionForm.rollbackTargetStepId"
+                    :options="rollbackOptions"
+                    :disabled="!rollbackOptions.length"
+                    placeholder="默认退回上一步，也可选择更早的前序节点"
                   />
                 </n-form-item>
 
@@ -182,7 +208,6 @@
                 <div class="action-buttons">
                   <n-button
                     v-if="canRenderAction('save')"
-                    type="default"
                     :loading="submittingAction === 'save'"
                     @click="submitAction('save')"
                   >
@@ -196,6 +221,16 @@
                     @click="submitAction('advance')"
                   >
                     推进下一步
+                  </n-button>
+                  <n-button
+                    v-if="canRenderAction('rollback')"
+                    type="error"
+                    ghost
+                    :disabled="!rollbackOptions.length || activeOrder.isBlocked === 1"
+                    :loading="submittingAction === 'rollback'"
+                    @click="submitAction('rollback')"
+                  >
+                    {{ rollbackActionText }}
                   </n-button>
                   <n-button
                     v-if="canRenderAction('block')"
@@ -220,10 +255,7 @@
 
               <n-divider>历史进度</n-divider>
 
-              <n-empty
-                v-if="!detail?.progressList?.length"
-                description="当前订单暂无进度记录"
-              />
+              <n-empty v-if="!detail?.progressList?.length" description="当前订单暂无进度记录" />
               <n-timeline v-else>
                 <n-timeline-item
                   v-for="progress in detail.progressList"
@@ -264,7 +296,7 @@ import { useGlobSetting } from '@/hooks/setting';
 import { ACCESS_TOKEN } from '@/store/mutation-types';
 import { storage } from '@/utils/Storage';
 
-type WorkbenchAction = 'save' | 'advance' | 'block' | 'unblock';
+type WorkbenchAction = 'save' | 'advance' | 'rollback' | 'block' | 'unblock';
 
 const route = useRoute();
 const message = useMessage();
@@ -282,9 +314,14 @@ const loadingDetail = ref(false);
 const submittingAction = ref<WorkbenchAction | ''>('');
 const uploadFiles = ref<UploadFileInfo[]>([]);
 
-const actionForm = ref({
+const actionForm = ref<{
+  description: string;
+  blockReason: string;
+  rollbackTargetStepId: number | null;
+}>({
   description: '',
   blockReason: '',
+  rollbackTargetStepId: null,
 });
 
 const selectedStep = computed(
@@ -298,14 +335,56 @@ const activeOrder = computed(() => {
 const allowedActions = computed<WorkbenchAction[]>(() => {
   const raw = selectedStep.value?.allowedActions;
   if (!raw) {
-    return ['save', 'advance', 'block', 'unblock'];
+    return ['save', 'advance', 'rollback', 'block', 'unblock'];
   }
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : ['save', 'advance', 'block', 'unblock'];
+    return Array.isArray(parsed) ? parsed : ['save', 'advance', 'rollback', 'block', 'unblock'];
   } catch {
-    return ['save', 'advance', 'block', 'unblock'];
+    return ['save', 'advance', 'rollback', 'block', 'unblock'];
   }
+});
+
+const rollbackOptions = computed(() => {
+  if (!activeOrder.value) {
+    return [];
+  }
+  const steps = detail.value?.workflowSteps || workflowSteps.value;
+  const currentIndex = steps.findIndex((item: any) => item.stepId === activeOrder.value.currentStepId);
+  if (currentIndex <= 0) {
+    return [];
+  }
+  return steps
+    .slice(0, currentIndex)
+    .reverse()
+    .map((step: any) => ({
+      label: `${step.stepOrder}. ${step.stepName}`,
+      value: step.stepId,
+    }));
+});
+
+const rollbackTargetLabel = computed(() => {
+  if (!rollbackOptions.value.length) {
+    return '';
+  }
+  const target = rollbackOptions.value.find((item) => item.value === actionForm.value.rollbackTargetStepId);
+  return target?.label || rollbackOptions.value[0].label;
+});
+
+const rollbackOptionText = computed(() => rollbackOptions.value.map((item) => item.label).join('、'));
+
+const currentOrderStepName = computed(() => {
+  if (!activeOrder.value?.currentStepId) {
+    return '未绑定节点';
+  }
+  return getStepName(activeOrder.value.currentStepId);
+});
+
+const rollbackActionText = computed(() => {
+  if (!rollbackOptions.value.length) {
+    return '退回前序节点';
+  }
+  return rollbackTargetLabel.value ? `退回到 ${rollbackTargetLabel.value}` : '退回前序节点';
 });
 
 onMounted(async () => {
@@ -344,7 +423,10 @@ async function loadWorkbench() {
   if (!selectedCategoryId.value) return;
   loadingWorkbench.value = true;
   try {
-    const res = await getWorkbenchData(selectedCategoryId.value, selectedStepId.value ? { stepId: selectedStepId.value } : undefined);
+    const res = await getWorkbenchData(
+      selectedCategoryId.value,
+      selectedStepId.value ? { stepId: selectedStepId.value } : undefined
+    );
     workflowSteps.value = res?.workflowSteps || [];
     selectedStepId.value = res?.selectedStepId || workflowSteps.value[0]?.stepId || null;
     orders.value = res?.orders || [];
@@ -377,6 +459,7 @@ async function loadOrderDetail(orderId: number) {
   loadingDetail.value = true;
   try {
     detail.value = await getOrderDetail(orderId);
+    syncRollbackTarget();
   } finally {
     loadingDetail.value = false;
   }
@@ -386,8 +469,13 @@ function resetEditor() {
   actionForm.value = {
     description: '',
     blockReason: '',
+    rollbackTargetStepId: null,
   };
   uploadFiles.value = [];
+}
+
+function syncRollbackTarget() {
+  actionForm.value.rollbackTargetStepId = rollbackOptions.value[0]?.value || null;
 }
 
 function canRenderAction(action: WorkbenchAction) {
@@ -399,6 +487,16 @@ function formatAmount(value?: number | string | null) {
     return '-';
   }
   return `¥${value}`;
+}
+
+function getCustomerLabel(order?: any) {
+  if (!order) return '-';
+  return order.customerName || (order.userId ? `客户 #${order.userId}` : '-');
+}
+
+function getDesignerLabel(order?: any) {
+  if (!order) return '-';
+  return order.designerName || (order.designerId ? `设计师 #${order.designerId}` : '-');
 }
 
 function parseImageUrls(value?: string | null) {
@@ -431,10 +529,7 @@ function toFileUrl(url?: string | null) {
   if (/^https?:\/\//i.test(url)) {
     return url;
   }
-  if (!fileUrl) {
-    return url;
-  }
-  return `${fileUrl}${url}`;
+  return fileUrl ? `${fileUrl}${url}` : url;
 }
 
 function getUploadedImageUrls() {
@@ -483,6 +578,10 @@ async function submitAction(action: WorkbenchAction) {
     message.warning('请先填写阻塞原因');
     return;
   }
+  if (action === 'rollback' && !rollbackOptions.value.length) {
+    message.warning('当前节点没有可退回的前序节点');
+    return;
+  }
 
   const imageUrls = getUploadedImageUrls();
   submittingAction.value = action;
@@ -491,6 +590,7 @@ async function submitAction(action: WorkbenchAction) {
       action,
       description: actionForm.value.description.trim() || null,
       blockReason: actionForm.value.blockReason.trim() || null,
+      rollbackTargetStepId: action === 'rollback' ? actionForm.value.rollbackTargetStepId : null,
       imageUrls: imageUrls.length ? JSON.stringify(imageUrls) : null,
     });
     message.success(actionSuccessText[action]);
@@ -504,6 +604,7 @@ async function submitAction(action: WorkbenchAction) {
 const actionSuccessText: Record<WorkbenchAction, string> = {
   save: '节点记录已保存',
   advance: '订单已推进到下一步',
+  rollback: '订单已退回到指定前序节点',
   block: '订单已标记为阻塞',
   unblock: '订单已解除阻塞',
 };

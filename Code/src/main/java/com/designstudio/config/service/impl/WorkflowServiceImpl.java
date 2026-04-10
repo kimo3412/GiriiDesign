@@ -11,6 +11,7 @@ import com.designstudio.config.service.WorkflowService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 
@@ -76,6 +77,9 @@ public class WorkflowServiceImpl implements WorkflowService {
                 }
                 if (step.getVisibleToClient() == null) {
                     step.setVisibleToClient(1);
+                }
+                if (!StringUtils.hasText(step.getAllowedActions())) {
+                    step.setAllowedActions("[\"save\",\"advance\",\"rollback\",\"block\",\"unblock\"]");
                 }
                 stepMapper.insert(step);
             }

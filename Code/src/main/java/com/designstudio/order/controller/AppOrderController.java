@@ -12,6 +12,7 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @RestController
@@ -71,6 +72,21 @@ public class AppOrderController {
         private DsOrder order;
         private List<DsWorkflowStep> workflowSteps;
         private List<DsOrderProgress> progressList;
+        private List<TimelineEventVO> timelineEvents;
         private Integer currentStepIndex;
+        private String currentStepName;
+        private Integer hasRollback;
+    }
+
+    @Data
+    public static class TimelineEventVO {
+        private Long progressId;
+        private Long stepId;
+        private String stepName;
+        private String description;
+        private String imageUrls;
+        private LocalDateTime createTime;
+        private String eventType;
+        private String eventLabel;
     }
 }

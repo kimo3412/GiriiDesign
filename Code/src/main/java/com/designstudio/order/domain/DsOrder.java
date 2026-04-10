@@ -1,6 +1,7 @@
 package com.designstudio.order.domain;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import com.baomidou.mybatisplus.annotation.Version;
@@ -74,4 +75,10 @@ public class DsOrder extends BaseEntity {
 
     /** 完成时间 */
     private LocalDateTime finishTime;
+
+    @TableField(exist = false)
+    private String customerName;
+
+    @TableField(exist = false)
+    private String designerName;
 }

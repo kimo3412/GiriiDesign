@@ -107,6 +107,7 @@
             <n-space>
               <n-checkbox value="save">保存记录</n-checkbox>
               <n-checkbox value="advance">推进下一步</n-checkbox>
+              <n-checkbox value="rollback">退回上一步</n-checkbox>
               <n-checkbox value="block">标记阻塞</n-checkbox>
               <n-checkbox value="unblock">解除阻塞</n-checkbox>
             </n-space>
@@ -154,7 +155,7 @@ const formRef = ref();
 const formData = ref<WorkflowStep>({
   stepName: '',
   nodeDescription: '',
-  allowedActions: '["save","advance"]',
+  allowedActions: '["save","advance","rollback","block","unblock"]',
   needImageUpload: 0,
   visibleToClient: 1,
   expectedDurationDays: null,
@@ -214,7 +215,7 @@ async function loadWorkflow() {
     workflowName.value = res?.workflow?.workflowName || '';
     stepsList.value = (res?.steps || []).map((step: WorkflowStep) => ({
       ...step,
-      allowedActions: step.allowedActions || '["save","advance"]',
+      allowedActions: step.allowedActions || '["save","advance","rollback","block","unblock"]',
       needImageUpload: step.needImageUpload ?? 0,
       visibleToClient: step.visibleToClient ?? 1,
     }));
@@ -227,7 +228,7 @@ function resetForm() {
   formData.value = {
     stepName: '',
     nodeDescription: '',
-    allowedActions: '["save","advance"]',
+    allowedActions: '["save","advance","rollback","block","unblock"]',
     needImageUpload: 0,
     visibleToClient: 1,
     expectedDurationDays: null,
@@ -246,7 +247,7 @@ function handleEditStep(row: WorkflowStep, index: number) {
   editIndex.value = index;
   formData.value = {
     ...row,
-    allowedActions: row.allowedActions || '["save","advance"]',
+    allowedActions: row.allowedActions || '["save","advance","rollback","block","unblock"]',
     needImageUpload: row.needImageUpload ?? 0,
     visibleToClient: row.visibleToClient ?? 1,
   };
