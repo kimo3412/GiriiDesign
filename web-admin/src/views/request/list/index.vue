@@ -145,7 +145,7 @@
     </n-drawer>
 
     <!-- 转单弹窗 -->
-    <n-modal v-model:show="showConvert" title="意向转正式订单" preset="dialog" positive-text="确认转单" negative-text="取消" @positive-click="handleConvert" style="width: 520px">
+    <n-modal v-model:show="showConvert" title="意向转正式订单" preset="dialog" positive-text="确认转单" negative-text="取消" @positive-click="handleConvert" style="width: 600px">
       <div class="convert-hint">
         <n-alert type="info" :bordered="false">
           转单后将创建正式订单，并启动对应品类的工作流。客户可在小程序查看订单进度。
@@ -155,6 +155,24 @@
         <n-form-item label="指派设计师">
           <n-select v-model:value="convertForm.designerId" :options="designerOptions" placeholder="选择负责的设计师" />
         </n-form-item>
+        <n-form-item label="BOM模板" v-if="bomTemplateOptions.length > 0">
+          <n-select
+            v-model:value="convertForm.bomTemplateId"
+            :options="bomTemplateOptions"
+            placeholder="选择BOM模板（选填）"
+            clearable
+            @update:value="handleBomTemplateChange"
+          />
+        </n-form-item>
+        <!-- BOM物料预览 -->
+        <div v-if="bomPreviewItems.length > 0" class="bom-preview">
+          <div class="bom-preview-title">物料明细预览</div>
+          <n-data-table :columns="bomPreviewColumns" :data="bomPreviewItems" :bordered="false" size="tiny" />
+          <div class="bom-cost-row">
+            <span>物料成本合计：</span>
+            <span class="bom-cost-value">¥{{ bomPreviewCost }}</span>
+          </div>
+        </div>
         <n-grid :cols="2" :x-gap="12">
           <n-gi>
             <n-form-item label="总金额">
@@ -199,6 +217,7 @@ import { getRequestList, getRequestDetail, convertRequest, closeRequest } from '
 import { getCategoryList } from '@/api/config/category';
 import { getFieldList } from '@/api/config/field';
 import { getDesignersByCategory } from '@/api/system/adminList';
+import { getBomTemplateList, getBomTemplateDetail } from '@/api/supply/index';
 
 const message = useMessage();
 const loading = ref(false);
@@ -279,7 +298,20 @@ const convertForm = ref({
   prepayAmount: null as number | null,
   expectedDateTs: null as number | null,
   remark: '',
+  bomTemplateId: null as number | null,
 });
+
+// BOM 模板
+const bomTemplateOptions = ref<any[]>([]);
+const bomPreviewItems = ref<any[]>([]);
+const bomPreviewCost = ref('0.00');
+const bomPreviewColumns = [
+  { title: '物料', key: 'name', width: 120 },
+  { title: 'SKU', key: 'sku', width: 90 },
+  { title: '用量', key: 'quantity', width: 70, align: 'right' as const },
+  { title: '单价', key: 'unitPrice', width: 80, align: 'right' as const, render: (row: any) => `¥${row.unitPrice}` },
+  { title: '小计', key: 'subtotal', width: 80, align: 'right' as const, render: (row: any) => `¥${row.subtotal}` },
+];
 
 // 关闭
 const showClose = ref(false);
@@ -405,7 +437,10 @@ const handleQuickConvert = async (row: any) => {
 };
 
 const openConvert = async () => {
-  convertForm.value = { designerId: null, totalAmount: null, prepayAmount: null, expectedDateTs: null, remark: '' };
+  convertForm.value = { designerId: null, totalAmount: null, prepayAmount: null, expectedDateTs: null, remark: '', bomTemplateId: null };
+  bomPreviewItems.value = [];
+  bomPreviewCost.value = '0.00';
+  bomTemplateOptions.value = [];
   // 根据意向的品类加载负责该品类的设计师
   if (detailData.value?.categoryId) {
     try {
@@ -415,10 +450,43 @@ const openConvert = async () => {
       console.error('加载设计师失败', e);
       designerOptions.value = [];
     }
+    // 加载该品类的 BOM 模板
+    try {
+      const templates = await getBomTemplateList({ categoryId: detailData.value.categoryId });
+      bomTemplateOptions.value = (templates || []).map((t: any) => ({ label: t.name, value: t.templateId }));
+    } catch (e) {
+      console.error('加载BOM模板失败', e);
+      bomTemplateOptions.value = [];
+    }
   } else {
     designerOptions.value = [];
   }
   showConvert.value = true;
+};
+
+const handleBomTemplateChange = async (templateId: number | null) => {
+  convertForm.value.bomTemplateId = templateId;
+  if (!templateId) {
+    bomPreviewItems.value = [];
+    bomPreviewCost.value = '0.00';
+    return;
+  }
+  try {
+    const detail = await getBomTemplateDetail(templateId);
+    const items = (detail?.items || []).map((item: any) => ({
+      name: item.materialName || item.materialId,
+      sku: item.materialSku || '-',
+      quantity: item.quantity,
+      unitPrice: item.unitPrice ?? 0,
+      subtotal: ((item.quantity || 0) * (item.unitPrice || 0)).toFixed(2),
+    }));
+    bomPreviewItems.value = items;
+    const total = items.reduce((sum: number, i: any) => sum + parseFloat(i.subtotal), 0);
+    bomPreviewCost.value = total.toFixed(2);
+  } catch (e) {
+    console.error('加载BOM模板详情失败', e);
+    bomPreviewItems.value = [];
+  }
 };
 
 const handleConvert = async () => {
@@ -433,6 +501,7 @@ const handleConvert = async () => {
       prepayAmount: convertForm.value.prepayAmount,
       expectedDate,
       remark: convertForm.value.remark,
+      bomTemplateId: convertForm.value.bomTemplateId,
     });
     message.success('转单成功！订单已创建');
     showConvert.value = false;
@@ -621,5 +690,36 @@ const handleClose = async () => {
 /* 转单提示 */
 .convert-hint {
   margin-bottom: 4px;
+}
+
+/* BOM预览 */
+.bom-preview {
+  background: #f9fafb;
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 12px;
+}
+
+.bom-preview-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #666;
+  margin-bottom: 8px;
+}
+
+.bom-cost-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  padding-top: 8px;
+  font-size: 13px;
+  color: #666;
+}
+
+.bom-cost-value {
+  font-weight: 700;
+  font-size: 15px;
+  color: #e53e3e;
 }
 </style>

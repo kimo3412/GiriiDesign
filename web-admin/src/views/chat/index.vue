@@ -17,9 +17,9 @@
         <div class="conv-scroll">
           <div
             v-for="conv in filteredConversations"
-            :key="conv.userId"
+            :key="(conv.userId) + '_' + (conv.orderId || 'general')"
             class="conv-item"
-            :class="{ active: activeUserId === conv.userId }"
+            :class="{ active: activeUserId === conv.userId && activeOrderId == conv.orderId }"
             @click="selectConversation(conv)"
           >
             <div class="conv-avatar">
@@ -28,7 +28,11 @@
             </div>
             <div class="conv-info">
               <div class="conv-top">
-                <span class="conv-name">{{ conv.nickname || conv.username || `用户#${conv.userId}` }}</span>
+                <span class="conv-name">
+                  {{ conv.nickname || conv.username || `用户#${conv.userId}` }}
+                  <span v-if="conv.orderSn" class="conv-order-tag">{{ conv.orderSn }}</span>
+                  <span v-else class="conv-order-tag conv-order-general">一般咨询</span>
+                </span>
                 <span class="conv-time-text">{{ formatTime(conv.lastTime) }}</span>
               </div>
               <div class="conv-bottom">
@@ -48,6 +52,8 @@
         <div class="chat-header">
           <div class="chat-header-left">
             <span class="chat-title">{{ activeUserName }}</span>
+            <n-tag v-if="activeOrderSn" size="small" type="info" round>{{ activeOrderSn }}</n-tag>
+            <n-tag v-else size="small" round>一般咨询</n-tag>
             <n-tag size="tiny" :type="wsConnected ? 'success' : 'default'" round>
               {{ wsConnected ? '在线' : '离线' }}
             </n-tag>
@@ -167,7 +173,9 @@ const userStore = useUser();
 const searchText = ref('');
 const conversations = ref<any[]>([]);
 const activeUserId = ref<number | null>(null);
+const activeOrderId = ref<number | null>(null);
 const activeUserName = ref('');
+const activeOrderSn = ref('');
 const messages = ref<any[]>([]);
 const inputText = ref('');
 const messagesRef = ref<HTMLElement | null>(null);
@@ -196,10 +204,12 @@ const totalUnread = computed(() =>
 
 const filteredConversations = computed(() => {
   if (!searchText.value) return conversations.value;
+  const kw = searchText.value.toLowerCase();
   return conversations.value.filter(
     (c: any) =>
-      String(c.order_no || c.order_id).includes(searchText.value) ||
-      (c.last_content || '').includes(searchText.value)
+      (c.orderSn || '').toLowerCase().includes(kw) ||
+      (c.nickname || '').toLowerCase().includes(kw) ||
+      (c.lastContent || '').toLowerCase().includes(kw)
   );
 });
 
@@ -227,14 +237,16 @@ const fetchConversations = async () => {
 
 const selectConversation = async (conv: any) => {
   activeUserId.value = conv.userId;
+  activeOrderId.value = conv.orderId || null;
   activeUserName.value = conv.nickname || conv.username || `用户#${conv.userId}`;
+  activeOrderSn.value = conv.orderSn || '';
   userSummary.value = null;
 
   try {
-    const res = await getChatMessages(conv.userId);
+    const res = await getChatMessages(conv.userId, activeOrderId.value);
     messages.value = res || [];
     scrollToBottom();
-    await markChatRead(conv.userId);
+    await markChatRead(conv.userId, activeOrderId.value);
     conv.unreadCount = 0;
   } catch (e) { console.error('获取聊天记录失败', e); }
 
@@ -257,7 +269,7 @@ const connectWS = () => {
     try {
       const msg = JSON.parse(event.data);
       if (msg.type === 'NEW_MSG') {
-        if (msg.userId === activeUserId.value) {
+        if (msg.userId === activeUserId.value && (msg.orderId == activeOrderId.value)) {
           messages.value.push(msg);
           scrollToBottom();
         }
@@ -281,12 +293,14 @@ const sendText = () => {
   ws.send(JSON.stringify({
     type: 'SEND',
     userId: activeUserId.value,
+    orderId: activeOrderId.value,
     content: text,
     msgType: 'text',
   }));
 
   messages.value.push({
     userId: activeUserId.value,
+    orderId: activeOrderId.value,
     senderType: 'admin',
     content: text,
     msgType: 'text',
@@ -418,6 +432,23 @@ const isImageMsg = (msg: any) => {
   font-size: 13px;
   font-weight: 500;
   color: #333;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.conv-order-tag {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: #e8f4fd;
+  color: #1890ff;
+  font-weight: normal;
+}
+
+.conv-order-general {
+  background: #f0f0f0;
+  color: #999;
 }
 
 .conv-time-text {

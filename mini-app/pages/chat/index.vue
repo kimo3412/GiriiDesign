@@ -72,11 +72,17 @@ import storage from '@/utils/storage'
 const messages = ref([])
 const inputText = ref('')
 const scrollToId = ref('')
+const chatOrderId = ref(null)
 
 let socketTask = null
 
-onLoad(() => {
-  uni.setNavigationBarTitle({ title: `专属客服` })
+onLoad((options) => {
+  if (options && options.orderId) {
+    chatOrderId.value = Number(options.orderId)
+    uni.setNavigationBarTitle({ title: '订单咨询' })
+  } else {
+    uni.setNavigationBarTitle({ title: '专属客服' })
+  }
   fetchHistory()
   connectWS()
 })
@@ -90,9 +96,12 @@ onUnmounted(() => {
 
 const fetchHistory = async () => {
   try {
+    const params = {}
+    if (chatOrderId.value) params.orderId = chatOrderId.value
     const data = await request({
       url: `/v1/app/chat`,
-      method: 'GET'
+      method: 'GET',
+      data: params
     })
     messages.value = data || []
     scrollToBottom()
@@ -120,8 +129,10 @@ const connectWS = () => {
     try {
       const msg = JSON.parse(res.data)
       if (msg.type === 'NEW_MSG') {
-        messages.value.push(msg)
-        scrollToBottom()
+        if (msg.orderId == chatOrderId.value) {
+          messages.value.push(msg)
+          scrollToBottom()
+        }
       }
     } catch (e) {
       console.error('解析消息失败', e)
@@ -165,7 +176,8 @@ const sendMessage = (content, msgType) => {
     data: JSON.stringify({
       type: 'SEND',
       content: content,
-      msgType: msgType
+      msgType: msgType,
+      orderId: chatOrderId.value
     })
   })
 
@@ -173,6 +185,7 @@ const sendMessage = (content, msgType) => {
     senderType: 'client',
     content: content,
     msgType: msgType,
+    orderId: chatOrderId.value,
     createTime: new Date().toISOString().replace('T', ' ').substring(0, 19)
   })
   scrollToBottom()
