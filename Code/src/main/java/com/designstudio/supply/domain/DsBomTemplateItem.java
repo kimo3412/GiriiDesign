@@ -1,6 +1,7 @@
 package com.designstudio.supply.domain;
 
 import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.Data;
@@ -29,4 +30,16 @@ public class DsBomTemplateItem implements Serializable {
 
     /** 逻辑删除 */
     private Integer delFlag;
+
+    /** 物料名称（非持久化，查询时填充） */
+    @TableField(exist = false)
+    private String materialName;
+
+    /** 物料SKU（非持久化） */
+    @TableField(exist = false)
+    private String materialSku;
+
+    /** 物料单价（非持久化） */
+    @TableField(exist = false)
+    private BigDecimal unitPrice;
 }

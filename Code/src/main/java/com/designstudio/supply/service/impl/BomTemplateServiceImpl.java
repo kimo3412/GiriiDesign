@@ -4,14 +4,20 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.designstudio.supply.controller.BomTemplateController;
 import com.designstudio.supply.domain.DsBomTemplate;
 import com.designstudio.supply.domain.DsBomTemplateItem;
+import com.designstudio.supply.domain.DsMaterial;
 import com.designstudio.supply.mapper.DsBomTemplateItemMapper;
 import com.designstudio.supply.mapper.DsBomTemplateMapper;
+import com.designstudio.supply.mapper.DsMaterialMapper;
 import com.designstudio.supply.service.BomTemplateService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * BOM模板业务 Service 实现
@@ -22,6 +28,7 @@ public class BomTemplateServiceImpl implements BomTemplateService {
 
     private final DsBomTemplateMapper templateMapper;
     private final DsBomTemplateItemMapper itemMapper;
+    private final DsMaterialMapper materialMapper;
 
     @Override
     public List<DsBomTemplate> listTemplates(Long categoryId) {
@@ -40,6 +47,24 @@ public class BomTemplateServiceImpl implements BomTemplateService {
 
         List<DsBomTemplateItem> items = itemMapper.selectList(
                 new LambdaQueryWrapper<DsBomTemplateItem>().eq(DsBomTemplateItem::getTemplateId, id));
+
+        // 填充物料名称、SKU、单价
+        Set<Long> materialIds = items.stream()
+                .map(DsBomTemplateItem::getMaterialId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (!materialIds.isEmpty()) {
+            Map<Long, DsMaterial> materialMap = materialMapper.selectBatchIds(materialIds).stream()
+                    .collect(Collectors.toMap(DsMaterial::getMaterialId, m -> m, (a, b) -> a));
+            for (DsBomTemplateItem item : items) {
+                DsMaterial material = materialMap.get(item.getMaterialId());
+                if (material != null) {
+                    item.setMaterialName(material.getName());
+                    item.setMaterialSku(material.getSku());
+                    item.setUnitPrice(material.getUnitPrice());
+                }
+            }
+        }
 
         BomTemplateController.BomDetailVO vo = new BomTemplateController.BomDetailVO();
         vo.setTemplate(template);

@@ -11,14 +11,25 @@ import com.designstudio.order.domain.DsOrderRequest;
 import com.designstudio.order.mapper.DsOrderMapper;
 import com.designstudio.order.mapper.DsOrderRequestMapper;
 import com.designstudio.order.service.RequestService;
+import com.designstudio.supply.domain.DsBomItem;
+import com.designstudio.supply.domain.DsBomTemplateItem;
+import com.designstudio.supply.domain.DsMaterial;
+import com.designstudio.supply.mapper.DsBomItemMapper;
+import com.designstudio.supply.mapper.DsBomTemplateItemMapper;
+import com.designstudio.supply.mapper.DsMaterialMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -32,6 +43,10 @@ public class RequestServiceImpl implements RequestService {
     private final DsOrderMapper orderMapper;
     private final DsWorkflowMapper workflowMapper;
     private final DsWorkflowStepMapper workflowStepMapper;
+    private final DsBomTemplateItemMapper bomTemplateItemMapper;
+    private final DsMaterialMapper materialMapper;
+    private final DsBomItemMapper bomItemMapper;
+    private final ObjectMapper objectMapper;
 
     @Override
     public List<DsOrderRequest> listRequests(Integer status, Long categoryId) {
@@ -75,6 +90,7 @@ public class RequestServiceImpl implements RequestService {
         order.setRemark(dto.getRemark());
         order.setStatus(0);
         order.setIsBlocked(0);
+        order.setBomTemplateId(dto.getBomTemplateId());
 
         DsWorkflow workflow = workflowMapper.selectOne(
                 new LambdaQueryWrapper<DsWorkflow>().eq(DsWorkflow::getCategoryId, request.getCategoryId()));
@@ -90,6 +106,11 @@ public class RequestServiceImpl implements RequestService {
         }
 
         orderMapper.insert(order);
+
+        // 生成订单 BOM 明细 + 计算物料成本
+        if (dto.getBomTemplateId() != null) {
+            generateOrderBom(order.getOrderId(), dto.getBomTemplateId());
+        }
 
         request.setStatus(1);
         request.setLinkedOrderId(order.getOrderId());
@@ -131,5 +152,51 @@ public class RequestServiceImpl implements RequestService {
         String dateStr = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmss"));
         int random = ThreadLocalRandom.current().nextInt(1000, 9999);
         return "DS" + dateStr + random;
+    }
+
+    /**
+     * 根据 BOM 模板生成订单物料明细，计算物料成本
+     */
+    private void generateOrderBom(Long orderId, Long templateId) {
+        // 查询模板明细
+        List<DsBomTemplateItem> templateItems = bomTemplateItemMapper.selectList(
+                new LambdaQueryWrapper<DsBomTemplateItem>()
+                        .eq(DsBomTemplateItem::getTemplateId, templateId));
+        if (templateItems.isEmpty()) return;
+
+        BigDecimal totalCost = BigDecimal.ZERO;
+
+        for (DsBomTemplateItem item : templateItems) {
+            DsMaterial material = materialMapper.selectById(item.getMaterialId());
+            if (material == null) continue;
+
+            BigDecimal subtotal = material.getUnitPrice().multiply(item.getQuantity());
+            totalCost = totalCost.add(subtotal);
+
+            // 物料快照
+            Map<String, Object> snapshot = new HashMap<>();
+            snapshot.put("name", material.getName());
+            snapshot.put("sku", material.getSku());
+            snapshot.put("unitPrice", material.getUnitPrice());
+            snapshot.put("unit", material.getUnit());
+
+            DsBomItem bomItem = new DsBomItem();
+            bomItem.setOrderId(orderId);
+            bomItem.setMaterialId(item.getMaterialId());
+            bomItem.setQuantity(item.getQuantity());
+            try {
+                bomItem.setMaterialSnapshot(objectMapper.writeValueAsString(snapshot));
+            } catch (JsonProcessingException e) {
+                bomItem.setMaterialSnapshot("{}");
+            }
+            bomItem.setIsAllocated(0);
+            bomItem.setDelFlag(0);
+            bomItemMapper.insert(bomItem);
+        }
+
+        // 更新订单物料成本
+        DsOrder order = orderMapper.selectById(orderId);
+        order.setMaterialCost(totalCost);
+        orderMapper.updateById(order);
     }
 }

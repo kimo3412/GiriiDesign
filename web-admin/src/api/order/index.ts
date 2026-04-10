@@ -84,3 +84,8 @@ export function convertRequest(requestId: number, data: any) {
 export function closeRequest(requestId: number, data: { closeReason: string }) {
     return Alova.Post<any>(`/v1/admin/requests/${requestId}/close`, data);
 }
+
+/** 获取订单BOM物料明细 */
+export function getOrderBom(orderId: number) {
+    return Alova.Get<any>(`/v1/admin/orders/${orderId}/bom`);
+}

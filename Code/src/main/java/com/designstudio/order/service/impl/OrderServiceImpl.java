@@ -21,6 +21,10 @@ import com.designstudio.order.domain.DsOrderProgress;
 import com.designstudio.order.mapper.DsOrderMapper;
 import com.designstudio.order.mapper.DsOrderProgressMapper;
 import com.designstudio.order.service.OrderService;
+import com.designstudio.supply.domain.DsBomItem;
+import com.designstudio.supply.domain.DsMaterial;
+import com.designstudio.supply.mapper.DsBomItemMapper;
+import com.designstudio.supply.mapper.DsMaterialMapper;
 import com.designstudio.system.domain.SysAdmin;
 import com.designstudio.system.mapper.SysAdminMapper;
 import lombok.RequiredArgsConstructor;
@@ -46,6 +50,8 @@ public class OrderServiceImpl implements OrderService {
     private final DsWorkflowStepMapper stepMapper;
     private final DsUserMapper userMapper;
     private final SysAdminMapper adminMapper;
+    private final DsBomItemMapper bomItemMapper;
+    private final DsMaterialMapper materialMapper;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -224,10 +230,10 @@ public class OrderServiceImpl implements OrderService {
             touchOrderForUpdate(order);
             orderMapper.updateById(order);
 
-            DsOrderProgress progress = new DsOrderProgress();
-            progress.setOrderId(orderId);
-            progress.setDescription("客户已支付定金：¥" + order.getPrepayAmount());
-            progressMapper.insert(progress);
+            recordProgress(orderId, order.getCurrentStepId(), "客户已支付定金：¥" + order.getPrepayAmount(), null, null);
+
+            // 扣减库存
+            allocateOrderMaterials(orderId);
             return;
         }
 
@@ -237,11 +243,8 @@ public class OrderServiceImpl implements OrderService {
             touchOrderForUpdate(order);
             orderMapper.updateById(order);
 
-            DsOrderProgress progress = new DsOrderProgress();
-            progress.setOrderId(orderId);
-            progress.setDescription("客户已支付尾款：¥"
-                    + order.getTotalAmount().subtract(order.getPrepayAmount()));
-            progressMapper.insert(progress);
+            recordProgress(orderId, order.getCurrentStepId(), "客户已支付尾款：¥"
+                    + order.getTotalAmount().subtract(order.getPrepayAmount()), null, null);
             return;
         }
 
@@ -286,6 +289,9 @@ public class OrderServiceImpl implements OrderService {
         touchOrderForUpdate(order);
         orderMapper.updateById(order);
         recordProgress(orderId, order.getCurrentStepId(), "订单已取消：" + cancelReason, null, null);
+
+        // 归还已扣减的库存
+        releaseOrderMaterials(orderId);
     }
 
     @Override
@@ -1140,5 +1146,59 @@ public class OrderServiceImpl implements OrderService {
         }
         String trimmed = value.trim();
         return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    @Override
+    public List<DsBomItem> getOrderBom(Long orderId) {
+        return bomItemMapper.selectList(
+                new LambdaQueryWrapper<DsBomItem>()
+                        .eq(DsBomItem::getOrderId, orderId));
+    }
+
+    /** 扣减订单 BOM 物料库存 */
+    private void allocateOrderMaterials(Long orderId) {
+        List<DsBomItem> bomItems = bomItemMapper.selectList(
+                new LambdaQueryWrapper<DsBomItem>()
+                        .eq(DsBomItem::getOrderId, orderId)
+                        .eq(DsBomItem::getIsAllocated, 0));
+        if (bomItems.isEmpty()) return;
+
+        for (DsBomItem item : bomItems) {
+            DsMaterial material = materialMapper.selectById(item.getMaterialId());
+            if (material == null) {
+                throw new RuntimeException("物料不存在，ID：" + item.getMaterialId());
+            }
+            if (material.getStock().compareTo(item.getQuantity()) < 0) {
+                throw new RuntimeException("物料「" + material.getName() + "」库存不足，当前库存：" + material.getStock() + " " + material.getUnit());
+            }
+        }
+
+        for (DsBomItem item : bomItems) {
+            DsMaterial material = materialMapper.selectById(item.getMaterialId());
+            material.setStock(material.getStock().subtract(item.getQuantity()));
+            materialMapper.updateById(material);
+
+            item.setIsAllocated(1);
+            bomItemMapper.updateById(item);
+        }
+    }
+
+    /** 归还已扣减的订单 BOM 物料库存 */
+    private void releaseOrderMaterials(Long orderId) {
+        List<DsBomItem> bomItems = bomItemMapper.selectList(
+                new LambdaQueryWrapper<DsBomItem>()
+                        .eq(DsBomItem::getOrderId, orderId)
+                        .eq(DsBomItem::getIsAllocated, 1));
+        if (bomItems.isEmpty()) return;
+
+        for (DsBomItem item : bomItems) {
+            DsMaterial material = materialMapper.selectById(item.getMaterialId());
+            if (material != null) {
+                material.setStock(material.getStock().add(item.getQuantity()));
+                materialMapper.updateById(material);
+            }
+            item.setIsAllocated(0);
+            bomItemMapper.updateById(item);
+        }
     }
 }

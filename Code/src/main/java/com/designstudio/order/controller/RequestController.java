@@ -70,6 +70,7 @@ public class RequestController {
         private BigDecimal prepayAmount;
         private LocalDate expectedDate;
         private String remark;
+        private Long bomTemplateId;
     }
 
     @Data

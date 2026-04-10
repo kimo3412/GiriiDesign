@@ -25,6 +25,9 @@ public class DsChatMessage {
     /** 关联客户ID */
     private Long userId;
 
+    /** 关联订单ID（NULL=一般咨询） */
+    private Long orderId;
+
     /** 发送方类型: 0=客户, 1=设计师/管理员 */
     private Integer senderType;
 

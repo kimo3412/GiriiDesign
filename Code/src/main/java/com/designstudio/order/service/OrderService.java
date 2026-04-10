@@ -5,6 +5,7 @@ import com.designstudio.order.controller.OrderController;
 import com.designstudio.order.controller.WorkbenchController;
 import com.designstudio.order.domain.DsOrder;
 import com.designstudio.order.domain.DsOrderProgress;
+import com.designstudio.supply.domain.DsBomItem;
 
 import java.util.List;
 
@@ -81,4 +82,9 @@ public interface OrderService {
     void handleWorkbenchAction(Long orderId, WorkbenchController.WorkbenchActionDTO dto);
 
     AppOrderController.OrderTimelineVO getOrderTimeline(Long orderId, Long userId);
+
+    /**
+     * 获取订单BOM物料明细
+     */
+    List<DsBomItem> getOrderBom(Long orderId);
 }

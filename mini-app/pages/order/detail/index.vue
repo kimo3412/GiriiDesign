@@ -293,7 +293,7 @@ const formatEntryValue = (entry) => {
 }
 
 const goToChat = () => {
-  uni.navigateTo({ url: '/pages/chat/index' })
+  uni.navigateTo({ url: `/pages/chat/index?orderId=${orderId.value}` })
 }
 
 const handlePay = () => {

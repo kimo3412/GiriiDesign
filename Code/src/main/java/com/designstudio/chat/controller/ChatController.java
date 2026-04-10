@@ -24,28 +24,33 @@ public class ChatController {
 
     @GetMapping("/api/v1/app/chat")
     @Operation(summary = "C端-获取我的聊天记录")
-    public R<List<DsChatMessage>> getClientMessages() {
+    public R<List<DsChatMessage>> getClientMessages(
+            @RequestParam(required = false) Long orderId) {
         Long userId = LoginHelper.getUserId();
         if (userId == null) return R.fail("未登录");
-        return R.ok(chatService.getClientMessages(userId));
+        return R.ok(chatService.getClientMessages(userId, orderId));
     }
 
     @GetMapping("/api/v1/admin/chat/conversations")
-    @Operation(summary = "B端-获取所有会话列表（含未读数）")
+    @Operation(summary = "B端-获取所有会话列表（含未读数，按订单分组）")
     public R<List<Map<String, Object>>> getConversations() {
         return R.ok(chatService.getConversations());
     }
 
     @GetMapping("/api/v1/admin/chat/{userId}")
     @Operation(summary = "B端-获取某客户的聊天记录")
-    public R<List<DsChatMessage>> getAdminMessages(@PathVariable Long userId) {
-        return R.ok(chatService.getAdminMessages(userId));
+    public R<List<DsChatMessage>> getAdminMessages(
+            @PathVariable Long userId,
+            @RequestParam(required = false) Long orderId) {
+        return R.ok(chatService.getAdminMessages(userId, orderId));
     }
 
     @PutMapping("/api/v1/admin/chat/{userId}/read")
     @Operation(summary = "B端-标记某客户的消息为已读")
-    public R<Void> markAsRead(@PathVariable Long userId) {
-        chatService.markAsRead(userId);
+    public R<Void> markAsRead(
+            @PathVariable Long userId,
+            @RequestParam(required = false) Long orderId) {
+        chatService.markAsRead(userId, orderId);
         return R.ok();
     }
 

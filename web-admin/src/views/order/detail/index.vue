@@ -108,6 +108,16 @@
             </n-timeline-item>
           </n-timeline>
         </n-tab-pane>
+
+        <n-tab-pane name="bom" tab="BOM物料">
+          <div v-if="detail.order.materialCost" class="bom-cost-banner">
+            物料成本合计：<span class="bom-cost-amount">¥{{ detail.order.materialCost }}</span>
+          </div>
+          <n-empty v-if="!bomItems.length" description="该订单暂无BOM物料" style="margin-top: 24px" />
+          <template v-else>
+            <n-data-table :columns="bomColumns" :data="bomItems" :bordered="true" size="small" style="margin-top: 12px" />
+          </template>
+        </n-tab-pane>
       </n-tabs>
     </n-card>
 
@@ -210,6 +220,7 @@ import {
   cancelOrder,
   delayOrder,
   getOrderDetail,
+  getOrderBom,
   shipOrder,
   unblockOrder,
 } from '@/api/order/index';
@@ -263,8 +274,45 @@ async function loadDetail() {
   try {
     detail.value = await getOrderDetail(id);
     delayExpectedDate.value = detail.value?.order?.expectedDate || '';
+    loadBomItems(id);
   } finally {
     detailLoaded.value = true;
+  }
+}
+
+// BOM 物料
+const bomItems = ref<any[]>([]);
+const bomColumns = [
+  { title: '物料名称', key: 'name', width: 140 },
+  { title: 'SKU', key: 'sku', width: 100 },
+  { title: '单位', key: 'unit', width: 60 },
+  { title: '用量', key: 'quantity', width: 80, align: 'right' as const },
+  { title: '单价', key: 'unitPrice', width: 90, align: 'right' as const, render: (row: any) => row.unitPrice ? `¥${row.unitPrice}` : '-' },
+  { title: '小计', key: 'subtotal', width: 90, align: 'right' as const, render: (row: any) => {
+    if (row.unitPrice && row.quantity) return `¥${(row.unitPrice * row.quantity).toFixed(2)}`;
+    return '-';
+  }},
+  { title: '已扣库', key: 'isAllocated', width: 80, align: 'center' as const,
+    render: (row: any) => row.isAllocated === 1 ? '是' : '否' },
+];
+
+async function loadBomItems(orderId: number) {
+  try {
+    const items = await getOrderBom(orderId);
+    bomItems.value = (items || []).map((item: any) => {
+      let snapshot: any = {};
+      try { snapshot = JSON.parse(item.materialSnapshot || '{}'); } catch {}
+      return {
+        ...item,
+        name: snapshot.name || `物料#${item.materialId}`,
+        sku: snapshot.sku || '-',
+        unit: snapshot.unit || '-',
+        unitPrice: snapshot.unitPrice || null,
+      };
+    });
+  } catch (e) {
+    console.error('加载BOM物料失败', e);
+    bomItems.value = [];
   }
 }
 
@@ -379,5 +427,20 @@ onMounted(loadDetail);
   border-radius: 4px;
   font-size: 12px;
   white-space: pre-wrap;
+}
+
+.bom-cost-banner {
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  color: #555;
+}
+
+.bom-cost-amount {
+  font-weight: 700;
+  font-size: 16px;
+  color: #e53e3e;
 }
 </style>

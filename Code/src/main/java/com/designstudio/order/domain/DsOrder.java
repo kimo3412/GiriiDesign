@@ -54,6 +54,12 @@ public class DsOrder extends BaseEntity {
     /** 已支付金额 */
     private BigDecimal paidAmount;
 
+    /** 关联BOM模板 */
+    private Long bomTemplateId;
+
+    /** 物料成本 */
+    private BigDecimal materialCost;
+
     /** 预计交付日期 */
     private LocalDate expectedDate;
 

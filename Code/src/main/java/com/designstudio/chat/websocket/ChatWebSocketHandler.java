@@ -69,17 +69,19 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         Long chatUserId = "client".equals(userType) ? currentUserId : targetUserId;
         String content = json.getStr("content");
         String msgType = json.getStr("msgType", "text");
+        Long orderId = json.getLong("orderId");
         int senderTypeInt = "client".equals(userType) ? 0 : 1;
         int contentTypeInt = "image".equals(msgType) ? 1 : 0;
 
         // 持久化消息
-        DsChatMessage msg = chatService.saveMessage(chatUserId, senderTypeInt, currentUserId, content, contentTypeInt);
+        DsChatMessage msg = chatService.saveMessage(chatUserId, senderTypeInt, currentUserId, content, contentTypeInt, orderId);
 
         // 构建推送 JSON
         JSONObject pushJson = new JSONObject();
         pushJson.set("type", "NEW_MSG");
         pushJson.set("messageId", msg.getMsgId());
         pushJson.set("userId", chatUserId);
+        pushJson.set("orderId", orderId);
         pushJson.set("senderType", userType);
         pushJson.set("senderId", currentUserId);
         pushJson.set("content", content);

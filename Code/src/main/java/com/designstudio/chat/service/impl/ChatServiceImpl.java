@@ -29,17 +29,29 @@ public class ChatServiceImpl implements ChatService {
     private final DsOrderRequestMapper requestMapper;
 
     @Override
-    public List<DsChatMessage> getClientMessages(Long userId) {
-        List<DsChatMessage> list = messageMapper.selectList(
-                new LambdaQueryWrapper<DsChatMessage>()
-                        .eq(DsChatMessage::getUserId, userId)
-                        .orderByAsc(DsChatMessage::getCreateTime));
+    public List<DsChatMessage> getClientMessages(Long userId, Long orderId) {
+        LambdaQueryWrapper<DsChatMessage> wrapper = new LambdaQueryWrapper<DsChatMessage>()
+                .eq(DsChatMessage::getUserId, userId);
+        if (orderId != null) {
+            wrapper.eq(DsChatMessage::getOrderId, orderId);
+        } else {
+            wrapper.isNull(DsChatMessage::getOrderId);
+        }
+        wrapper.orderByAsc(DsChatMessage::getCreateTime);
+        List<DsChatMessage> list = messageMapper.selectList(wrapper);
 
-        messageMapper.update(null, new LambdaUpdateWrapper<DsChatMessage>()
+        // 标记管理员消息已读
+        LambdaUpdateWrapper<DsChatMessage> updateWrapper = new LambdaUpdateWrapper<DsChatMessage>()
                 .eq(DsChatMessage::getUserId, userId)
                 .eq(DsChatMessage::getSenderType, 1)
-                .eq(DsChatMessage::getIsRead, 0)
-                .set(DsChatMessage::getIsRead, 1));
+                .eq(DsChatMessage::getIsRead, 0);
+        if (orderId != null) {
+            updateWrapper.eq(DsChatMessage::getOrderId, orderId);
+        } else {
+            updateWrapper.isNull(DsChatMessage::getOrderId);
+        }
+        updateWrapper.set(DsChatMessage::getIsRead, 1);
+        messageMapper.update(null, updateWrapper);
 
         return list;
     }
@@ -50,20 +62,31 @@ public class ChatServiceImpl implements ChatService {
     }
 
     @Override
-    public List<DsChatMessage> getAdminMessages(Long userId) {
-        return messageMapper.selectList(
-                new LambdaQueryWrapper<DsChatMessage>()
-                        .eq(DsChatMessage::getUserId, userId)
-                        .orderByAsc(DsChatMessage::getCreateTime));
+    public List<DsChatMessage> getAdminMessages(Long userId, Long orderId) {
+        LambdaQueryWrapper<DsChatMessage> wrapper = new LambdaQueryWrapper<DsChatMessage>()
+                .eq(DsChatMessage::getUserId, userId);
+        if (orderId != null) {
+            wrapper.eq(DsChatMessage::getOrderId, orderId);
+        } else {
+            wrapper.isNull(DsChatMessage::getOrderId);
+        }
+        wrapper.orderByAsc(DsChatMessage::getCreateTime);
+        return messageMapper.selectList(wrapper);
     }
 
     @Override
-    public void markAsRead(Long userId) {
-        messageMapper.update(null, new LambdaUpdateWrapper<DsChatMessage>()
+    public void markAsRead(Long userId, Long orderId) {
+        LambdaUpdateWrapper<DsChatMessage> wrapper = new LambdaUpdateWrapper<DsChatMessage>()
                 .eq(DsChatMessage::getUserId, userId)
                 .eq(DsChatMessage::getSenderType, 0)
-                .eq(DsChatMessage::getIsRead, 0)
-                .set(DsChatMessage::getIsRead, 1));
+                .eq(DsChatMessage::getIsRead, 0);
+        if (orderId != null) {
+            wrapper.eq(DsChatMessage::getOrderId, orderId);
+        } else {
+            wrapper.isNull(DsChatMessage::getOrderId);
+        }
+        wrapper.set(DsChatMessage::getIsRead, 1);
+        messageMapper.update(null, wrapper);
     }
 
     @Override
@@ -85,9 +108,10 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public DsChatMessage saveMessage(Long chatUserId, int senderType, Long senderId,
-                                     String content, int contentType) {
+                                     String content, int contentType, Long orderId) {
         DsChatMessage msg = new DsChatMessage();
         msg.setUserId(chatUserId);
+        msg.setOrderId(orderId);
         msg.setSenderType(senderType);
         msg.setSenderId(senderId);
         msg.setContent(content);

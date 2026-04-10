@@ -6,6 +6,7 @@ import com.designstudio.config.domain.DsWorkflowStep;
 import com.designstudio.order.domain.DsOrder;
 import com.designstudio.order.domain.DsOrderProgress;
 import com.designstudio.order.service.OrderService;
+import com.designstudio.supply.domain.DsBomItem;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
@@ -124,6 +125,14 @@ public class OrderController {
         } catch (RuntimeException e) {
             return R.fail(e.getMessage());
         }
+    }
+
+    // ==================== BOM物料 ====================
+
+    @GetMapping("/{orderId}/bom")
+    @Operation(summary = "获取订单BOM物料明细")
+    public R<List<DsBomItem>> bomList(@PathVariable Long orderId) {
+        return R.ok(orderService.getOrderBom(orderId));
     }
 
     // ==================== 进度管理 ====================
