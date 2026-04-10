@@ -12,6 +12,7 @@ export interface WorkflowStep {
   needImageUpload?: number;
   visibleToClient?: number;
   expectedDurationDays?: number | null;
+  nodeFormFields?: string;
 }
 
 export interface Workflow {

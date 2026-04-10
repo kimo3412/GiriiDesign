@@ -53,6 +53,7 @@ public class WorkbenchController {
         private String action;
         private String description;
         private String imageUrls;
+        private String formData;
         private String blockReason;
         private Long rollbackTargetStepId;
     }

@@ -9,7 +9,27 @@
       </view>
     </view>
 
-    <view class="timeline-section">
+    <view v-if="currentStepEntries.length" class="section">
+      <text class="section-title">当前节点产出</text>
+      <view class="info-card current-output-card">
+        <view class="current-output-head">
+          <text class="current-output-title">{{ currentStepName || '当前节点' }}</text>
+          <text v-if="order.expectedDate" class="current-output-date">预计完成 {{ order.expectedDate }}</text>
+        </view>
+        <view class="field-grid">
+          <view
+            v-for="entry in currentStepEntries"
+            :key="entry.key"
+            class="field-item"
+          >
+            <text class="field-label">{{ entry.label }}</text>
+            <text class="field-value">{{ formatEntryValue(entry) }}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="section">
       <text class="section-title">流程进度</text>
       <view class="timeline-card">
         <view
@@ -25,8 +45,8 @@
                 current: index === currentStepIndex,
                 pending: index > currentStepIndex
               }"
-            ></view>
-            <view v-if="index < workflowSteps.length - 1" class="timeline-line"></view>
+            />
+            <view v-if="index < workflowSteps.length - 1" class="timeline-line" />
           </view>
           <view class="timeline-body">
             <view class="timeline-top">
@@ -35,22 +55,19 @@
                 预计 {{ step.expectedDurationDays }} 天
               </text>
             </view>
-            <text class="timeline-desc">{{ step.nodeDescription || '该节点暂无说明' }}</text>
+            <text class="timeline-desc">{{ step.nodeDescription || '该节点暂无补充说明' }}</text>
             <text v-if="getProgressAtStep(step.stepId)" class="timeline-time">
               {{ getProgressAtStep(step.stepId).createTime }}
             </text>
-            <text
-              v-if="index === currentStepIndex && hasRollback"
-              class="timeline-rework"
-            >
-              当前节点存在返工记录，请以最新进度为准
+            <text v-if="index === currentStepIndex && hasRollback" class="timeline-rework">
+              当前流程包含返工记录，请以最新进度为准
             </text>
           </view>
         </view>
       </view>
     </view>
 
-    <view class="progress-section">
+    <view class="section">
       <text class="section-title">进度动态</text>
       <view class="timeline-card">
         <view v-if="timelineEvents.length === 0" class="empty-progress">
@@ -69,7 +86,17 @@
               </text>
             </view>
             <text class="progress-step">{{ item.stepName }}</text>
-            <text class="progress-desc">{{ item.description }}</text>
+            <text v-if="item.description" class="progress-desc">{{ item.description }}</text>
+            <view v-if="item.formEntries?.length" class="progress-fields">
+              <view
+                v-for="entry in item.formEntries"
+                :key="`${item.progressId}-${entry.key}`"
+                class="progress-field"
+              >
+                <text class="progress-field__label">{{ entry.label }}</text>
+                <text class="progress-field__value">{{ formatEntryValue(entry) }}</text>
+              </view>
+            </view>
             <view v-if="parseImageUrls(item.imageUrls).length" class="progress-images">
               <image
                 v-for="image in parseImageUrls(item.imageUrls)"
@@ -84,12 +111,16 @@
       </view>
     </view>
 
-    <view class="info-section">
+    <view class="section">
       <text class="section-title">订单信息</text>
       <view class="info-card">
         <view class="info-row">
           <text class="info-label">订单编号</text>
-          <text class="info-value">{{ order.orderSn }}</text>
+          <text class="info-value">{{ order.orderSn || '-' }}</text>
+        </view>
+        <view class="info-row">
+          <text class="info-label">设计师</text>
+          <text class="info-value">{{ order.designerName || '-' }}</text>
         </view>
         <view class="info-row">
           <text class="info-label">订单金额</text>
@@ -137,12 +168,11 @@ const timelineEvents = ref([])
 const currentStepIndex = ref(-1)
 const currentStepName = ref('')
 const hasRollback = ref(0)
+const currentStepEntries = ref([])
 
 const currentStepText = computed(() => {
   if (order.value.isBlocked === 1) {
-    return currentStepName.value
-      ? `当前暂停在：${currentStepName.value}`
-      : '当前订单已暂停'
+    return currentStepName.value ? `当前暂停在：${currentStepName.value}` : '当前订单已暂停'
   }
   if (currentStepName.value) {
     return `当前节点：${currentStepName.value}`
@@ -166,6 +196,7 @@ const fetchTimeline = async () => {
     currentStepIndex.value = data.currentStepIndex ?? -1
     currentStepName.value = data.currentStepName || ''
     hasRollback.value = data.hasRollback || 0
+    currentStepEntries.value = data.currentStepFormEntries || []
   } catch (err) {
     uni.showToast({ title: '获取订单失败', icon: 'none' })
   }
@@ -207,6 +238,11 @@ const toFileUrl = (url) => {
     return url
   }
   return `${fileBaseUrl}${url}`
+}
+
+const formatEntryValue = (entry) => {
+  if (!entry) return '-'
+  return entry.unit ? `${entry.value} ${entry.unit}` : entry.value
 }
 
 const goToChat = () => {
@@ -280,9 +316,7 @@ onLoad((options) => {
   line-height: 1.5;
 }
 
-.timeline-section,
-.progress-section,
-.info-section {
+.section {
   margin-top: 20rpx;
   padding: 0 24rpx;
 }
@@ -300,6 +334,56 @@ onLoad((options) => {
   background: #fff;
   border-radius: 18rpx;
   padding: 24rpx;
+}
+
+.current-output-card {
+  background: linear-gradient(135deg, #fbfaf6 0%, #ffffff 100%);
+}
+
+.current-output-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 16rpx;
+  align-items: center;
+}
+
+.current-output-title {
+  color: #1f1f1f;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+.current-output-date {
+  color: #9d765f;
+  font-size: 22rpx;
+}
+
+.field-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-top: 18rpx;
+}
+
+.field-item {
+  min-width: calc(50% - 8rpx);
+  padding: 18rpx;
+  border-radius: 14rpx;
+  background: #f6f4f1;
+}
+
+.field-label {
+  display: block;
+  color: #8b7767;
+  font-size: 22rpx;
+}
+
+.field-value {
+  display: block;
+  margin-top: 10rpx;
+  color: #2c2c2c;
+  font-size: 28rpx;
+  font-weight: 600;
 }
 
 .timeline-item {
@@ -421,6 +505,33 @@ onLoad((options) => {
 .tag-unblock {
   background: #eef9f1;
   color: #2d8a57;
+}
+
+.progress-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 14rpx;
+}
+
+.progress-field {
+  min-width: calc(50% - 6rpx);
+  padding: 14rpx 16rpx;
+  border-radius: 14rpx;
+  background: #f8f7f4;
+}
+
+.progress-field__label {
+  display: block;
+  color: #8b7767;
+  font-size: 20rpx;
+}
+
+.progress-field__value {
+  display: block;
+  margin-top: 8rpx;
+  color: #2c2c2c;
+  font-size: 24rpx;
 }
 
 .progress-images {

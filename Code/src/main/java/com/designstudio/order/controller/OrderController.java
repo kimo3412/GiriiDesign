@@ -132,6 +132,7 @@ public class OrderController {
     public static class AdvanceDTO {
         private String description;
         private String imageUrls;
+        private String formData;
     }
 
     @Data
@@ -143,5 +144,6 @@ public class OrderController {
     public static class ProgressDTO {
         private String description;
         private String imageUrls;
+        private String formData;
     }
 }

@@ -340,6 +340,7 @@ CREATE TABLE `ds_order_progress`  (
   `step_id` bigint NOT NULL COMMENT '对应工作流节点',
   `description` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '进度描述',
   `image_urls` json NULL COMMENT '进度图片',
+  `form_data` json NULL COMMENT '节点表单填写数据',
   `operator_id` bigint NULL DEFAULT NULL COMMENT '操作人ID',
   `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
   `del_flag` tinyint(1) NULL DEFAULT 0,
@@ -350,19 +351,19 @@ CREATE TABLE `ds_order_progress`  (
 -- ----------------------------
 -- Records of ds_order_progress
 -- ----------------------------
-INSERT INTO `ds_order_progress` VALUES (1, 1, 1, '客户需求已确认，改良汉服宽松版型，亚麻面料', NULL, 2, '2026-03-08 16:10:00', 0);
-INSERT INTO `ds_order_progress` VALUES (2, 1, 2, '特选高品质亚麻面料已采购到位，颜色为浅米色', NULL, 2, '2026-03-10 09:00:00', 0);
-INSERT INTO `ds_order_progress` VALUES (3, 1, 3, '开始裁剪，按照客户尺寸放样', NULL, 2, '2026-03-12 14:00:00', 0);
-INSERT INTO `ds_order_progress` VALUES (4, 2, 12, '需求已确认，客户要求扁平化风格Logo', NULL, 3, '2026-03-07 11:10:00', 0);
-INSERT INTO `ds_order_progress` VALUES (5, 2, 13, '草稿完成，已提交3个备选方案给客户', NULL, 3, '2026-03-09 16:00:00', 0);
-INSERT INTO `ds_order_progress` VALUES (6, 2, 14, '客户选择方案B，开始线稿细化', NULL, 3, '2026-03-11 10:00:00', 0);
-INSERT INTO `ds_order_progress` VALUES (7, 4, 12, '需求确认完毕', NULL, 3, '2026-02-20 10:10:00', 0);
-INSERT INTO `ds_order_progress` VALUES (8, 4, 13, '草稿完成', NULL, 3, '2026-02-22 15:00:00', 0);
-INSERT INTO `ds_order_progress` VALUES (9, 4, 14, '线稿已定稿', NULL, 3, '2026-02-25 11:00:00', 0);
-INSERT INTO `ds_order_progress` VALUES (10, 4, 15, '上色完成，最终稿已出', NULL, 3, '2026-02-28 17:00:00', 0);
-INSERT INTO `ds_order_progress` VALUES (11, 4, 16, '客户验收通过，交付完成', NULL, 3, '2026-03-03 18:00:00', 0);
-INSERT INTO `ds_order_progress` VALUES (12, 3, 8, '部分', NULL, 1, '2026-03-17 15:16:03', 0);
-INSERT INTO `ds_order_progress` VALUES (13, 1, 3, '工作台接口联调记录', NULL, 1, '2026-04-09 21:13:19', 0);
+INSERT INTO `ds_order_progress` VALUES (1, 1, 1, '客户需求已确认，改良汉服宽松版型，亚麻面料', NULL, NULL, 2, '2026-03-08 16:10:00', 0);
+INSERT INTO `ds_order_progress` VALUES (2, 1, 2, '特选高品质亚麻面料已采购到位，颜色为浅米色', NULL, NULL, 2, '2026-03-10 09:00:00', 0);
+INSERT INTO `ds_order_progress` VALUES (3, 1, 3, '开始裁剪，按照客户尺寸放样', NULL, NULL, 2, '2026-03-12 14:00:00', 0);
+INSERT INTO `ds_order_progress` VALUES (4, 2, 12, '需求已确认，客户要求扁平化风格Logo', NULL, NULL, 3, '2026-03-07 11:10:00', 0);
+INSERT INTO `ds_order_progress` VALUES (5, 2, 13, '草稿完成，已提交3个备选方案给客户', NULL, NULL, 3, '2026-03-09 16:00:00', 0);
+INSERT INTO `ds_order_progress` VALUES (6, 2, 14, '客户选择方案B，开始线稿细化', NULL, NULL, 3, '2026-03-11 10:00:00', 0);
+INSERT INTO `ds_order_progress` VALUES (7, 4, 12, '需求确认完毕', NULL, NULL, 3, '2026-02-20 10:10:00', 0);
+INSERT INTO `ds_order_progress` VALUES (8, 4, 13, '草稿完成', NULL, NULL, 3, '2026-02-22 15:00:00', 0);
+INSERT INTO `ds_order_progress` VALUES (9, 4, 14, '线稿已定稿', NULL, NULL, 3, '2026-02-25 11:00:00', 0);
+INSERT INTO `ds_order_progress` VALUES (10, 4, 15, '上色完成，最终稿已出', NULL, NULL, 3, '2026-02-28 17:00:00', 0);
+INSERT INTO `ds_order_progress` VALUES (11, 4, 16, '客户验收通过，交付完成', NULL, NULL, 3, '2026-03-03 18:00:00', 0);
+INSERT INTO `ds_order_progress` VALUES (12, 3, 8, '部分', NULL, NULL, 1, '2026-03-17 15:16:03', 0);
+INSERT INTO `ds_order_progress` VALUES (13, 1, 3, '工作台接口联调记录', NULL, NULL, 1, '2026-04-09 21:13:19', 0);
 
 -- ----------------------------
 -- Table structure for ds_order_request
@@ -555,6 +556,7 @@ CREATE TABLE `ds_workflow_step`  (
   `need_image_upload` tinyint(1) NULL DEFAULT 0 COMMENT '????????',
   `visible_to_client` tinyint(1) NULL DEFAULT 1 COMMENT '???????',
   `expected_duration_days` int NULL DEFAULT NULL COMMENT '??????(?)',
+  `node_form_fields` json NULL COMMENT '节点表单字段键列表',
   `create_by` bigint NULL DEFAULT NULL,
   `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
   `update_by` bigint NULL DEFAULT NULL,
@@ -567,22 +569,22 @@ CREATE TABLE `ds_workflow_step`  (
 -- ----------------------------
 -- Records of ds_workflow_step
 -- ----------------------------
-INSERT INTO `ds_workflow_step` VALUES (1, 1, '需求确认', 1, 1, 0, '处理节点：需求确认', '[\"save\", \"advance\", \"block\", \"unblock\"]', 0, 1, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
-INSERT INTO `ds_workflow_step` VALUES (2, 1, '面料采购', 2, 0, 0, '处理节点：面料采购', '[\"save\", \"advance\", \"block\", \"unblock\"]', 0, 1, 2, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
-INSERT INTO `ds_workflow_step` VALUES (3, 1, '裁剪', 3, 0, 0, '处理节点：裁剪', '[\"save\", \"advance\", \"block\", \"unblock\"]', 1, 1, 3, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
-INSERT INTO `ds_workflow_step` VALUES (4, 1, '缝制', 4, 0, 0, '处理节点：缝制', '[\"save\", \"advance\", \"block\", \"unblock\"]', 1, 1, 3, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
-INSERT INTO `ds_workflow_step` VALUES (5, 1, '质检', 5, 0, 0, '处理节点：质检', '[\"save\", \"advance\", \"block\", \"unblock\"]', 1, 1, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
-INSERT INTO `ds_workflow_step` VALUES (6, 1, '包装发货', 6, 0, 1, '处理节点：包装发货', '[\"save\", \"advance\", \"block\", \"unblock\"]', 0, 1, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
-INSERT INTO `ds_workflow_step` VALUES (7, 2, '需求确认', 1, 1, 0, '处理节点：需求确认', '[\"save\", \"advance\", \"block\", \"unblock\"]', 0, 1, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
-INSERT INTO `ds_workflow_step` VALUES (8, 2, '皮料裁切', 2, 0, 0, '处理节点：皮料裁切', '[\"save\", \"advance\", \"block\", \"unblock\"]', 0, 1, 2, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
-INSERT INTO `ds_workflow_step` VALUES (9, 2, '缝线打磨', 3, 0, 0, '处理节点：缝线打磨', '[\"save\", \"advance\", \"block\", \"unblock\"]', 1, 1, 3, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
-INSERT INTO `ds_workflow_step` VALUES (10, 2, '上色封边', 4, 0, 0, '处理节点：上色封边', '[\"save\", \"advance\", \"block\", \"unblock\"]', 1, 1, 3, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
-INSERT INTO `ds_workflow_step` VALUES (11, 2, '质检出货', 5, 0, 1, '处理节点：质检出货', '[\"save\", \"advance\", \"block\", \"unblock\"]', 1, 1, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
-INSERT INTO `ds_workflow_step` VALUES (12, 3, '需求确认', 1, 1, 0, '处理节点：需求确认', '[\"save\", \"advance\", \"block\", \"unblock\"]', 0, 1, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
-INSERT INTO `ds_workflow_step` VALUES (13, 3, '草稿构图', 2, 0, 0, '处理节点：草稿构图', '[\"save\", \"advance\", \"block\", \"unblock\"]', 1, 1, 2, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
-INSERT INTO `ds_workflow_step` VALUES (14, 3, '线稿细化', 3, 0, 0, '处理节点：线稿细化', '[\"save\", \"advance\", \"block\", \"unblock\"]', 1, 1, 3, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
-INSERT INTO `ds_workflow_step` VALUES (15, 3, '上色完稿', 4, 0, 0, '处理节点：上色完稿', '[\"save\", \"advance\", \"block\", \"unblock\"]', 1, 1, 3, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
-INSERT INTO `ds_workflow_step` VALUES (16, 3, '客户验收', 5, 0, 1, '处理节点：客户验收', '[\"save\", \"advance\", \"block\", \"unblock\"]', 1, 1, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
+INSERT INTO `ds_workflow_step` VALUES (1, 1, '需求确认', 1, 1, 0, '处理节点：需求确认', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 0, 1, 1, '[\"chest\", \"waist\"]', NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
+INSERT INTO `ds_workflow_step` VALUES (2, 1, '面料采购', 2, 0, 0, '处理节点：面料采购', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 0, 1, 2, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
+INSERT INTO `ds_workflow_step` VALUES (3, 1, '裁剪', 3, 0, 0, '处理节点：裁剪', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 3, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
+INSERT INTO `ds_workflow_step` VALUES (4, 1, '缝制', 4, 0, 0, '处理节点：缝制', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 3, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
+INSERT INTO `ds_workflow_step` VALUES (5, 1, '质检', 5, 0, 0, '处理节点：质检', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 1, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
+INSERT INTO `ds_workflow_step` VALUES (6, 1, '包装发货', 6, 0, 1, '处理节点：包装发货', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 0, 1, 1, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
+INSERT INTO `ds_workflow_step` VALUES (7, 2, '需求确认', 1, 1, 0, '处理节点：需求确认', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 0, 1, 1, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
+INSERT INTO `ds_workflow_step` VALUES (8, 2, '皮料裁切', 2, 0, 0, '处理节点：皮料裁切', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 0, 1, 2, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
+INSERT INTO `ds_workflow_step` VALUES (9, 2, '缝线打磨', 3, 0, 0, '处理节点：缝线打磨', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 3, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
+INSERT INTO `ds_workflow_step` VALUES (10, 2, '上色封边', 4, 0, 0, '处理节点：上色封边', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 3, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
+INSERT INTO `ds_workflow_step` VALUES (11, 2, '质检出货', 5, 0, 1, '处理节点：质检出货', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 1, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
+INSERT INTO `ds_workflow_step` VALUES (12, 3, '需求确认', 1, 1, 0, '处理节点：需求确认', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 0, 1, 1, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
+INSERT INTO `ds_workflow_step` VALUES (13, 3, '草稿构图', 2, 0, 0, '处理节点：草稿构图', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 2, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
+INSERT INTO `ds_workflow_step` VALUES (14, 3, '线稿细化', 3, 0, 0, '处理节点：线稿细化', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 3, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
+INSERT INTO `ds_workflow_step` VALUES (15, 3, '上色完稿', 4, 0, 0, '处理节点：上色完稿', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 3, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
+INSERT INTO `ds_workflow_step` VALUES (16, 3, '客户验收', 5, 0, 1, '处理节点：客户验收', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 1, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-09 21:07:17', 0);
 
 -- ----------------------------
 -- Table structure for sys_admin

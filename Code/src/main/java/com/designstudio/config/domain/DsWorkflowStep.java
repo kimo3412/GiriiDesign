@@ -42,4 +42,6 @@ public class DsWorkflowStep extends BaseEntity {
     private Integer visibleToClient;
 
     private Integer expectedDurationDays;
+
+    private String nodeFormFields;
 }

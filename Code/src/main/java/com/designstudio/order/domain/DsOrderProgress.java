@@ -30,6 +30,9 @@ public class DsOrderProgress implements Serializable {
     /** 进度图片(JSON数组) */
     private String imageUrls;
 
+    /** 节点表单填写数据(JSON对象) */
+    private String formData;
+
     /** 操作人ID */
     private Long operatorId;
 

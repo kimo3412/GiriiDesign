@@ -156,6 +156,58 @@
                   />
                 </n-form-item>
 
+                <template v-if="currentStepFields.length">
+                  <n-divider>节点字段</n-divider>
+                  <n-grid :cols="2" :x-gap="12">
+                    <n-gi v-for="field in currentStepFields" :key="field.fieldKey">
+                      <n-form-item :label="getFieldFormLabel(field)">
+                        <n-input
+                          v-if="field.fieldType === 'text' || field.fieldType === 'image'"
+                          v-model:value="nodeFieldValues[field.fieldKey]"
+                          :placeholder="field.placeholder || `请输入${field.label}`"
+                        />
+                        <n-input
+                          v-else-if="field.fieldType === 'textarea'"
+                          v-model:value="nodeFieldValues[field.fieldKey]"
+                          type="textarea"
+                          :autosize="{ minRows: 2, maxRows: 4 }"
+                          :placeholder="field.placeholder || `请输入${field.label}`"
+                        />
+                        <n-input-number
+                          v-else-if="field.fieldType === 'number'"
+                          v-model:value="nodeFieldValues[field.fieldKey]"
+                          clearable
+                          style="width: 100%"
+                          :placeholder="field.placeholder || `请输入${field.label}`"
+                        />
+                        <n-select
+                          v-else-if="field.fieldType === 'select'"
+                          v-model:value="nodeFieldValues[field.fieldKey]"
+                          :options="getSelectOptions(field)"
+                          clearable
+                          :placeholder="field.placeholder || `请选择${field.label}`"
+                        />
+                        <n-date-picker
+                          v-else-if="field.fieldType === 'date'"
+                          v-model:formatted-value="nodeFieldValues[field.fieldKey]"
+                          type="date"
+                          value-format="yyyy-MM-dd"
+                          clearable
+                          style="width: 100%"
+                        />
+                        <n-input
+                          v-else
+                          v-model:value="nodeFieldValues[field.fieldKey]"
+                          :placeholder="field.placeholder || `请输入${field.label}`"
+                        />
+                        <div v-if="getFieldHelperText(field)" class="field-helper">
+                          {{ getFieldHelperText(field) }}
+                        </div>
+                      </n-form-item>
+                    </n-gi>
+                  </n-grid>
+                </template>
+
                 <n-alert
                   v-if="canRenderAction('rollback')"
                   type="info"
@@ -265,6 +317,12 @@
                   :title="getStepName(progress.stepId)"
                 >
                   <div class="timeline-desc">{{ progress.description || '无说明' }}</div>
+                  <div v-if="getProgressFormEntries(progress).length" class="timeline-form">
+                    <div v-for="entry in getProgressFormEntries(progress)" :key="entry.key" class="timeline-form__item">
+                      <span class="timeline-form__label">{{ entry.label }}：</span>
+                      <span>{{ entry.value }}</span>
+                    </div>
+                  </div>
                   <div v-if="parseImageUrls(progress.imageUrls).length" class="timeline-images">
                     <n-image
                       v-for="image in parseImageUrls(progress.imageUrls)"
@@ -291,6 +349,7 @@ import type { UploadCustomRequestOptions, UploadFileInfo } from 'naive-ui';
 import { useMessage } from 'naive-ui';
 import { useRoute } from 'vue-router';
 import { getCategoryList } from '@/api/config/category';
+import { getFieldList, type CustomField } from '@/api/config/field';
 import { getOrderDetail, getWorkbenchData, submitWorkbenchAction } from '@/api/order/index';
 import { useGlobSetting } from '@/hooks/setting';
 import { ACCESS_TOKEN } from '@/store/mutation-types';
@@ -306,6 +365,7 @@ const categoryOptions = ref<{ label: string; value: number }[]>([]);
 const selectedCategoryId = ref<number | null>(null);
 const selectedStepId = ref<number | null>(null);
 const workflowSteps = ref<any[]>([]);
+const categoryFields = ref<CustomField[]>([]);
 const orders = ref<any[]>([]);
 const activeOrderId = ref<number | null>(null);
 const detail = ref<any>(null);
@@ -313,6 +373,7 @@ const loadingWorkbench = ref(false);
 const loadingDetail = ref(false);
 const submittingAction = ref<WorkbenchAction | ''>('');
 const uploadFiles = ref<UploadFileInfo[]>([]);
+const nodeFieldValues = ref<Record<string, any>>({});
 
 const actionForm = ref<{
   description: string;
@@ -387,6 +448,24 @@ const rollbackActionText = computed(() => {
   return rollbackTargetLabel.value ? `退回到 ${rollbackTargetLabel.value}` : '退回前序节点';
 });
 
+const currentStepFields = computed(() => {
+  const raw = selectedStep.value?.nodeFormFields;
+  if (!raw) {
+    return [];
+  }
+  try {
+    const keys = JSON.parse(raw);
+    if (!Array.isArray(keys)) {
+      return [];
+    }
+    return keys
+      .map((key) => categoryFields.value.find((field) => field.fieldKey === key))
+      .filter(Boolean) as CustomField[];
+  } catch {
+    return [];
+  }
+});
+
 onMounted(async () => {
   await loadCategories();
   const queryCategoryId = Number(route.query.categoryId);
@@ -396,6 +475,7 @@ onMounted(async () => {
     selectedCategoryId.value = categoryOptions.value[0].value;
   }
   if (selectedCategoryId.value) {
+    await loadCategoryFields();
     await loadWorkbench();
   }
 });
@@ -410,6 +490,7 @@ async function loadCategories() {
 
 async function handleCategoryChange() {
   selectedStepId.value = null;
+  await loadCategoryFields();
   await loadWorkbench();
 }
 
@@ -449,6 +530,11 @@ async function loadWorkbench() {
   }
 }
 
+async function loadCategoryFields() {
+  if (!selectedCategoryId.value) return;
+  categoryFields.value = await getFieldList(selectedCategoryId.value);
+}
+
 async function selectOrder(orderId: number) {
   activeOrderId.value = orderId;
   resetEditor();
@@ -472,10 +558,12 @@ function resetEditor() {
     rollbackTargetStepId: null,
   };
   uploadFiles.value = [];
+  nodeFieldValues.value = {};
 }
 
 function syncRollbackTarget() {
   actionForm.value.rollbackTargetStepId = rollbackOptions.value[0]?.value || null;
+  syncNodeFieldValues();
 }
 
 function canRenderAction(action: WorkbenchAction) {
@@ -497,6 +585,108 @@ function getCustomerLabel(order?: any) {
 function getDesignerLabel(order?: any) {
   if (!order) return '-';
   return order.designerName || (order.designerId ? `设计师 #${order.designerId}` : '-');
+}
+
+function getFieldFormLabel(field: CustomField) {
+  const unitText = field.unit ? `（${field.unit}）` : '';
+  const requiredText = field.isRequired === 1 ? ' *' : '';
+  return `${field.label}${unitText}${requiredText}`;
+}
+
+function getFieldHelperText(field: CustomField) {
+  const tips: string[] = [];
+  if (field.placeholder) {
+    tips.push(field.placeholder);
+  }
+  if (field.unit) {
+    tips.push(`单位：${field.unit}`);
+  }
+  return tips.join(' · ');
+}
+
+function syncNodeFieldValues() {
+  const baseValues = parseObjectValue(activeOrder.value?.customDataSnapshot);
+  const latestProgressValues = getLatestProgressFormData();
+  const merged = {
+    ...baseValues,
+    ...latestProgressValues,
+  };
+  nodeFieldValues.value = currentStepFields.value.reduce((result, field) => {
+    result[field.fieldKey] = merged[field.fieldKey] ?? null;
+    return result;
+  }, {} as Record<string, any>);
+}
+
+function getLatestProgressFormData() {
+  const list = detail.value?.progressList || [];
+  for (let index = list.length - 1; index >= 0; index -= 1) {
+    const values = parseObjectValue(list[index]?.formData);
+    if (Object.keys(values).length) {
+      return values;
+    }
+  }
+  return {};
+}
+
+function parseObjectValue(value?: string | null) {
+  if (!value) return {};
+  try {
+    const parsed = JSON.parse(value);
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+function getSelectOptions(field: CustomField) {
+  const parsed = parseFieldOptions(field.options);
+  return parsed.map((item) => ({
+    label: item,
+    value: item,
+  }));
+}
+
+function parseFieldOptions(options?: any) {
+  if (!options) return [];
+  if (Array.isArray(options)) return options;
+  if (typeof options === 'string') {
+    try {
+      const parsed = JSON.parse(options);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+function getProgressFormEntries(progress: any) {
+  const values = parseObjectValue(progress?.formData);
+  return Object.entries(values)
+    .filter(([, value]) => value !== null && value !== undefined && value !== '')
+    .map(([key, value]) => ({
+      key,
+      label: categoryFields.value.find((field) => field.fieldKey === key)?.label || key,
+      value: formatFieldDisplayValue(categoryFields.value.find((field) => field.fieldKey === key), value),
+    }));
+}
+
+function formatFieldDisplayValue(field: CustomField | undefined, value: any) {
+  if (Array.isArray(value)) {
+    const joined = value.filter((item) => item !== null && item !== undefined && item !== '').join('、');
+    return appendFieldUnit(field, joined);
+  }
+  if (value && typeof value === 'object') {
+    return appendFieldUnit(field, JSON.stringify(value));
+  }
+  return appendFieldUnit(field, value);
+}
+
+function appendFieldUnit(field: CustomField | undefined, value: any) {
+  if (value === null || value === undefined || value === '') {
+    return '-';
+  }
+  return field?.unit ? `${value} ${field.unit}` : String(value);
 }
 
 function parseImageUrls(value?: string | null) {
@@ -584,6 +774,8 @@ async function submitAction(action: WorkbenchAction) {
   }
 
   const imageUrls = getUploadedImageUrls();
+  const formData =
+    currentStepFields.value.length > 0 ? JSON.stringify(nodeFieldValues.value || {}) : null;
   submittingAction.value = action;
   try {
     await submitWorkbenchAction(activeOrder.value.orderId, {
@@ -591,6 +783,7 @@ async function submitAction(action: WorkbenchAction) {
       description: actionForm.value.description.trim() || null,
       blockReason: actionForm.value.blockReason.trim() || null,
       rollbackTargetStepId: action === 'rollback' ? actionForm.value.rollbackTargetStepId : null,
+      formData,
       imageUrls: imageUrls.length ? JSON.stringify(imageUrls) : null,
     });
     message.success(actionSuccessText[action]);
@@ -752,6 +945,13 @@ const actionSuccessText: Record<WorkbenchAction, string> = {
   font-weight: 600;
 }
 
+.field-helper {
+  margin-top: 8px;
+  color: #9ca3af;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
 .action-buttons {
   display: flex;
   flex-wrap: wrap;
@@ -763,5 +963,19 @@ const actionSuccessText: Record<WorkbenchAction, string> = {
   flex-wrap: wrap;
   gap: 8px;
   margin-top: 10px;
+}
+
+.timeline-form {
+  margin-top: 8px;
+}
+
+.timeline-form__item {
+  color: #4b5563;
+  font-size: 12px;
+  line-height: 1.8;
+}
+
+.timeline-form__label {
+  color: #6b7280;
 }
 </style>

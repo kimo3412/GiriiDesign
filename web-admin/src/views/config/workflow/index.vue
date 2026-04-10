@@ -8,7 +8,7 @@
           :options="categoryOptions"
           placeholder="请选择品类"
           style="width: 220px"
-          @update:value="loadWorkflow"
+          @update:value="handleCategoryChange"
         />
         <n-button type="primary" :disabled="!selectedCategoryId" @click="handleAddStep">
           新增节点
@@ -41,6 +41,7 @@
             <div class="col-drag"></div>
             <div class="col-order">顺序</div>
             <div class="col-name">节点名称</div>
+            <div class="col-fields">节点字段</div>
             <div class="col-meta">客户可见</div>
             <div class="col-meta">需传图</div>
             <div class="col-meta">预计天数</div>
@@ -58,6 +59,9 @@
                 <div class="col-name">
                   <div class="step-name">{{ element.stepName }}</div>
                   <div class="step-desc">{{ element.nodeDescription || '未配置节点说明' }}</div>
+                </div>
+                <div class="col-fields">
+                  {{ getNodeFieldSummary(element.nodeFormFields) }}
                 </div>
                 <div class="col-meta">
                   <n-tag size="small" :type="element.visibleToClient === 0 ? 'default' : 'success'">
@@ -113,6 +117,15 @@
             </n-space>
           </n-checkbox-group>
         </n-form-item>
+        <n-form-item label="节点字段">
+          <n-select
+            v-model:value="selectedNodeFields"
+            :options="fieldOptions"
+            multiple
+            clearable
+            placeholder="选择该节点需要填写的动态字段"
+          />
+        </n-form-item>
         <n-form-item label="客户可见">
           <n-switch v-model:value="visibleToClientBool" />
         </n-form-item>
@@ -135,6 +148,7 @@ import draggable from 'vuedraggable';
 import { MenuOutlined } from '@vicons/antd';
 import { getCategoryList } from '@/api/config/category';
 import { getWorkflow, saveWorkflow, type WorkflowStep } from '@/api/config/workflow';
+import { getFieldList, type CustomField } from '@/api/config/field';
 
 const message = useMessage();
 const dialog = useDialog();
@@ -144,6 +158,8 @@ const router = useRouter();
 const loading = ref(false);
 const saving = ref(false);
 const categoryOptions = ref<{ label: string; value: number }[]>([]);
+const fieldOptions = ref<{ label: string; value: string }[]>([]);
+const categoryFields = ref<CustomField[]>([]);
 const selectedCategoryId = ref<number | null>(null);
 const workflowName = ref('');
 const stepsList = ref<WorkflowStep[]>([]);
@@ -159,6 +175,7 @@ const formData = ref<WorkflowStep>({
   needImageUpload: 0,
   visibleToClient: 1,
   expectedDurationDays: null,
+  nodeFormFields: '[]',
 });
 
 const rules = {
@@ -193,6 +210,19 @@ const needImageUploadBool = computed({
   },
 });
 
+const selectedNodeFields = computed({
+  get: () => {
+    try {
+      return formData.value.nodeFormFields ? JSON.parse(formData.value.nodeFormFields) : [];
+    } catch {
+      return [];
+    }
+  },
+  set: (value: string[]) => {
+    formData.value.nodeFormFields = JSON.stringify(value);
+  },
+});
+
 onMounted(async () => {
   const categories = await getCategoryList();
   categoryOptions.value = categories.map((item: any) => ({
@@ -203,6 +233,7 @@ onMounted(async () => {
   const queryCategoryId = Number(route.query.categoryId);
   if (queryCategoryId) {
     selectedCategoryId.value = queryCategoryId;
+    await loadCategoryFields();
     await loadWorkflow();
   }
 });
@@ -218,10 +249,26 @@ async function loadWorkflow() {
       allowedActions: step.allowedActions || '["save","advance","rollback","block","unblock"]',
       needImageUpload: step.needImageUpload ?? 0,
       visibleToClient: step.visibleToClient ?? 1,
+      nodeFormFields: step.nodeFormFields || '[]',
     }));
   } finally {
     loading.value = false;
   }
+}
+
+async function loadCategoryFields() {
+  if (!selectedCategoryId.value) return;
+  const fields = await getFieldList(selectedCategoryId.value);
+  categoryFields.value = fields || [];
+  fieldOptions.value = categoryFields.value.map((field) => ({
+    label: `${field.label} (${field.fieldKey})`,
+    value: field.fieldKey,
+  }));
+}
+
+async function handleCategoryChange() {
+  await loadCategoryFields();
+  await loadWorkflow();
 }
 
 function resetForm() {
@@ -232,6 +279,7 @@ function resetForm() {
     needImageUpload: 0,
     visibleToClient: 1,
     expectedDurationDays: null,
+    nodeFormFields: '[]',
   };
 }
 
@@ -250,6 +298,7 @@ function handleEditStep(row: WorkflowStep, index: number) {
     allowedActions: row.allowedActions || '["save","advance","rollback","block","unblock"]',
     needImageUpload: row.needImageUpload ?? 0,
     visibleToClient: row.visibleToClient ?? 1,
+    nodeFormFields: row.nodeFormFields || '[]',
   };
   showModal.value = true;
 }
@@ -309,6 +358,22 @@ function goWorkbench() {
   if (!selectedCategoryId.value) return;
   router.push(`/workbench/nodes?categoryId=${selectedCategoryId.value}`);
 }
+
+function getNodeFieldSummary(nodeFormFields?: string) {
+  if (!nodeFormFields) return '未绑定字段';
+  try {
+    const keys = JSON.parse(nodeFormFields);
+    if (!Array.isArray(keys) || !keys.length) {
+      return '未绑定字段';
+    }
+    const labels = keys
+      .map((key) => categoryFields.value.find((field) => field.fieldKey === key)?.label || key)
+      .slice(0, 3);
+    return keys.length > 3 ? `${labels.join('、')} 等 ${keys.length} 个字段` : labels.join('、');
+  } catch {
+    return '未绑定字段';
+  }
+}
 </script>
 
 <style scoped>
@@ -359,6 +424,12 @@ function goWorkbench() {
 .col-name {
   flex: 1;
   min-width: 0;
+}
+
+.col-fields {
+  width: 220px;
+  color: #666;
+  font-size: 12px;
 }
 
 .col-meta {

@@ -76,6 +76,7 @@ public class AppOrderController {
         private Integer currentStepIndex;
         private String currentStepName;
         private Integer hasRollback;
+        private List<FormEntryVO> currentStepFormEntries;
     }
 
     @Data
@@ -88,5 +89,14 @@ public class AppOrderController {
         private LocalDateTime createTime;
         private String eventType;
         private String eventLabel;
+        private List<FormEntryVO> formEntries;
+    }
+
+    @Data
+    public static class FormEntryVO {
+        private String key;
+        private String label;
+        private String value;
+        private String unit;
     }
 }

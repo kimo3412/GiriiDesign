@@ -5,8 +5,10 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.designstudio.common.security.LoginHelper;
 import com.designstudio.common.security.LoginUser;
+import com.designstudio.config.domain.DsCustomField;
 import com.designstudio.config.domain.DsWorkflow;
 import com.designstudio.config.domain.DsWorkflowStep;
+import com.designstudio.config.mapper.DsCustomFieldMapper;
 import com.designstudio.config.mapper.DsWorkflowMapper;
 import com.designstudio.config.mapper.DsWorkflowStepMapper;
 import com.designstudio.customer.domain.DsUser;
@@ -37,6 +39,7 @@ public class OrderServiceImpl implements OrderService {
 
     private final DsOrderMapper orderMapper;
     private final DsOrderProgressMapper progressMapper;
+    private final DsCustomFieldMapper customFieldMapper;
     private final DsWorkflowMapper workflowMapper;
     private final DsWorkflowStepMapper stepMapper;
     private final DsUserMapper userMapper;
@@ -155,6 +158,7 @@ public class OrderServiceImpl implements OrderService {
                 ? dto.getDescription()
                 : "推进至节点：" + nextStep.getStepName());
         progress.setImageUrls(normalizeJsonField(dto.getImageUrls()));
+        progress.setFormData(normalizeJsonField(dto.getFormData()));
         progress.setOperatorId(loginUser != null ? loginUser.getAdminId() : null);
         progress.setCreateTime(LocalDateTime.now());
         progress.setDelFlag(0);
@@ -197,6 +201,7 @@ public class OrderServiceImpl implements OrderService {
         progress.setStepId(order.getCurrentStepId());
         progress.setDescription(dto.getDescription());
         progress.setImageUrls(normalizeJsonField(dto.getImageUrls()));
+        progress.setFormData(normalizeJsonField(dto.getFormData()));
         progress.setOperatorId(loginUser != null ? loginUser.getAdminId() : null);
         progress.setCreateTime(LocalDateTime.now());
         progress.setDelFlag(0);
@@ -308,6 +313,7 @@ public class OrderServiceImpl implements OrderService {
             OrderController.ProgressDTO progressDTO = new OrderController.ProgressDTO();
             progressDTO.setDescription(dto.getDescription());
             progressDTO.setImageUrls(dto.getImageUrls());
+            progressDTO.setFormData(dto.getFormData());
             addProgress(orderId, progressDTO);
             return;
         }
@@ -316,6 +322,7 @@ public class OrderServiceImpl implements OrderService {
             OrderController.AdvanceDTO advanceDTO = new OrderController.AdvanceDTO();
             advanceDTO.setDescription(dto.getDescription());
             advanceDTO.setImageUrls(dto.getImageUrls());
+            advanceDTO.setFormData(dto.getFormData());
             advance(orderId, advanceDTO);
             return;
         }
@@ -331,7 +338,8 @@ public class OrderServiceImpl implements OrderService {
                     StringUtils.hasText(dto.getDescription())
                             ? dto.getDescription()
                             : "订单已阻塞：" + dto.getBlockReason(),
-                    dto.getImageUrls());
+                    dto.getImageUrls(),
+                    dto.getFormData());
             return;
         }
 
@@ -341,7 +349,8 @@ public class OrderServiceImpl implements OrderService {
                     StringUtils.hasText(dto.getDescription())
                             ? dto.getDescription()
                             : "订单已解除阻塞",
-                    dto.getImageUrls());
+                    dto.getImageUrls(),
+                    dto.getFormData());
             return;
         }
 
@@ -359,7 +368,14 @@ public class OrderServiceImpl implements OrderService {
         List<DsWorkflowStep> allSteps = getWorkflowStepsByCategory(order.getCategoryId()).stream()
                 .filter(step -> step.getVisibleToClient() == null || step.getVisibleToClient() == 1)
                 .collect(Collectors.toList());
-        List<DsOrderProgress> progressList = getProgressList(orderId);
+        Set<Long> visibleStepIds = allSteps.stream()
+                .map(DsWorkflowStep::getStepId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        List<DsOrderProgress> progressList = getProgressList(orderId).stream()
+                .filter(progress -> progress.getStepId() == null || visibleStepIds.contains(progress.getStepId()))
+                .collect(Collectors.toList());
+        Map<String, DsCustomField> categoryFieldMap = buildCategoryFieldMap(order.getCategoryId());
 
         AppOrderController.OrderTimelineVO vo = new AppOrderController.OrderTimelineVO();
         vo.setOrder(order);
@@ -372,9 +388,10 @@ public class OrderServiceImpl implements OrderService {
                 ? allSteps.get(currentStepIndex).getStepName()
                 : null);
 
-        List<AppOrderController.TimelineEventVO> timelineEvents = buildTimelineEvents(allSteps, progressList);
+        List<AppOrderController.TimelineEventVO> timelineEvents = buildTimelineEvents(allSteps, progressList, categoryFieldMap);
         vo.setTimelineEvents(timelineEvents);
         vo.setHasRollback(timelineEvents.stream().anyMatch(event -> "rollback".equals(event.getEventType())) ? 1 : 0);
+        vo.setCurrentStepFormEntries(resolveCurrentStepFormEntries(order.getCurrentStepId(), progressList, categoryFieldMap));
         return vo;
     }
 
@@ -542,7 +559,8 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private List<AppOrderController.TimelineEventVO> buildTimelineEvents(List<DsWorkflowStep> steps,
-                                                                         List<DsOrderProgress> progressList) {
+                                                                         List<DsOrderProgress> progressList,
+                                                                         Map<String, DsCustomField> categoryFieldMap) {
         if (progressList == null || progressList.isEmpty()) {
             return Collections.emptyList();
         }
@@ -562,6 +580,7 @@ public class OrderServiceImpl implements OrderService {
             event.setCreateTime(progress.getCreateTime());
             event.setEventType(eventType);
             event.setEventLabel(resolveTimelineEventLabel(eventType));
+            event.setFormEntries(buildFormEntries(progress.getFormData(), categoryFieldMap));
             events.add(event);
 
             if (currentIndex >= 0) {
@@ -612,13 +631,99 @@ public class OrderServiceImpl implements OrderService {
                 .orElse("节点 #" + stepId);
     }
 
-    private void recordProgress(Long orderId, Long stepId, String description, String imageUrls) {
+    private Map<String, DsCustomField> buildCategoryFieldMap(Long categoryId) {
+        if (categoryId == null) {
+            return Collections.emptyMap();
+        }
+        return customFieldMapper.selectList(new LambdaQueryWrapper<DsCustomField>()
+                        .eq(DsCustomField::getCategoryId, categoryId)
+                        .orderByAsc(DsCustomField::getSortOrder)
+                        .orderByAsc(DsCustomField::getFieldId))
+                .stream()
+                .filter(field -> StringUtils.hasText(field.getFieldKey()))
+                .collect(Collectors.toMap(
+                        DsCustomField::getFieldKey,
+                        field -> field,
+                        (left, right) -> left,
+                        LinkedHashMap::new));
+    }
+
+    private List<AppOrderController.FormEntryVO> resolveCurrentStepFormEntries(Long currentStepId,
+                                                                               List<DsOrderProgress> progressList,
+                                                                               Map<String, DsCustomField> categoryFieldMap) {
+        if (currentStepId == null || progressList == null || progressList.isEmpty()) {
+            return Collections.emptyList();
+        }
+        for (int index = progressList.size() - 1; index >= 0; index--) {
+            DsOrderProgress progress = progressList.get(index);
+            if (!Objects.equals(progress.getStepId(), currentStepId)) {
+                continue;
+            }
+            List<AppOrderController.FormEntryVO> entries = buildFormEntries(progress.getFormData(), categoryFieldMap);
+            if (!entries.isEmpty()) {
+                return entries;
+            }
+        }
+        return Collections.emptyList();
+    }
+
+    private List<AppOrderController.FormEntryVO> buildFormEntries(String formData,
+                                                                  Map<String, DsCustomField> categoryFieldMap) {
+        Map<String, Object> valueMap = parseFormDataMap(formData);
+        if (valueMap.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<AppOrderController.FormEntryVO> entries = new ArrayList<>();
+        for (Map.Entry<String, Object> entry : valueMap.entrySet()) {
+            String valueText = formatFormValue(entry.getValue());
+            if (!StringUtils.hasText(valueText)) {
+                continue;
+            }
+            DsCustomField field = categoryFieldMap.get(entry.getKey());
+            AppOrderController.FormEntryVO formEntry = new AppOrderController.FormEntryVO();
+            formEntry.setKey(entry.getKey());
+            formEntry.setLabel(field != null && StringUtils.hasText(field.getLabel()) ? field.getLabel() : entry.getKey());
+            formEntry.setUnit(field != null ? field.getUnit() : null);
+            formEntry.setValue(valueText);
+            entries.add(formEntry);
+        }
+        return entries;
+    }
+
+    private String formatFormValue(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Collection<?>) {
+            return ((Collection<?>) value).stream()
+                    .filter(Objects::nonNull)
+                    .map(String::valueOf)
+                    .filter(StringUtils::hasText)
+                    .collect(Collectors.joining("、"));
+        }
+        if (value.getClass().isArray()) {
+            int length = java.lang.reflect.Array.getLength(value);
+            List<String> values = new ArrayList<>(length);
+            for (int index = 0; index < length; index++) {
+                Object item = java.lang.reflect.Array.get(value, index);
+                if (item != null && StringUtils.hasText(String.valueOf(item))) {
+                    values.add(String.valueOf(item));
+                }
+            }
+            return String.join("、", values);
+        }
+        return String.valueOf(value);
+    }
+
+    private void recordProgress(Long orderId, Long stepId, String description, String imageUrls, String formData) {
         LoginUser loginUser = LoginHelper.getLoginUser();
         DsOrderProgress progress = new DsOrderProgress();
         progress.setOrderId(orderId);
         progress.setStepId(stepId);
         progress.setDescription(description);
         progress.setImageUrls(normalizeJsonField(imageUrls));
+        progress.setFormData(normalizeJsonField(formData));
         progress.setOperatorId(loginUser != null ? loginUser.getAdminId() : null);
         progress.setCreateTime(LocalDateTime.now());
         progress.setDelFlag(0);
@@ -654,7 +759,7 @@ public class OrderServiceImpl implements OrderService {
         String description = StringUtils.hasText(dto.getDescription())
                 ? dto.getDescription()
                 : "退回至节点：" + targetStep.getStepName();
-        recordProgress(order.getOrderId(), targetStep.getStepId(), description, dto.getImageUrls());
+        recordProgress(order.getOrderId(), targetStep.getStepId(), description, dto.getImageUrls(), dto.getFormData());
     }
 
     private DsWorkflowStep resolveRollbackTargetStep(List<DsWorkflowStep> steps, int currentIndex,
@@ -704,6 +809,10 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException("当前节点不存在，无法退回");
         }
 
+        if (currentStep != null && ("save".equals(action) || "advance".equals(action))) {
+            validateNodeFormData(currentStep, dto.getFormData());
+        }
+
         if (currentStep != null
                 && currentStep.getNeedImageUpload() != null
                 && currentStep.getNeedImageUpload() == 1
@@ -725,6 +834,67 @@ public class OrderServiceImpl implements OrderService {
         } catch (Exception ignored) {
             return new HashSet<>(Arrays.asList("save", "advance", "rollback", "block", "unblock"));
         }
+    }
+
+    private void validateNodeFormData(DsWorkflowStep currentStep, String formData) {
+        List<String> fieldKeys = parseNodeFormFieldKeys(currentStep);
+        if (fieldKeys.isEmpty()) {
+            return;
+        }
+
+        Long categoryId = resolveCategoryIdByWorkflowId(currentStep.getWorkflowId());
+        if (categoryId == null) {
+            return;
+        }
+        List<DsCustomField> fields = customFieldMapper.selectList(new LambdaQueryWrapper<DsCustomField>()
+                .eq(DsCustomField::getCategoryId, categoryId)
+                .in(DsCustomField::getFieldKey, fieldKeys));
+        Map<String, Object> formValueMap = parseFormDataMap(formData);
+        if (formValueMap.isEmpty()) {
+            boolean hasRequiredFields = fields.stream().anyMatch(field -> field.getIsRequired() != null && field.getIsRequired() == 1);
+            if (hasRequiredFields) {
+                throw new RuntimeException("请填写当前节点的必填字段");
+            }
+            return;
+        }
+        for (DsCustomField field : fields) {
+            if (field.getIsRequired() != null && field.getIsRequired() == 1) {
+                Object value = formValueMap.get(field.getFieldKey());
+                if (value == null || !StringUtils.hasText(String.valueOf(value))) {
+                    throw new RuntimeException("请填写节点字段：" + field.getLabel());
+                }
+            }
+        }
+    }
+
+    private List<String> parseNodeFormFieldKeys(DsWorkflowStep currentStep) {
+        if (currentStep == null || !StringUtils.hasText(currentStep.getNodeFormFields())) {
+            return Collections.emptyList();
+        }
+        try {
+            return objectMapper.readValue(currentStep.getNodeFormFields(), new TypeReference<List<String>>() {});
+        } catch (Exception ignored) {
+            return Collections.emptyList();
+        }
+    }
+
+    private Map<String, Object> parseFormDataMap(String formData) {
+        if (!StringUtils.hasText(formData)) {
+            return Collections.emptyMap();
+        }
+        try {
+            return objectMapper.readValue(formData, new TypeReference<Map<String, Object>>() {});
+        } catch (Exception ignored) {
+            return Collections.emptyMap();
+        }
+    }
+
+    private Long resolveCategoryIdByWorkflowId(Long workflowId) {
+        if (workflowId == null) {
+            return null;
+        }
+        DsWorkflow workflow = workflowMapper.selectById(workflowId);
+        return workflow != null ? workflow.getCategoryId() : null;
     }
 
     private String normalizeJsonField(String value) {
