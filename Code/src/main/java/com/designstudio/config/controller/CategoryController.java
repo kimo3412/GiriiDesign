@@ -61,4 +61,14 @@ public class CategoryController {
         categoryMapper.deleteById(id);
         return R.ok();
     }
+
+    @DeleteMapping("/batch")
+    @Operation(summary = "批量删除品类")
+    @OperLog("批量删除品类")
+    public R<Void> batchDelete(@RequestBody List<Long> ids) {
+        for (Long id : ids) {
+            categoryMapper.deleteById(id);
+        }
+        return R.ok();
+    }
 }

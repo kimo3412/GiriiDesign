@@ -66,6 +66,16 @@ public class MaterialController {
         return R.ok();
     }
 
+    @DeleteMapping("/batch")
+    @Operation(summary = "批量删除物料")
+    @OperLog("批量删除物料")
+    public R<Void> batchDelete(@RequestBody List<Long> ids) {
+        for (Long id : ids) {
+            materialService.deleteMaterial(id);
+        }
+        return R.ok();
+    }
+
     @PostMapping("/{id}/stock-in")
     @Operation(summary = "入库")
     @OperLog("物料入库")

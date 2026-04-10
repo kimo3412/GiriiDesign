@@ -69,4 +69,25 @@ public class PortfolioController {
         portfolioMapper.deleteById(id);
         return R.ok();
     }
+
+    @DeleteMapping("/batch")
+    @Operation(summary = "批量删除作品集")
+    @OperLog("批量删除作品集")
+    public R<Void> batchDelete(@RequestBody List<Long> ids) {
+        for (Long id : ids) {
+            portfolioMapper.deleteById(id);
+        }
+        return R.ok();
+    }
+
+    @PutMapping("/{id}/status")
+    @Operation(summary = "发布/下架作品集")
+    @OperLog("发布/下架作品集")
+    public R<Void> toggleStatus(@PathVariable Long id, @RequestBody DsPortfolio body) {
+        DsPortfolio update = new DsPortfolio();
+        update.setPortfolioId(id);
+        update.setStatus(body.getStatus());
+        portfolioMapper.updateById(update);
+        return R.ok();
+    }
 }

@@ -1,10 +1,16 @@
 <template>
   <n-card title="用户管理" :bordered="false">
     <template #header-extra>
-      <n-button type="primary" @click="handleAdd">新增用户</n-button>
+      <n-space>
+        <n-button type="error" :disabled="!checkedKeys.length" @click="handleBatchDelete">
+          批量删除{{ checkedKeys.length ? `(${checkedKeys.length})` : '' }}
+        </n-button>
+        <n-button type="primary" @click="handleAdd">新增用户</n-button>
+      </n-space>
     </template>
 
     <n-data-table
+      v-model:checked-row-keys="checkedKeys"
       :columns="columns"
       :data="tableData"
       :loading="loading"
@@ -54,7 +60,7 @@
 <script lang="ts" setup>
 import { ref, onMounted, h } from 'vue';
 import { NButton, NTag, NSpace, useMessage, useDialog } from 'naive-ui';
-import { getAdminList, getAdminDetail, addAdmin, updateAdmin, deleteAdmin, updateDesignerCategories, type AdminSaveDTO } from '@/api/system/adminList';
+import { getAdminList, getAdminDetail, addAdmin, updateAdmin, deleteAdmin, batchDeleteAdmins, updateDesignerCategories, type AdminSaveDTO } from '@/api/system/adminList';
 import { getRoleList } from '@/api/system/roleList';
 import { getCategoryList } from '@/api/config/category';
 
@@ -85,7 +91,10 @@ const rules = {
   nickname: { required: true, message: '请输入昵称', trigger: 'blur' },
 };
 
+const checkedKeys = ref<number[]>([]);
+
 const columns = [
+  { type: 'selection' },
   { title: 'ID', key: 'adminId', width: 60 },
   { title: '账号', key: 'username' },
   { title: '昵称', key: 'nickname' },
@@ -186,6 +195,25 @@ const handleDelete = (row: any) => {
       try {
         await deleteAdmin(row.adminId);
         message.success('删除成功');
+        loadData();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  });
+};
+
+const handleBatchDelete = () => {
+  dialog.warning({
+    title: '确认批量删除',
+    content: `确定要删除选中的 ${checkedKeys.value.length} 个用户吗？`,
+    positiveText: '确认',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      try {
+        await batchDeleteAdmins(checkedKeys.value);
+        message.success('批量删除成功');
+        checkedKeys.value = [];
         loadData();
       } catch (e) {
         console.error(e);

@@ -26,6 +26,7 @@ export const getAdminDetail = (id: number) => Alova.Get<AdminDetailVO>(`/v1/admi
 export const addAdmin = (data: AdminSaveDTO) => Alova.Post<void>('/v1/admin/users', data);
 export const updateAdmin = (id: number, data: AdminSaveDTO) => Alova.Put<void>(`/v1/admin/users/${id}`, data);
 export const deleteAdmin = (id: number) => Alova.Delete<void>(`/v1/admin/users/${id}`);
+export const batchDeleteAdmins = (ids: number[]) => Alova.Delete<void>('/v1/admin/users/batch', ids);
 
 /** 根据品类获取设计师列表 */
 export const getDesignersByCategory = (categoryId: number) =>

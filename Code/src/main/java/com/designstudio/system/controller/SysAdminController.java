@@ -71,6 +71,20 @@ public class SysAdminController {
         }
     }
 
+    @DeleteMapping("/batch")
+    @Operation(summary = "批量删除用户")
+    @OperLog("批量删除后台用户")
+    public R<Void> batchDelete(@RequestBody List<Long> ids) {
+        try {
+            for (Long id : ids) {
+                adminService.deleteAdmin(id);
+            }
+            return R.ok();
+        } catch (RuntimeException e) {
+            return R.fail(e.getMessage());
+        }
+    }
+
     @PutMapping("/{id}/categories")
     @Operation(summary = "设置设计师负责的品类")
     @OperLog("设置设计师品类")

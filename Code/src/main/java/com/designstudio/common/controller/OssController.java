@@ -7,11 +7,15 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -88,6 +92,39 @@ public class OssController {
         } catch (IOException e) {
             log.error("文件上传失败", e);
             throw new BusinessException("文件上传失败", ErrorCode.SYSTEM_ERROR.getCode());
+        }
+    }
+
+    @GetMapping("/files/**")
+    @Operation(summary = "访问上传文件", description = "通过 API 路径访问上传的文件，避免跨域问题")
+    public ResponseEntity<Resource> getFile(HttpServletRequest request) {
+        String requestUri = request.getRequestURI();
+        String filePath = requestUri.substring(requestUri.indexOf("/oss/files") + "/oss/files".length());
+
+        // 安全检查：防止路径遍历
+        if (filePath.contains("..")) {
+            return ResponseEntity.notFound().build();
+        }
+
+        try {
+            Path file = Paths.get(uploadPath).resolve(filePath.substring(1)).normalize();
+            if (!Files.exists(file) || !Files.isRegularFile(file)) {
+                return ResponseEntity.notFound().build();
+            }
+
+            Resource resource = new UrlResource(file.toUri());
+            String contentType = Files.probeContentType(file);
+            if (contentType == null) {
+                contentType = "application/octet-stream";
+            }
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType(contentType))
+                    .header(HttpHeaders.CACHE_CONTROL, "max-age=86400")
+                    .body(resource);
+        } catch (IOException e) {
+            log.error("文件读取失败: {}", filePath, e);
+            return ResponseEntity.notFound().build();
         }
     }
 }

@@ -25,6 +25,11 @@ export function deleteMaterial(id: number) {
     return Alova.Delete<any>(`/v1/admin/materials/${id}`);
 }
 
+/** 批量删除物料 */
+export function batchDeleteMaterials(ids: number[]) {
+    return Alova.Delete<any>('/v1/admin/materials/batch', ids);
+}
+
 /** 入库（增加库存） */
 export function stockIn(id: number, data: { quantity: number; remark?: string }) {
     return Alova.Post<any>(`/v1/admin/materials/${id}/stock-in`, data);
@@ -58,6 +63,11 @@ export function updateBomTemplate(id: number, data: any) {
 /** 删除 BOM 模板 */
 export function deleteBomTemplate(id: number) {
     return Alova.Delete<any>(`/v1/admin/bom-templates/${id}`);
+}
+
+/** 批量删除 BOM 模板 */
+export function batchDeleteBomTemplates(ids: number[]) {
+    return Alova.Delete<any>('/v1/admin/bom-templates/batch', ids);
 }
 
 /** 库存预警列表 */

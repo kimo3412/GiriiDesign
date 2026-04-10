@@ -25,6 +25,11 @@ export function deleteCategory(id: number) {
     return Alova.Delete<any>(`/v1/admin/categories/${id}`);
 }
 
+/** 批量删除品类 */
+export function batchDeleteCategories(ids: number[]) {
+    return Alova.Delete<any>('/v1/admin/categories/batch', ids);
+}
+
 /** 获取品类下的动态字段列表 */
 export function getFieldsByCategory(categoryId: number) {
     return Alova.Get<any>(`/v1/admin/categories/${categoryId}/fields`);

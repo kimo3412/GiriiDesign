@@ -67,6 +67,16 @@ public class BomTemplateController {
         return R.ok();
     }
 
+    @DeleteMapping("/batch")
+    @Operation(summary = "批量删除BOM模板")
+    @OperLog("批量删除BOM模板")
+    public R<Void> batchDelete(@RequestBody List<Long> ids) {
+        for (Long id : ids) {
+            bomTemplateService.deleteTemplate(id);
+        }
+        return R.ok();
+    }
+
     // ========== VO / DTO ==========
 
     @Data

@@ -20,6 +20,11 @@ export function deletePortfolio(id: number) {
     return Alova.Delete<any>(`/v1/admin/portfolios/${id}`);
 }
 
+/** 批量删除作品 */
+export function batchDeletePortfolios(ids: number[]) {
+    return Alova.Delete<any>('/v1/admin/portfolios/batch', ids);
+}
+
 /** 发布/下架作品 */
 export function togglePortfolioStatus(id: number, status: number) {
     return Alova.Put<any>(`/v1/admin/portfolios/${id}/status`, { status });

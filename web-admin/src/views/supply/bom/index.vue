@@ -3,11 +3,14 @@
     <template #header-extra>
       <n-space>
         <n-select v-model:value="filterCategory" :options="categoryOptions" placeholder="品类" style="width: 140px" clearable @update:value="loadData" />
+        <n-button type="error" :disabled="!checkedKeys.length" @click="handleBatchDelete">
+          批量删除{{ checkedKeys.length ? `(${checkedKeys.length})` : '' }}
+        </n-button>
         <n-button type="primary" @click="handleAdd">新增模板</n-button>
       </n-space>
     </template>
 
-    <n-data-table :columns="columns" :data="tableData" :loading="loading" :row-key="row => row.templateId" />
+    <n-data-table v-model:checked-row-keys="checkedKeys" :columns="columns" :data="tableData" :loading="loading" :row-key="row => row.templateId" />
 
     <!-- 新增/编辑弹窗 -->
     <n-modal v-model:show="showModal" :title="isEdit ? '编辑 BOM 模板' : '新增 BOM 模板'" preset="dialog" positive-text="保存" negative-text="取消" @positive-click="handleSubmit" style="width: 600px">
@@ -34,7 +37,7 @@
 <script lang="ts" setup>
 import { ref, onMounted, h } from 'vue';
 import { NButton, NSpace, useMessage, useDialog } from 'naive-ui';
-import { getBomTemplateList, getBomTemplateDetail, addBomTemplate, updateBomTemplate, deleteBomTemplate } from '@/api/supply/index';
+import { getBomTemplateList, getBomTemplateDetail, addBomTemplate, updateBomTemplate, deleteBomTemplate, batchDeleteBomTemplates } from '@/api/supply/index';
 import { getMaterialList } from '@/api/supply/index';
 import { getCategoryList } from '@/api/config/category';
 
@@ -52,7 +55,10 @@ const showModal = ref(false);
 const isEdit = ref(false);
 const formData = ref<any>({ name: '', categoryId: null, remark: '', items: [] });
 
+const checkedKeys = ref<number[]>([]);
+
 const columns = [
+  { type: 'selection' },
   { title: 'ID', key: 'templateId', width: 60 },
   { title: '模板名称', key: 'name' },
   { title: '品类', key: 'categoryId', width: 100, render(row: any) { return categoryMap.value[row.categoryId] || '-'; } },
@@ -149,6 +155,23 @@ const handleDelete = (row: any) => {
       await deleteBomTemplate(row.templateId);
       message.success('已删除');
       loadData();
+    }
+  });
+};
+
+const handleBatchDelete = () => {
+  dialog.warning({
+    title: '确认批量删除',
+    content: `确定要删除选中的 ${checkedKeys.value.length} 个模板吗？`,
+    positiveText: '确认',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      try {
+        await batchDeleteBomTemplates(checkedKeys.value);
+        message.success('批量删除成功');
+        checkedKeys.value = [];
+        loadData();
+      } catch (e) { console.error(e); }
     }
   });
 };

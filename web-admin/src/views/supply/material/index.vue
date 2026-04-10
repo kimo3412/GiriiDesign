@@ -4,11 +4,14 @@
       <n-space>
         <n-select v-model:value="filterCategory" :options="categoryOptions" placeholder="品类" style="width: 120px" clearable @update:value="loadData" />
         <n-input v-model:value="keyword" placeholder="搜索名称/编码" clearable @keyup.enter="loadData" style="width: 180px" />
+        <n-button type="error" :disabled="!checkedKeys.length" @click="handleBatchDelete">
+          批量删除{{ checkedKeys.length ? `(${checkedKeys.length})` : '' }}
+        </n-button>
         <n-button type="primary" @click="handleAdd">新增物料</n-button>
       </n-space>
     </template>
 
-    <n-data-table :columns="columns" :data="tableData" :loading="loading" :row-key="row => row.materialId" />
+    <n-data-table v-model:checked-row-keys="checkedKeys" :columns="columns" :data="tableData" :loading="loading" :row-key="row => row.materialId" />
 
     <!-- 新增/编辑弹窗 -->
     <n-modal v-model:show="showModal" :title="isEdit ? '编辑物料' : '新增物料'" preset="dialog" positive-text="确定" negative-text="取消" @positive-click="handleSubmit" style="width: 520px">
@@ -39,7 +42,7 @@
 <script lang="ts" setup>
 import { ref, onMounted, h } from 'vue';
 import { NButton, NTag, NSpace, useMessage, useDialog } from 'naive-ui';
-import { getMaterialList, addMaterial, updateMaterial, deleteMaterial, stockIn, stockOut } from '@/api/supply/index';
+import { getMaterialList, addMaterial, updateMaterial, deleteMaterial, batchDeleteMaterials, stockIn, stockOut } from '@/api/supply/index';
 
 const message = useMessage();
 const dialog = useDialog();
@@ -65,7 +68,10 @@ const stockType = ref<'in' | 'out'>('in');
 const stockMaterial = ref<any>(null);
 const stockQty = ref(1);
 
+const checkedKeys = ref<number[]>([]);
+
 const columns = [
+  { type: 'selection' },
   { title: '编码', key: 'sku', width: 140 },
   { title: '名称', key: 'name', ellipsis: { tooltip: true } },
   { title: '品类', key: 'category', width: 80 },
@@ -147,6 +153,23 @@ const handleDelete = (row: any) => {
       await deleteMaterial(row.materialId);
       message.success('已删除');
       loadData();
+    }
+  });
+};
+
+const handleBatchDelete = () => {
+  dialog.warning({
+    title: '确认批量删除',
+    content: `确定要删除选中的 ${checkedKeys.value.length} 条物料吗？`,
+    positiveText: '确认',
+    negativeText: '取消',
+    onPositiveClick: async () => {
+      try {
+        await batchDeleteMaterials(checkedKeys.value);
+        message.success('批量删除成功');
+        checkedKeys.value = [];
+        loadData();
+      } catch (e) { console.error(e); }
     }
   });
 };

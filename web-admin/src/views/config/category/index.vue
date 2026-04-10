@@ -1,13 +1,19 @@
 <template>
   <n-card title="品类管理" :bordered="false">
     <template #header-extra>
-      <n-button type="primary" @click="handleAdd">
-        <template #icon><n-icon><PlusOutlined /></n-icon></template>
-        新增品类
-      </n-button>
+      <n-space>
+        <n-button type="error" :disabled="!checkedKeys.length" @click="handleBatchDelete">
+          批量删除{{ checkedKeys.length ? `(${checkedKeys.length})` : '' }}
+        </n-button>
+        <n-button type="primary" @click="handleAdd">
+          <template #icon><n-icon><PlusOutlined /></n-icon></template>
+          新增品类
+        </n-button>
+      </n-space>
     </template>
 
     <n-data-table
+      v-model:checked-row-keys="checkedKeys"
       :columns="columns"
       :data="tableData"
       :loading="loading"
@@ -66,6 +72,7 @@
     addCategory,
     updateCategory,
     deleteCategory,
+    batchDeleteCategories,
   } from '@/api/config/category';
 
   const message = useMessage();
@@ -91,7 +98,10 @@
     name: { required: true, message: '请输入品类名称', trigger: 'blur' },
   };
 
+  const checkedKeys = ref<number[]>([]);
+
   const columns = [
+    { type: 'selection' },
     { title: 'ID', key: 'categoryId', width: 60 },
     { title: '品类名称', key: 'name', width: 150 },
     {
@@ -198,6 +208,24 @@
         await deleteCategory(row.categoryId);
         message.success('删除成功');
         await loadData();
+      },
+    });
+  };
+
+  // 批量删除
+  const handleBatchDelete = () => {
+    dialog.warning({
+      title: '确认批量删除',
+      content: `确定要删除选中的 ${checkedKeys.value.length} 个品类吗？`,
+      positiveText: '删除',
+      negativeText: '取消',
+      onPositiveClick: async () => {
+        try {
+          await batchDeleteCategories(checkedKeys.value);
+          message.success('批量删除成功');
+          checkedKeys.value = [];
+          await loadData();
+        } catch (e) { console.error(e); }
       },
     });
   };
