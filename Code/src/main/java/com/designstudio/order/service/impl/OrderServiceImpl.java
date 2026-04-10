@@ -29,7 +29,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -377,6 +379,9 @@ public class OrderServiceImpl implements OrderService {
                 .collect(Collectors.toList());
         Map<String, DsCustomField> categoryFieldMap = buildCategoryFieldMap(order.getCategoryId());
 
+        // 构建操作者名称映射
+        Map<Long, String> operatorNameMap = buildOperatorNameMap(progressList);
+
         AppOrderController.OrderTimelineVO vo = new AppOrderController.OrderTimelineVO();
         vo.setOrder(order);
         vo.setWorkflowSteps(allSteps);
@@ -388,10 +393,17 @@ public class OrderServiceImpl implements OrderService {
                 ? allSteps.get(currentStepIndex).getStepName()
                 : null);
 
-        List<AppOrderController.TimelineEventVO> timelineEvents = buildTimelineEvents(allSteps, progressList, categoryFieldMap);
+        List<AppOrderController.TimelineEventVO> timelineEvents = buildTimelineEvents(allSteps, progressList, categoryFieldMap, operatorNameMap);
         vo.setTimelineEvents(timelineEvents);
         vo.setHasRollback(timelineEvents.stream().anyMatch(event -> "rollback".equals(event.getEventType())) ? 1 : 0);
         vo.setCurrentStepFormEntries(resolveCurrentStepFormEntries(order.getCurrentStepId(), progressList, categoryFieldMap));
+
+        // 逾期计算
+        resolveOverdueInfo(vo, order);
+
+        // 当前步骤耗时
+        resolveCurrentStepElapsed(vo, allSteps, progressList, currentStepIndex);
+
         return vo;
     }
 
@@ -560,7 +572,8 @@ public class OrderServiceImpl implements OrderService {
 
     private List<AppOrderController.TimelineEventVO> buildTimelineEvents(List<DsWorkflowStep> steps,
                                                                          List<DsOrderProgress> progressList,
-                                                                         Map<String, DsCustomField> categoryFieldMap) {
+                                                                         Map<String, DsCustomField> categoryFieldMap,
+                                                                         Map<Long, String> operatorNameMap) {
         if (progressList == null || progressList.isEmpty()) {
             return Collections.emptyList();
         }
@@ -574,13 +587,14 @@ public class OrderServiceImpl implements OrderService {
             AppOrderController.TimelineEventVO event = new AppOrderController.TimelineEventVO();
             event.setProgressId(progress.getProgressId());
             event.setStepId(progress.getStepId());
-            event.setStepName(resolveStepName(steps, progress.getStepId()));
+            event.setStepName(resolveStepNameForTimeline(steps, progress));
             event.setDescription(progress.getDescription());
             event.setImageUrls(progress.getImageUrls());
             event.setCreateTime(progress.getCreateTime());
             event.setEventType(eventType);
             event.setEventLabel(resolveTimelineEventLabel(eventType));
             event.setFormEntries(buildFormEntries(progress.getFormData(), categoryFieldMap));
+            event.setOperatorName(operatorNameMap.getOrDefault(progress.getOperatorId(), null));
             events.add(event);
 
             if (currentIndex >= 0) {
@@ -601,6 +615,9 @@ public class OrderServiceImpl implements OrderService {
         if (description.contains("退回")) {
             return "rollback";
         }
+        if (description.contains("支付")) {
+            return "payment";
+        }
         if (currentIndex >= 0 && lastStepIndex >= 0 && currentIndex < lastStepIndex) {
             return "rollback";
         }
@@ -615,6 +632,8 @@ public class OrderServiceImpl implements OrderService {
                 return "阻塞";
             case "unblock":
                 return "恢复";
+            case "payment":
+                return "支付";
             default:
                 return "进度";
         }
@@ -629,6 +648,87 @@ public class OrderServiceImpl implements OrderService {
                 .map(DsWorkflowStep::getStepName)
                 .findFirst()
                 .orElse("节点 #" + stepId);
+    }
+
+    /** 时间线专用：对支付等无 stepId 的记录返回友好名称 */
+    private String resolveStepNameForTimeline(List<DsWorkflowStep> steps, DsOrderProgress progress) {
+        if (progress.getStepId() != null) {
+            return resolveStepName(steps, progress.getStepId());
+        }
+        String desc = progress.getDescription() == null ? "" : progress.getDescription();
+        if (desc.contains("支付")) {
+            return "支付确认";
+        }
+        return "系统操作";
+    }
+
+    /** 构建操作者 ID → 名称映射 */
+    private Map<Long, String> buildOperatorNameMap(List<DsOrderProgress> progressList) {
+        if (progressList == null || progressList.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        Set<Long> operatorIds = progressList.stream()
+                .map(DsOrderProgress::getOperatorId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (operatorIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+        return adminMapper.selectBatchIds(operatorIds).stream()
+                .collect(Collectors.toMap(
+                        SysAdmin::getAdminId,
+                        admin -> StringUtils.hasText(admin.getNickname())
+                                ? admin.getNickname()
+                                : (StringUtils.hasText(admin.getUsername()) ? admin.getUsername() : "设计师#" + admin.getAdminId()),
+                        (left, right) -> left));
+    }
+
+    /** 计算逾期信息 */
+    private void resolveOverdueInfo(AppOrderController.OrderTimelineVO vo, DsOrder order) {
+        if (order.getExpectedDate() == null || order.getStatus() == null
+                || order.getStatus() >= 4 || order.getStatus() == 5) {
+            vo.setIsOverdue(false);
+            vo.setOverdueDays(0);
+            return;
+        }
+        LocalDate today = LocalDate.now();
+        long daysDiff = ChronoUnit.DAYS.between(today, order.getExpectedDate());
+        boolean isOverdue = daysDiff < 0;
+        vo.setIsOverdue(isOverdue);
+        vo.setOverdueDays(isOverdue ? (int) Math.abs(daysDiff) : 0);
+        if (daysDiff > 0) {
+            vo.setExpectedDateText("还剩" + daysDiff + "天");
+        } else if (daysDiff == 0) {
+            vo.setExpectedDateText("今天截止");
+        } else {
+            vo.setExpectedDateText("逾期" + Math.abs(daysDiff) + "天");
+        }
+    }
+
+    /** 计算当前步骤已耗时 */
+    private void resolveCurrentStepElapsed(AppOrderController.OrderTimelineVO vo,
+                                           List<DsWorkflowStep> steps,
+                                           List<DsOrderProgress> progressList,
+                                           int currentStepIndex) {
+        if (currentStepIndex < 0 || currentStepIndex >= steps.size() || progressList.isEmpty()) {
+            return;
+        }
+        Long currentStepId = steps.get(currentStepIndex).getStepId();
+        // 找到进入当前步骤的第一条进度记录
+        LocalDateTime enterTime = null;
+        for (DsOrderProgress p : progressList) {
+            if (Objects.equals(p.getStepId(), currentStepId)) {
+                enterTime = p.getCreateTime();
+                break;
+            }
+        }
+        if (enterTime == null) {
+            return;
+        }
+        long elapsedDays = ChronoUnit.DAYS.between(enterTime.toLocalDate(), LocalDate.now());
+        vo.setCurrentStepElapsedDays((int) elapsedDays);
+        DsWorkflowStep currentStep = steps.get(currentStepIndex);
+        vo.setCurrentStepExpectedDays(currentStep.getExpectedDurationDays());
     }
 
     private Map<String, DsCustomField> buildCategoryFieldMap(Long categoryId) {

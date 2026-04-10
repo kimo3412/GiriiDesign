@@ -77,6 +77,16 @@ public class AppOrderController {
         private String currentStepName;
         private Integer hasRollback;
         private List<FormEntryVO> currentStepFormEntries;
+        /** 是否逾期 */
+        private Boolean isOverdue;
+        /** 逾期天数（正数表示逾期） */
+        private Integer overdueDays;
+        /** 预计日期文案，如"还剩3天"、"逾期2天" */
+        private String expectedDateText;
+        /** 当前步骤已耗时天数 */
+        private Integer currentStepElapsedDays;
+        /** 当前步骤预计天数 */
+        private Integer currentStepExpectedDays;
     }
 
     @Data
@@ -90,6 +100,8 @@ public class AppOrderController {
         private String eventType;
         private String eventLabel;
         private List<FormEntryVO> formEntries;
+        /** 操作者名称 */
+        private String operatorName;
     }
 
     @Data

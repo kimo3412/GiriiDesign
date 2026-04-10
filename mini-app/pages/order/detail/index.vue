@@ -1,8 +1,21 @@
 <template>
   <view class="order-detail-container">
     <view class="status-card">
-      <text class="status-text">{{ getStatusText(order.status) }}</text>
+      <view class="status-head">
+        <text class="status-text">{{ getStatusText(order.status) }}</text>
+        <view v-if="isOverdue" class="status-overdue">
+          <text class="status-overdue__text">逾期{{ overdueDays }}天</text>
+        </view>
+        <view v-else-if="expectedDateText && !isOrderFinished" class="status-countdown">
+          <text class="status-countdown__text">{{ expectedDateText }}</text>
+        </view>
+      </view>
       <text class="status-desc">{{ currentStepText }}</text>
+      <view v-if="currentStepElapsedDays != null" class="status-elapsed">
+        <text class="status-elapsed__text">当前节点已进行 {{ currentStepElapsedDays }} 天
+          <text v-if="currentStepExpectedDays">/ 预计 {{ currentStepExpectedDays }} 天</text>
+        </text>
+      </view>
       <view v-if="order.isBlocked === 1 && order.blockReason" class="status-alert">
         <text class="status-alert__label">当前暂停</text>
         <text class="status-alert__text">{{ order.blockReason }}</text>
@@ -80,7 +93,10 @@
             class="progress-item"
           >
             <view class="progress-header">
-              <text class="progress-time">{{ item.createTime }}</text>
+              <view class="progress-header__left">
+                <text class="progress-time">{{ item.createTime }}</text>
+                <text v-if="item.operatorName" class="progress-operator">{{ item.operatorName }}</text>
+              </view>
               <text class="progress-tag" :class="`tag-${item.eventType}`">
                 {{ item.eventLabel }}
               </text>
@@ -169,6 +185,16 @@ const currentStepIndex = ref(-1)
 const currentStepName = ref('')
 const hasRollback = ref(0)
 const currentStepEntries = ref([])
+const isOverdue = ref(false)
+const overdueDays = ref(0)
+const expectedDateText = ref('')
+const currentStepElapsedDays = ref(null)
+const currentStepExpectedDays = ref(null)
+
+const isOrderFinished = computed(() => {
+  const s = order.value.status
+  return s === 4 || s === 5
+})
 
 const currentStepText = computed(() => {
   if (order.value.isBlocked === 1) {
@@ -197,6 +223,11 @@ const fetchTimeline = async () => {
     currentStepName.value = data.currentStepName || ''
     hasRollback.value = data.hasRollback || 0
     currentStepEntries.value = data.currentStepFormEntries || []
+    isOverdue.value = data.isOverdue || false
+    overdueDays.value = data.overdueDays || 0
+    expectedDateText.value = data.expectedDateText || ''
+    currentStepElapsedDays.value = data.currentStepElapsedDays ?? null
+    currentStepExpectedDays.value = data.currentStepExpectedDays ?? null
   } catch (err) {
     uni.showToast({ title: '获取订单失败', icon: 'none' })
   }
@@ -281,11 +312,51 @@ onLoad((options) => {
   padding: 56rpx 32rpx;
 }
 
+.status-head {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
 .status-text {
-  display: block;
   font-size: 38rpx;
   color: #fff;
   font-weight: 600;
+}
+
+.status-overdue {
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(220, 60, 60, 0.85);
+}
+
+.status-overdue__text {
+  color: #fff;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.status-countdown {
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.status-countdown__text {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 22rpx;
+}
+
+.status-elapsed {
+  margin-top: 16rpx;
+  padding: 12rpx 18rpx;
+  border-radius: 14rpx;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.status-elapsed__text {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 22rpx;
 }
 
 .status-desc {
@@ -505,6 +576,22 @@ onLoad((options) => {
 .tag-unblock {
   background: #eef9f1;
   color: #2d8a57;
+}
+
+.tag-payment {
+  background: #fff8e6;
+  color: #b8860b;
+}
+
+.progress-header__left {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.progress-operator {
+  font-size: 20rpx;
+  color: #8b7767;
 }
 
 .progress-fields {

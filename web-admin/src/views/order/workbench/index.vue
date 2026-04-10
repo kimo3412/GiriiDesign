@@ -146,7 +146,7 @@
                 </n-gi>
               </n-grid>
 
-              <n-form label-placement="top" class="action-form">
+              <n-form ref="formRef" :model="nodeFieldValues" label-placement="top" class="action-form">
                 <n-form-item label="节点记录">
                   <n-input
                     v-model:value="actionForm.description"
@@ -160,7 +160,7 @@
                   <n-divider>节点字段</n-divider>
                   <n-grid :cols="2" :x-gap="12">
                     <n-gi v-for="field in currentStepFields" :key="field.fieldKey">
-                      <n-form-item :label="getFieldFormLabel(field)">
+                      <n-form-item :label="getFieldFormLabel(field)" :rule="getFieldRule(field)" :path="field.fieldKey">
                         <n-input
                           v-if="field.fieldType === 'text' || field.fieldType === 'image'"
                           v-model:value="nodeFieldValues[field.fieldKey]"
@@ -346,7 +346,7 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from 'vue';
 import type { UploadCustomRequestOptions, UploadFileInfo } from 'naive-ui';
-import { useMessage } from 'naive-ui';
+import { useDialog, useMessage } from 'naive-ui';
 import { useRoute } from 'vue-router';
 import { getCategoryList } from '@/api/config/category';
 import { getFieldList, type CustomField } from '@/api/config/field';
@@ -359,6 +359,7 @@ type WorkbenchAction = 'save' | 'advance' | 'rollback' | 'block' | 'unblock';
 
 const route = useRoute();
 const message = useMessage();
+const dialog = useDialog();
 const { uploadUrl, fileUrl } = useGlobSetting();
 
 const categoryOptions = ref<{ label: string; value: number }[]>([]);
@@ -374,6 +375,7 @@ const loadingDetail = ref(false);
 const submittingAction = ref<WorkbenchAction | ''>('');
 const uploadFiles = ref<UploadFileInfo[]>([]);
 const nodeFieldValues = ref<Record<string, any>>({});
+const formRef = ref<any>(null);
 
 const actionForm = ref<{
   description: string;
@@ -604,6 +606,32 @@ function getFieldHelperText(field: CustomField) {
   return tips.join(' · ');
 }
 
+function getFieldRule(field: CustomField) {
+  if (field.isRequired !== 1) return undefined;
+  return {
+    required: true,
+    message: `请填写${field.label}`,
+    trigger: ['blur', 'change'],
+  };
+}
+
+/** 前端验证必填字段 */
+function validateRequiredFields(): boolean {
+  const requiredFields = currentStepFields.value.filter((f) => f.isRequired === 1);
+  for (const field of requiredFields) {
+    const val = nodeFieldValues.value[field.fieldKey];
+    if (val === null || val === undefined || val === '') {
+      message.warning(`请填写必填字段：${field.label}`);
+      return false;
+    }
+  }
+  if (selectedStep.value?.needImageUpload === 1 && !getUploadedImageUrls().length) {
+    message.warning('当前节点要求上传图片');
+    return false;
+  }
+  return true;
+}
+
 function syncNodeFieldValues() {
   const baseValues = parseObjectValue(activeOrder.value?.customDataSnapshot);
   const latestProgressValues = getLatestProgressFormData();
@@ -764,6 +792,8 @@ async function handleUpload(options: UploadCustomRequestOptions) {
 
 async function submitAction(action: WorkbenchAction) {
   if (!activeOrder.value) return;
+
+  // 前置校验
   if (action === 'block' && !actionForm.value.blockReason.trim()) {
     message.warning('请先填写阻塞原因');
     return;
@@ -771,6 +801,17 @@ async function submitAction(action: WorkbenchAction) {
   if (action === 'rollback' && !rollbackOptions.value.length) {
     message.warning('当前节点没有可退回的前序节点');
     return;
+  }
+
+  // save/advance 需要验证必填字段
+  if (action === 'save' || action === 'advance') {
+    if (!validateRequiredFields()) return;
+  }
+
+  // 确认弹窗（save 不需要确认）
+  if (action !== 'save') {
+    const confirmed = await confirmAction(action);
+    if (!confirmed) return;
   }
 
   const imageUrls = getUploadedImageUrls();
@@ -792,6 +833,46 @@ async function submitAction(action: WorkbenchAction) {
   } finally {
     submittingAction.value = '';
   }
+}
+
+function confirmAction(action: WorkbenchAction): Promise<boolean> {
+  const configMap: Record<string, { title: string; content: string; type: 'warning' | 'error' | 'info' | 'success' }> = {
+    advance: {
+      title: '确认推进',
+      content: '确认推进到下一节点？推进后客户将看到最新进度。',
+      type: 'info',
+    },
+    rollback: {
+      title: '确认退回',
+      content: `确认退回到「${rollbackTargetLabel.value || '前序节点'}」？退回操作会通知客户。`,
+      type: 'warning',
+    },
+    block: {
+      title: '确认阻塞',
+      content: `确认标记订单为阻塞？原因：${actionForm.value.blockReason.trim()}`,
+      type: 'error',
+    },
+    unblock: {
+      title: '确认解除阻塞',
+      content: '确认解除阻塞？订单将恢复正常流转。',
+      type: 'success',
+    },
+  };
+  const config = configMap[action];
+  if (!config) return Promise.resolve(true);
+
+  return new Promise((resolve) => {
+    dialog.warning({
+      title: config.title,
+      content: config.content,
+      positiveText: '确认',
+      negativeText: '取消',
+      onPositiveClick: () => resolve(true),
+      onNegativeClick: () => resolve(false),
+      onClose: () => resolve(false),
+      onMaskClick: () => resolve(false),
+    });
+  });
 }
 
 const actionSuccessText: Record<WorkbenchAction, string> = {
