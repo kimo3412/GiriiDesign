@@ -1,6 +1,8 @@
 package com.designstudio.supply.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.designstudio.common.annotation.OperLog;
+import com.designstudio.common.result.PageResult;
 import com.designstudio.common.result.R;
 import com.designstudio.supply.domain.DsBomTemplate;
 import com.designstudio.supply.domain.DsBomTemplateItem;
@@ -26,9 +28,13 @@ public class BomTemplateController {
     private final BomTemplateService bomTemplateService;
 
     @GetMapping
-    @Operation(summary = "BOM模板列表")
-    public R<List<DsBomTemplate>> list(@RequestParam(required = false) Long categoryId) {
-        return R.ok(bomTemplateService.listTemplates(categoryId));
+    @Operation(summary = "BOM模板列表（支持分页）")
+    public R<PageResult<DsBomTemplate>> list(
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(defaultValue = "1") Long pageNum,
+            @RequestParam(defaultValue = "10") Long pageSize) {
+        IPage<DsBomTemplate> page = bomTemplateService.listTemplates(categoryId, pageNum, pageSize);
+        return R.ok(PageResult.of(page.getRecords(), page.getTotal(), page.getCurrent(), page.getSize()));
     }
 
     @GetMapping("/{id}")

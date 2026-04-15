@@ -27,6 +27,9 @@
         <n-form-item label="角色标识" path="roleKey">
           <n-input v-model:value="formData.roleKey" placeholder="如：admin、designer" :disabled="isEdit && (formData.roleId === 1 || formData.roleId === 2)" />
         </n-form-item>
+        <n-form-item label="角色类型" path="roleType">
+          <n-select v-model:value="formData.roleType" :options="ROLE_TYPE_OPTIONS" placeholder="请选择角色类型" />
+        </n-form-item>
         <n-form-item label="备注" path="remark">
           <n-input v-model:value="formData.remark" type="textarea" placeholder="请输入备注" />
         </n-form-item>
@@ -52,8 +55,8 @@
 
 <script lang="ts" setup>
 import { ref, onMounted, h } from 'vue';
-import { NButton, NSpace, useMessage, useDialog } from 'naive-ui';
-import { getRoleList, getRoleDetail, addRole, updateRole, deleteRole, type RoleSaveDTO } from '@/api/system/roleList';
+import { NButton, NSelect, NSpace, useMessage, useDialog } from 'naive-ui';
+import { getRoleList, getRoleDetail, addRole, updateRole, deleteRole, type RoleSaveDTO, ROLE_TYPE_OPTIONS, ROLE_TYPE_MAP } from '@/api/system/roleList';
 import { getMenuList } from '@/api/system/menuConfig';
 
 const message = useMessage();
@@ -70,6 +73,7 @@ const formRef = ref();
 const formData = ref<RoleSaveDTO>({
   roleName: '',
   roleKey: '',
+  roleType: '',
   remark: '',
   menuIds: []
 });
@@ -83,6 +87,9 @@ const columns = [
   { title: 'ID', key: 'roleId', width: 60 },
   { title: '角色名', key: 'roleName' },
   { title: '角色标识', key: 'roleKey' },
+  { title: '角色类型', key: 'roleType', render(row: any) {
+    return ROLE_TYPE_MAP[row.roleType] || row.roleType || '-';
+  }},
   { title: '备注', key: 'remark' },
   { title: '创建时间', key: 'createTime' },
   {
@@ -129,6 +136,7 @@ const handleAdd = () => {
   formData.value = {
     roleName: '',
     roleKey: '',
+    roleType: '',
     remark: '',
     menuIds: []
   };

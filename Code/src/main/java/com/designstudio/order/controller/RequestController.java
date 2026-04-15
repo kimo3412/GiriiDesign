@@ -1,6 +1,8 @@
 package com.designstudio.order.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.designstudio.common.annotation.OperLog;
+import com.designstudio.common.result.PageResult;
 import com.designstudio.common.result.R;
 import com.designstudio.order.domain.DsOrder;
 import com.designstudio.order.domain.DsOrderRequest;
@@ -27,11 +29,14 @@ public class RequestController {
     private final RequestService requestService;
 
     @GetMapping
-    @Operation(summary = "获取意向列表")
-    public R<List<DsOrderRequest>> list(
+    @Operation(summary = "获取意向列表（支持分页）")
+    public R<PageResult<DsOrderRequest>> list(
             @RequestParam(required = false) Integer status,
-            @RequestParam(required = false) Long categoryId) {
-        return R.ok(requestService.listRequests(status, categoryId));
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(defaultValue = "1") Long pageNum,
+            @RequestParam(defaultValue = "10") Long pageSize) {
+        IPage<DsOrderRequest> page = requestService.listRequests(status, categoryId, pageNum, pageSize);
+        return R.ok(PageResult.of(page.getRecords(), page.getTotal(), page.getCurrent(), page.getSize()));
     }
 
     @GetMapping("/{id}")

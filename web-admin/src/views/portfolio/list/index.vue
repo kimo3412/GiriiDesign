@@ -8,13 +8,13 @@
           placeholder="全部品类"
           style="width: 140px"
           clearable
-          @update:value="loadData"
+          @update:value="() => { pageNum = 1; loadData(); }"
         />
         <n-input
           v-model:value="keyword"
           placeholder="搜索标题"
           clearable
-          @keyup.enter="loadData"
+          @keyup.enter="() => { pageNum = 1; loadData(); }"
           style="width: 180px"
         />
         <n-button type="error" :disabled="!checkedKeys.length" @click="handleBatchDelete">
@@ -31,6 +31,18 @@
       :loading="loading"
       :row-key="row => row.portfolioId"
     />
+
+    <div style="margin-top: 16px; display: flex; justify-content: flex-end">
+      <n-pagination
+        v-model:page="pageNum"
+        :page-size="pageSize"
+        :page-sizes="[10, 20, 50]"
+        :total="total"
+        show-size-picker
+        @update:page="loadData"
+        @update:page-size="loadData"
+      />
+    </div>
 
     <!-- 新增/编辑弹窗 -->
     <n-modal
@@ -111,6 +123,9 @@ const message = useMessage();
 const dialog = useDialog();
 const loading = ref(false);
 const tableData = ref([]);
+const total = ref(0);
+const pageNum = ref(1);
+const pageSize = ref(10);
 
 const filterCategory = ref<number | null>(null);
 const keyword = ref('');
@@ -209,10 +224,12 @@ const columns = [
 const loadData = async () => {
   loading.value = true;
   try {
-    const params: any = {};
+    const params: any = { pageNum: pageNum.value, pageSize: pageSize.value };
     if (filterCategory.value != null) params.categoryId = filterCategory.value;
     if (keyword.value) params.keyword = keyword.value;
-    tableData.value = await getPortfolioList(params);
+    const res: any = await getPortfolioList(params);
+    tableData.value = res.records || [];
+    total.value = res.total || 0;
   } catch (e) {
     console.error(e);
   } finally {

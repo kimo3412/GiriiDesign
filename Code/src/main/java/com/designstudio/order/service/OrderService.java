@@ -1,5 +1,6 @@
 package com.designstudio.order.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.designstudio.order.controller.AppOrderController;
 import com.designstudio.order.controller.OrderController;
 import com.designstudio.order.controller.WorkbenchController;
@@ -15,9 +16,9 @@ import java.util.List;
 public interface OrderService {
 
     /**
-     * 订单列表（支持筛选）
+     * 订单列表（支持分页、筛选）
      */
-    List<DsOrder> listOrders(Integer status, Long categoryId, Long designerId);
+    IPage<DsOrder> listOrders(Integer status, Long categoryId, Long designerId, Long pageNum, Long pageSize);
 
     /**
      * 订单详情（360° 视图）

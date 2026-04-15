@@ -1,6 +1,8 @@
 package com.designstudio.supply.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.designstudio.supply.controller.BomTemplateController;
 import com.designstudio.supply.domain.DsBomTemplate;
 import com.designstudio.supply.domain.DsBomTemplateItem;
@@ -31,13 +33,14 @@ public class BomTemplateServiceImpl implements BomTemplateService {
     private final DsMaterialMapper materialMapper;
 
     @Override
-    public List<DsBomTemplate> listTemplates(Long categoryId) {
+    public IPage<DsBomTemplate> listTemplates(Long categoryId, Long pageNum, Long pageSize) {
         LambdaQueryWrapper<DsBomTemplate> wrapper = new LambdaQueryWrapper<>();
         if (categoryId != null) {
             wrapper.eq(DsBomTemplate::getCategoryId, categoryId);
         }
         wrapper.orderByDesc(DsBomTemplate::getCreateTime);
-        return templateMapper.selectList(wrapper);
+        Page<DsBomTemplate> page = new Page<>(pageNum, pageSize);
+        return templateMapper.selectPage(page, wrapper);
     }
 
     @Override

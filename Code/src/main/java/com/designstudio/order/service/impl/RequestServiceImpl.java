@@ -1,6 +1,8 @@
 package com.designstudio.order.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.designstudio.config.domain.DsWorkflow;
 import com.designstudio.config.domain.DsWorkflowStep;
 import com.designstudio.config.mapper.DsWorkflowMapper;
@@ -49,7 +51,7 @@ public class RequestServiceImpl implements RequestService {
     private final ObjectMapper objectMapper;
 
     @Override
-    public List<DsOrderRequest> listRequests(Integer status, Long categoryId) {
+    public IPage<DsOrderRequest> listRequests(Integer status, Long categoryId, Long pageNum, Long pageSize) {
         LambdaQueryWrapper<DsOrderRequest> wrapper = new LambdaQueryWrapper<>();
         if (status != null) {
             wrapper.eq(DsOrderRequest::getStatus, status);
@@ -58,7 +60,8 @@ public class RequestServiceImpl implements RequestService {
             wrapper.eq(DsOrderRequest::getCategoryId, categoryId);
         }
         wrapper.orderByDesc(DsOrderRequest::getCreateTime);
-        return requestMapper.selectList(wrapper);
+        Page<DsOrderRequest> page = new Page<>(pageNum, pageSize);
+        return requestMapper.selectPage(page, wrapper);
     }
 
     @Override

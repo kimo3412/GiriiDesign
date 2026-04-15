@@ -64,6 +64,18 @@
         striped
         size="small"
       />
+
+      <div style="margin-top: 16px; display: flex; justify-content: flex-end">
+        <n-pagination
+          v-model:page="pageNum"
+          :page-size="pageSize"
+          :page-sizes="[10, 20, 50]"
+          :total="total"
+          show-size-picker
+          @update:page="loadData"
+          @update:page-size="loadData"
+        />
+      </div>
     </n-card>
 
     <!-- 意向详情抽屉 -->
@@ -222,6 +234,9 @@ import { getBomTemplateList, getBomTemplateDetail } from '@/api/supply/index';
 const message = useMessage();
 const loading = ref(false);
 const tableData = ref<any[]>([]);
+const total = ref(0);
+const pageNum = ref(1);
+const pageSize = ref(10);
 const searchText = ref('');
 
 const filterStatus = ref<number | null>(null);
@@ -237,9 +252,16 @@ const categoryOptions = ref<any[]>([]);
 const categoryMap = ref<Record<number, string>>({});
 const designerOptions = ref<any[]>([]);
 
+const toArray = (value: any) => {
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(value?.records)) return value.records;
+  if (Array.isArray(value?.list)) return value.list;
+  return [];
+};
+
 // 统计
 const stats = computed(() => {
-  const all = tableData.value;
+  const all = toArray(tableData.value);
   return {
     pending: all.filter((r: any) => r.status === 0).length,
     converted: all.filter((r: any) => r.status === 1).length,
@@ -249,7 +271,7 @@ const stats = computed(() => {
 });
 
 const filteredData = computed(() => {
-  let list = tableData.value;
+  let list = toArray(tableData.value);
   if (filterStatus.value !== null) {
     list = list.filter((r: any) => r.status === filterStatus.value);
   }
@@ -391,14 +413,19 @@ const columns = [
 
 const filterByStatus = (status: number | null) => {
   filterStatus.value = status;
+  pageNum.value = 1;
+  loadData();
 };
 
 const loadData = async () => {
   loading.value = true;
   try {
-    const params: any = {};
+    const params: any = { pageNum: pageNum.value, pageSize: pageSize.value };
     if (filterCategory.value != null) params.categoryId = filterCategory.value;
-    tableData.value = await getRequestList(params);
+    if (filterStatus.value != null) params.status = filterStatus.value;
+    const res = await getRequestList(params);
+    tableData.value = toArray(res);
+    total.value = res?.total || 0;
   } catch (e) { console.error(e); }
   finally { loading.value = false; }
 };
@@ -406,7 +433,7 @@ const loadData = async () => {
 onMounted(async () => {
   loadData();
   try {
-    const cats = await getCategoryList();
+    const cats = toArray(await getCategoryList());
     categoryOptions.value = cats.map((c: any) => ({ label: c.name, value: c.categoryId }));
     categoryMap.value = Object.fromEntries(cats.map((c: any) => [c.categoryId, c.name]));
   } catch (e) { console.error(e); }
@@ -418,7 +445,7 @@ const handleViewDetail = async (row: any) => {
     // 加载该品类的字段定义，用于 key → label 映射
     if (detailData.value?.categoryId) {
       try {
-        const fields = await getFieldList(detailData.value.categoryId);
+        const fields = toArray(await getFieldList(detailData.value.categoryId));
         fieldLabelMap.value = Object.fromEntries(
           (fields || []).map((f: any) => [f.fieldKey, f.label])
         );
@@ -444,7 +471,7 @@ const openConvert = async () => {
   // 根据意向的品类加载负责该品类的设计师
   if (detailData.value?.categoryId) {
     try {
-      const designers = await getDesignersByCategory(detailData.value.categoryId);
+      const designers = toArray(await getDesignersByCategory(detailData.value.categoryId));
       designerOptions.value = designers.map((d: any) => ({ label: d.nickname || d.username, value: d.adminId }));
     } catch (e) {
       console.error('加载设计师失败', e);
@@ -452,8 +479,8 @@ const openConvert = async () => {
     }
     // 加载该品类的 BOM 模板
     try {
-      const templates = await getBomTemplateList({ categoryId: detailData.value.categoryId });
-      bomTemplateOptions.value = (templates || []).map((t: any) => ({ label: t.name, value: t.templateId }));
+      const templates = toArray(await getBomTemplateList({ categoryId: detailData.value.categoryId }));
+      bomTemplateOptions.value = templates.map((t: any) => ({ label: t.name, value: t.templateId }));
     } catch (e) {
       console.error('加载BOM模板失败', e);
       bomTemplateOptions.value = [];

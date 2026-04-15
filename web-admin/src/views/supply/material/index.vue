@@ -2,8 +2,8 @@
   <n-card title="物料管理" :bordered="false">
     <template #header-extra>
       <n-space>
-        <n-select v-model:value="filterCategory" :options="categoryOptions" placeholder="品类" style="width: 120px" clearable @update:value="loadData" />
-        <n-input v-model:value="keyword" placeholder="搜索名称/编码" clearable @keyup.enter="loadData" style="width: 180px" />
+        <n-select v-model:value="filterCategory" :options="categoryOptions" placeholder="品类" style="width: 120px" clearable @update:value="() => { pageNum = 1; loadData(); }" />
+        <n-input v-model:value="keyword" placeholder="搜索名称/编码" clearable @keyup.enter="() => { pageNum = 1; loadData(); }" style="width: 180px" />
         <n-button type="error" :disabled="!checkedKeys.length" @click="handleBatchDelete">
           批量删除{{ checkedKeys.length ? `(${checkedKeys.length})` : '' }}
         </n-button>
@@ -12,6 +12,18 @@
     </template>
 
     <n-data-table v-model:checked-row-keys="checkedKeys" :columns="columns" :data="tableData" :loading="loading" :row-key="row => row.materialId" />
+
+    <div style="margin-top: 16px; display: flex; justify-content: flex-end">
+      <n-pagination
+        v-model:page="pageNum"
+        :page-size="pageSize"
+        :page-sizes="[10, 20, 50]"
+        :total="total"
+        show-size-picker
+        @update:page="loadData"
+        @update:page-size="loadData"
+      />
+    </div>
 
     <!-- 新增/编辑弹窗 -->
     <n-modal v-model:show="showModal" :title="isEdit ? '编辑物料' : '新增物料'" preset="dialog" positive-text="确定" negative-text="取消" @positive-click="handleSubmit" style="width: 520px">
@@ -48,6 +60,9 @@ const message = useMessage();
 const dialog = useDialog();
 const loading = ref(false);
 const tableData = ref([]);
+const total = ref(0);
+const pageNum = ref(1);
+const pageSize = ref(10);
 
 const filterCategory = ref(null);
 const keyword = ref('');
@@ -107,10 +122,12 @@ const columns = [
 const loadData = async () => {
   loading.value = true;
   try {
-    const params: any = {};
+    const params: any = { pageNum: pageNum.value, pageSize: pageSize.value };
     if (filterCategory.value) params.category = filterCategory.value;
     if (keyword.value) params.keyword = keyword.value;
-    tableData.value = await getMaterialList(params);
+    const res: any = await getMaterialList(params);
+    tableData.value = res.records || [];
+    total.value = res.total || 0;
   } catch (e) { console.error(e); }
   finally { loading.value = false; }
 };

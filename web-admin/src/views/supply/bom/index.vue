@@ -2,7 +2,7 @@
   <n-card title="BOM 模板" :bordered="false">
     <template #header-extra>
       <n-space>
-        <n-select v-model:value="filterCategory" :options="categoryOptions" placeholder="品类" style="width: 140px" clearable @update:value="loadData" />
+        <n-select v-model:value="filterCategory" :options="categoryOptions" placeholder="品类" style="width: 140px" clearable @update:value="() => { pageNum = 1; loadData(); }" />
         <n-button type="error" :disabled="!checkedKeys.length" @click="handleBatchDelete">
           批量删除{{ checkedKeys.length ? `(${checkedKeys.length})` : '' }}
         </n-button>
@@ -11,6 +11,18 @@
     </template>
 
     <n-data-table v-model:checked-row-keys="checkedKeys" :columns="columns" :data="tableData" :loading="loading" :row-key="row => row.templateId" />
+
+    <div style="margin-top: 16px; display: flex; justify-content: flex-end">
+      <n-pagination
+        v-model:page="pageNum"
+        :page-size="pageSize"
+        :page-sizes="[10, 20, 50]"
+        :total="total"
+        show-size-picker
+        @update:page="loadData"
+        @update:page-size="loadData"
+      />
+    </div>
 
     <!-- 新增/编辑弹窗 -->
     <n-modal v-model:show="showModal" :title="isEdit ? '编辑 BOM 模板' : '新增 BOM 模板'" preset="dialog" positive-text="保存" negative-text="取消" @positive-click="handleSubmit" style="width: 600px">
@@ -45,6 +57,9 @@ const message = useMessage();
 const dialog = useDialog();
 const loading = ref(false);
 const tableData = ref([]);
+const total = ref(0);
+const pageNum = ref(1);
+const pageSize = ref(10);
 
 const filterCategory = ref(null);
 const categoryOptions = ref<any[]>([]);
@@ -82,9 +97,11 @@ const columns = [
 const loadData = async () => {
   loading.value = true;
   try {
-    const params: any = {};
+    const params: any = { pageNum: pageNum.value, pageSize: pageSize.value };
     if (filterCategory.value != null) params.categoryId = filterCategory.value;
-    tableData.value = await getBomTemplateList(params);
+    const res: any = await getBomTemplateList(params);
+    tableData.value = res.records || [];
+    total.value = res.total || 0;
   } catch (e) { console.error(e); }
   finally { loading.value = false; }
 };
@@ -99,8 +116,8 @@ onMounted(async () => {
     categoryMap.value = cMap;
   } catch (e) { console.error(e); }
   try {
-    const mats = await getMaterialList({});
-    materialOptions.value = mats.map((m: any) => ({ label: `${m.name} (${m.sku})`, value: m.materialId }));
+    const mats: any = await getMaterialList({ pageNum: 1, pageSize: 1000 });
+    materialOptions.value = (mats.records || mats || []).map((m: any) => ({ label: `${m.name} (${m.sku})`, value: m.materialId }));
   } catch (e) { console.error(e); }
 });
 

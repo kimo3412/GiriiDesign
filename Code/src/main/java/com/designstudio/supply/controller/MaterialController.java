@@ -1,6 +1,8 @@
 package com.designstudio.supply.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.designstudio.common.annotation.OperLog;
+import com.designstudio.common.result.PageResult;
 import com.designstudio.common.result.R;
 import com.designstudio.supply.domain.DsMaterial;
 import com.designstudio.supply.service.MaterialService;
@@ -25,11 +27,14 @@ public class MaterialController {
     private final MaterialService materialService;
 
     @GetMapping
-    @Operation(summary = "物料列表")
-    public R<List<DsMaterial>> list(
+    @Operation(summary = "物料列表（支持分页）")
+    public R<PageResult<DsMaterial>> list(
             @RequestParam(required = false) String category,
-            @RequestParam(required = false) String keyword) {
-        return R.ok(materialService.listMaterials(category, keyword));
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "1") Long pageNum,
+            @RequestParam(defaultValue = "10") Long pageSize) {
+        IPage<DsMaterial> page = materialService.listMaterials(category, keyword, pageNum, pageSize);
+        return R.ok(PageResult.of(page.getRecords(), page.getTotal(), page.getCurrent(), page.getSize()));
     }
 
     @GetMapping("/{id}")

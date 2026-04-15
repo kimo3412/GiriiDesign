@@ -79,14 +79,22 @@
 import { ref, computed } from 'vue'
 import { onShow, onLoad } from '@dcloudio/uni-app'
 import { getPortfolioList } from '@/api/portfolio'
+import { getBannerList } from '@/api/banner'
 
-// 新生成的绝美高定绿调展示图
+// 轮播图（从后端获取）
 const banners = ref([
   { image: '/static/images/zehana_couture_1774340712019.png', label: '2026 高定系列', headline: '静谧奢华' },
   { image: '/static/images/zehana_leather_1774340726407.png', label: '手工皮具', headline: '永恒优雅' }
 ])
 
 const portfolios = ref([])
+
+const normalizeList = (data) => {
+  if (Array.isArray(data)) return data
+  if (Array.isArray(data?.records)) return data.records
+  if (Array.isArray(data?.list)) return data.list
+  return []
+}
 
 // 把数据平分为两列，做简单的瀑布流
 const splitPortfolios = computed(() => {
@@ -117,14 +125,31 @@ const fetchPortfolios = async () => {
   try {
     const data = await getPortfolioList()
     // 后端返回格式可能是 { list: [...] } 或直接是 [...]
-    portfolios.value = (data && data.list) ? data.list : (Array.isArray(data) ? data : [])
+    portfolios.value = normalizeList(data)
   } catch (err) {
     console.error('获取作品列表失败', err)
   }
 }
 
+const fetchBanners = async () => {
+  try {
+    const data = await getBannerList()
+    const list = normalizeList(data)
+    if (list.length > 0) {
+      banners.value = list.map(item => ({
+        image: item.imageUrl,
+        label: item.title || '',
+        headline: ''
+      }))
+    }
+  } catch (err) {
+    console.error('获取轮播图失败', err)
+  }
+}
+
 onLoad(() => {
   fetchPortfolios()
+  fetchBanners()
 })
 </script>
 

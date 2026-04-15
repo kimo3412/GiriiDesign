@@ -1,5 +1,6 @@
 package com.designstudio.order.service;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.designstudio.order.controller.RequestController;
 import com.designstudio.order.domain.DsOrder;
 import com.designstudio.order.domain.DsOrderRequest;
@@ -12,9 +13,9 @@ import java.util.List;
 public interface RequestService {
 
     /**
-     * 意向列表
+     * 意向列表（分页）
      */
-    List<DsOrderRequest> listRequests(Integer status, Long categoryId);
+    IPage<DsOrderRequest> listRequests(Integer status, Long categoryId, Long pageNum, Long pageSize);
 
     /**
      * 意向详情

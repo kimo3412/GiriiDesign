@@ -24,6 +24,9 @@ public class SysRole extends BaseEntity {
     /** 角色标识（admin / designer） */
     private String roleKey;
 
+    /** 角色类型：admin/ designer/ storekeeper/ purchaser/ finance/ customer_service */
+    private String roleType;
+
     /** 备注 */
     private String remark;
 }

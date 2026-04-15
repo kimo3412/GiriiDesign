@@ -136,4 +136,6 @@ export const dynamicImport = (
     );
     return;
   }
+  console.warn(`[dynamic-route] Component not found for route component: ${component}`);
+  return viewsModules['../views/exception/404.vue'];
 };

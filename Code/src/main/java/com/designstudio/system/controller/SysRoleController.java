@@ -75,6 +75,7 @@ public class SysRoleController {
     public static class RoleSaveDTO {
         private String roleName;
         private String roleKey;
+        private String roleType;
         private String remark;
         private List<Long> menuIds;
     }

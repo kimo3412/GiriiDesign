@@ -1,7 +1,10 @@
 package com.designstudio.portfolio.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.designstudio.common.annotation.OperLog;
+import com.designstudio.common.result.PageResult;
 import com.designstudio.common.result.R;
 import com.designstudio.portfolio.domain.DsPortfolio;
 import com.designstudio.portfolio.mapper.DsPortfolioMapper;
@@ -24,9 +27,12 @@ public class PortfolioController {
     private final DsPortfolioMapper portfolioMapper;
 
     @GetMapping
-    @Operation(summary = "作品集列表")
-    public R<List<DsPortfolio>> list(@RequestParam(required = false) Long categoryId,
-                                     @RequestParam(required = false) String keyword) {
+    @Operation(summary = "作品集列表（支持分页）")
+    public R<PageResult<DsPortfolio>> list(
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String keyword,
+            @RequestParam(defaultValue = "1") Long pageNum,
+            @RequestParam(defaultValue = "10") Long pageSize) {
         LambdaQueryWrapper<DsPortfolio> wrapper = new LambdaQueryWrapper<>();
         if (categoryId != null) {
             wrapper.eq(DsPortfolio::getCategoryId, categoryId);
@@ -35,7 +41,9 @@ public class PortfolioController {
             wrapper.like(DsPortfolio::getTitle, keyword);
         }
         wrapper.orderByDesc(DsPortfolio::getSortOrder, DsPortfolio::getCreateTime);
-        return R.ok(portfolioMapper.selectList(wrapper));
+        Page<DsPortfolio> page = new Page<>(pageNum, pageSize);
+        IPage<DsPortfolio> result = portfolioMapper.selectPage(page, wrapper);
+        return R.ok(PageResult.of(result.getRecords(), result.getTotal(), result.getCurrent(), result.getSize()));
     }
 
     @GetMapping("/{id}")

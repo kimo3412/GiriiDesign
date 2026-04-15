@@ -40,6 +40,11 @@
       <view style="height: 20rpx;"></view>
     </scroll-view>
 
+    <!-- 连接状态提示 -->
+    <view v-if="!isConnected" class="connection-hint">
+      <text>连接已断开，正在重连...</text>
+    </view>
+
     <!-- 输入区 -->
     <view class="input-area">
       <view class="input-row">
@@ -73,8 +78,12 @@ const messages = ref([])
 const inputText = ref('')
 const scrollToId = ref('')
 const chatOrderId = ref(null)
+const isConnected = ref(false)
 
 let socketTask = null
+let reconnectTimer = null
+let reconnectAttempts = 0
+const MAX_RECONNECT_ATTEMPTS = 5
 
 onLoad((options) => {
   if (options && options.orderId) {
@@ -91,6 +100,10 @@ onUnmounted(() => {
   if (socketTask) {
     socketTask.close({ code: 1000, reason: '页面关闭' })
     socketTask = null
+  }
+  if (reconnectTimer) {
+    clearTimeout(reconnectTimer)
+    reconnectTimer = null
   }
 })
 
@@ -123,6 +136,12 @@ const connectWS = () => {
 
   socketTask.onOpen(() => {
     console.log('WebSocket 已连接')
+    isConnected.value = true
+    reconnectAttempts = 0
+    if (reconnectTimer) {
+      clearTimeout(reconnectTimer)
+      reconnectTimer = null
+    }
   })
 
   socketTask.onMessage((res) => {
@@ -139,13 +158,33 @@ const connectWS = () => {
     }
   })
 
-  socketTask.onClose(() => {
-    console.log('WebSocket 已断开')
-  })
-
   socketTask.onError((err) => {
     console.error('WebSocket 错误', err)
   })
+
+  socketTask.onClose(() => {
+    console.log('WebSocket 已断开')
+    isConnected.value = false
+    scheduleReconnect()
+  })
+}
+
+const scheduleReconnect = () => {
+  if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+    console.log('WebSocket 重连次数已用完')
+    uni.showToast({ title: '连接已断开，请退出重试', icon: 'none' })
+    return
+  }
+  const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000)
+  reconnectAttempts++
+  console.log(`${delay / 1000}s 后尝试第 ${reconnectAttempts} 次重连`)
+  reconnectTimer = setTimeout(() => {
+    if (socketTask) {
+      socketTask.close({ code: 1000, reason: '重连' })
+      socketTask = null
+    }
+    connectWS()
+  }, delay)
 }
 
 const sendTextMsg = () => {
@@ -167,7 +206,7 @@ const chooseImage = () => {
 }
 
 const sendMessage = (content, msgType) => {
-  if (!socketTask) {
+  if (!socketTask || !isConnected.value) {
     uni.showToast({ title: '连接已断开', icon: 'none' })
     return
   }
@@ -333,6 +372,18 @@ const isImageMsg = (msg) => {
   color: #aaa;
   margin-top: 8rpx;
   letter-spacing: 1rpx;
+}
+
+/* 连接状态提示 */
+.connection-hint {
+  background: #fff3eb;
+  padding: 12rpx 24rpx;
+  text-align: center;
+
+  text {
+    font-size: 22rpx;
+    color: #c65a3b;
+  }
 }
 
 /* 输入区 */

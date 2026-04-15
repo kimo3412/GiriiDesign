@@ -8,7 +8,7 @@
           placeholder="状态"
           style="width: 120px"
           clearable
-          @update:value="loadData"
+          @update:value="() => { pageNum = 1; loadData(); }"
         />
         <n-select
           v-model:value="filterCategory"
@@ -16,12 +16,24 @@
           placeholder="品类"
           style="width: 140px"
           clearable
-          @update:value="loadData"
+          @update:value="() => { pageNum = 1; loadData(); }"
         />
       </n-space>
     </template>
 
     <n-data-table :columns="columns" :data="tableData" :loading="loading" :row-key="row => row.orderId" />
+
+    <div style="margin-top: 16px; display: flex; justify-content: flex-end">
+      <n-pagination
+        v-model:page="pageNum"
+        :page-size="pageSize"
+        :page-sizes="[10, 20, 50]"
+        :total="total"
+        show-size-picker
+        @update:page="loadData"
+        @update:page-size="loadData"
+      />
+    </div>
   </n-card>
 </template>
 
@@ -37,6 +49,9 @@ const router = useRouter();
 const message = useMessage();
 const loading = ref(false);
 const tableData = ref([]);
+const total = ref(0);
+const pageNum = ref(1);
+const pageSize = ref(10);
 
 const filterStatus = ref(null);
 const filterCategory = ref(null);
@@ -129,10 +144,12 @@ const columns = [
 const loadData = async () => {
   loading.value = true;
   try {
-    const params: any = {};
+    const params: any = { pageNum: pageNum.value, pageSize: pageSize.value };
     if (filterStatus.value != null) params.status = filterStatus.value;
     if (filterCategory.value != null) params.categoryId = filterCategory.value;
-    tableData.value = await getOrderList(params);
+    const res: any = await getOrderList(params);
+    tableData.value = res.records || [];
+    total.value = res.total || 0;
   } catch (e) { console.error(e); }
   finally { loading.value = false; }
 };

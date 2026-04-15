@@ -1,6 +1,8 @@
 package com.designstudio.order.controller;
 
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.designstudio.common.annotation.OperLog;
+import com.designstudio.common.result.PageResult;
 import com.designstudio.common.result.R;
 import com.designstudio.config.domain.DsWorkflowStep;
 import com.designstudio.order.domain.DsOrder;
@@ -29,12 +31,15 @@ public class OrderController {
     // ==================== 订单列表 & 详情 ====================
 
     @GetMapping
-    @Operation(summary = "订单列表（支持按状态/品类筛选）")
-    public R<List<DsOrder>> list(
+    @Operation(summary = "订单列表（支持分页、按状态/品类筛选）")
+    public R<PageResult<DsOrder>> list(
             @RequestParam(required = false) Integer status,
             @RequestParam(required = false) Long categoryId,
-            @RequestParam(required = false) Long designerId) {
-        return R.ok(orderService.listOrders(status, categoryId, designerId));
+            @RequestParam(required = false) Long designerId,
+            @RequestParam(defaultValue = "1") Long pageNum,
+            @RequestParam(defaultValue = "10") Long pageSize) {
+        IPage<DsOrder> page = orderService.listOrders(status, categoryId, designerId, pageNum, pageSize);
+        return R.ok(PageResult.of(page.getRecords(), page.getTotal(), page.getCurrent(), page.getSize()));
     }
 
     @GetMapping("/{id}")

@@ -54,7 +54,7 @@
       <text class="section-title">流程进度</text>
       <view class="timeline-card">
         <view
-          v-for="(step, index) in workflowSteps"
+          v-for="(step, index) in visibleWorkflowSteps"
           :key="step.stepId || index"
           class="timeline-item"
         >
@@ -62,12 +62,12 @@
             <view
               class="timeline-dot"
               :class="{
-                done: index < currentStepIndex,
-                current: index === currentStepIndex,
-                pending: index > currentStepIndex
+                done: index < visibleCurrentStepIndex,
+                current: index === visibleCurrentStepIndex,
+                pending: index > visibleCurrentStepIndex
               }"
             />
-            <view v-if="index < workflowSteps.length - 1" class="timeline-line" />
+            <view v-if="index < visibleWorkflowSteps.length - 1" class="timeline-line" />
           </view>
           <view class="timeline-body">
             <view class="timeline-top">
@@ -80,7 +80,7 @@
             <text v-if="getProgressAtStep(step.stepId)" class="timeline-time">
               {{ getProgressAtStep(step.stepId).createTime }}
             </text>
-            <text v-if="index === currentStepIndex && hasRollback" class="timeline-rework">
+            <text v-if="index === visibleCurrentStepIndex && hasRollback" class="timeline-rework">
               当前流程包含返工记录，请以最新进度为准
             </text>
           </view>
@@ -181,6 +181,9 @@
       <button v-if="order.status === 6" class="pay-btn" @click="handlePay">
         支付尾款 ¥{{ balanceAmount }}
       </button>
+      <button v-if="order.status === 3" class="pay-btn" @click="handleConfirm">
+        确认收货
+      </button>
     </view>
   </view>
 </template>
@@ -188,7 +191,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { getOrderTimeline, payOrder } from '@/api/order'
+import { getOrderTimeline, payOrder, confirmOrder } from '@/api/order'
 
 const fileBaseUrl = 'http://localhost:8081'
 
@@ -206,6 +209,17 @@ const overdueDays = ref(0)
 const expectedDateText = ref('')
 const currentStepElapsedDays = ref(null)
 const currentStepExpectedDays = ref(null)
+
+// 仅显示当前及后续步骤（精简流程）
+const visibleWorkflowSteps = computed(() => {
+  if (currentStepIndex.value < 0) return workflowSteps.value
+  return workflowSteps.value.filter((_, index) => index >= currentStepIndex.value)
+})
+
+const visibleCurrentStepIndex = computed(() => {
+  if (currentStepIndex.value < 0) return -1
+  return 0
+})
 
 const isOrderFinished = computed(() => {
   const s = order.value.status
@@ -308,6 +322,29 @@ const handlePay = () => {
       uni.hideLoading()
       uni.showToast({ title: err.message || '支付失败', icon: 'none' })
     })
+}
+
+const handleConfirm = () => {
+  uni.showModal({
+    title: '确认收货',
+    content: '请确认您已收到货物，订单将标记为已完成。',
+    confirmText: '确认收货',
+    success: (res) => {
+      if (res.confirm) {
+        uni.showLoading({ title: '确认中...' })
+        confirmOrder(orderId.value)
+          .then(() => {
+            uni.hideLoading()
+            uni.showToast({ title: '已确认收货', icon: 'success' })
+            fetchTimeline()
+          })
+          .catch((err) => {
+            uni.hideLoading()
+            uni.showToast({ title: err.message || '确认失败', icon: 'none' })
+          })
+      }
+    }
+  })
 }
 
 onLoad((options) => {

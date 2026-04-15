@@ -51,6 +51,7 @@ public class SysRoleServiceImpl implements ISysRoleService {
         SysRole role = new SysRole();
         role.setRoleName(dto.getRoleName());
         role.setRoleKey(dto.getRoleKey());
+        role.setRoleType(dto.getRoleType());
         role.setRemark(dto.getRemark());
         roleMapper.insert(role);
 
@@ -70,6 +71,7 @@ public class SysRoleServiceImpl implements ISysRoleService {
 
         role.setRoleName(dto.getRoleName());
         role.setRoleKey(dto.getRoleKey());
+        role.setRoleType(dto.getRoleType());
         role.setRemark(dto.getRemark());
         roleMapper.updateById(role);
 

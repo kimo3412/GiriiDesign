@@ -1,6 +1,8 @@
 package com.designstudio.supply.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.designstudio.supply.domain.DsMaterial;
 import com.designstudio.supply.mapper.DsMaterialMapper;
 import com.designstudio.supply.service.MaterialService;
@@ -21,7 +23,7 @@ public class MaterialServiceImpl implements MaterialService {
     private final DsMaterialMapper materialMapper;
 
     @Override
-    public List<DsMaterial> listMaterials(String category, String keyword) {
+    public IPage<DsMaterial> listMaterials(String category, String keyword, Long pageNum, Long pageSize) {
         LambdaQueryWrapper<DsMaterial> wrapper = new LambdaQueryWrapper<>();
         if (category != null && !category.isEmpty()) {
             wrapper.eq(DsMaterial::getCategory, category);
@@ -30,7 +32,8 @@ public class MaterialServiceImpl implements MaterialService {
             wrapper.and(w -> w.like(DsMaterial::getName, keyword).or().like(DsMaterial::getSku, keyword));
         }
         wrapper.orderByDesc(DsMaterial::getCreateTime);
-        return materialMapper.selectList(wrapper);
+        Page<DsMaterial> page = new Page<>(pageNum, pageSize);
+        return materialMapper.selectPage(page, wrapper);
     }
 
     @Override

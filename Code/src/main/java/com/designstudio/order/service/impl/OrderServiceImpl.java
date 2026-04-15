@@ -1,6 +1,8 @@
 package com.designstudio.order.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.designstudio.common.security.LoginHelper;
@@ -55,7 +57,7 @@ public class OrderServiceImpl implements OrderService {
     private final ObjectMapper objectMapper;
 
     @Override
-    public List<DsOrder> listOrders(Integer status, Long categoryId, Long designerId) {
+    public IPage<DsOrder> listOrders(Integer status, Long categoryId, Long designerId, Long pageNum, Long pageSize) {
         LambdaQueryWrapper<DsOrder> wrapper = new LambdaQueryWrapper<>();
         if (status != null) {
             wrapper.eq(DsOrder::getStatus, status);
@@ -67,9 +69,10 @@ public class OrderServiceImpl implements OrderService {
             wrapper.eq(DsOrder::getDesignerId, designerId);
         }
         wrapper.orderByDesc(DsOrder::getCreateTime);
-        List<DsOrder> orders = orderMapper.selectList(wrapper);
-        fillOrderDisplayNames(orders);
-        return orders;
+        Page<DsOrder> page = new Page<>(pageNum, pageSize);
+        IPage<DsOrder> result = orderMapper.selectPage(page, wrapper);
+        fillOrderDisplayNames(result.getRecords());
+        return result;
     }
 
     @Override
@@ -258,7 +261,7 @@ public class OrderServiceImpl implements OrderService {
         if (!Objects.equals(order.getUserId(), userId)) {
             throw new RuntimeException("订单不存在或无权操作");
         }
-        if (order.getStatus() == null || (order.getStatus() != 3 && order.getStatus() != 2)) {
+        if (order.getStatus() == null || order.getStatus() != 3) {
             throw new RuntimeException("当前订单还不能确认收货");
         }
 
@@ -579,23 +582,26 @@ public class OrderServiceImpl implements OrderService {
     }
 
     private void finishOrder(DsOrder order) {
-        if (order.getTotalAmount() != null
+        boolean needsBalancePayment = order.getTotalAmount() != null
                 && order.getPrepayAmount() != null
-                && order.getTotalAmount().compareTo(order.getPrepayAmount()) > 0) {
+                && order.getTotalAmount().compareTo(order.getPrepayAmount()) > 0;
+        String progressDescription;
+        if (needsBalancePayment) {
             order.setStatus(6);
-            LoginUser loginUser = LoginHelper.getLoginUser();
-            DsOrderProgress progress = new DsOrderProgress();
-            progress.setOrderId(order.getOrderId());
-            progress.setDescription("生产完毕，等待客户支付尾款");
-            progress.setOperatorId(loginUser != null ? loginUser.getAdminId() : null);
-            progress.setCreateTime(LocalDateTime.now());
-            progressMapper.insert(progress);
+            progressDescription = "生产完毕，等待客户支付尾款";
         } else {
             order.setStatus(2);
+            progressDescription = "生产完毕，等待发货";
         }
         order.setFinishTime(LocalDateTime.now());
         touchOrderForUpdate(order);
         orderMapper.updateById(order);
+        DsOrderProgress progress = new DsOrderProgress();
+        progress.setOrderId(order.getOrderId());
+        progress.setDescription(progressDescription);
+        progress.setOperatorId(null);
+        progress.setCreateTime(LocalDateTime.now());
+        progressMapper.insert(progress);
     }
 
     private Long resolveWorkbenchStepId(Long categoryId, List<DsWorkflowStep> steps) {
