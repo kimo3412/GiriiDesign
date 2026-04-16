@@ -1,48 +1,105 @@
 <template>
-  <n-card title="作品管理" :bordered="false">
-    <template #header-extra>
-      <n-space>
-        <n-select
-          v-model:value="filterCategory"
-          :options="categoryOptions"
-          placeholder="全部品类"
-          style="width: 140px"
-          clearable
-          @update:value="() => { pageNum = 1; loadData(); }"
-        />
-        <n-input
-          v-model:value="keyword"
-          placeholder="搜索标题"
-          clearable
-          @keyup.enter="() => { pageNum = 1; loadData(); }"
-          style="width: 180px"
-        />
-        <n-button type="error" :disabled="!checkedKeys.length" @click="handleBatchDelete">
-          批量删除{{ checkedKeys.length ? `(${checkedKeys.length})` : '' }}
-        </n-button>
-        <n-button type="primary" @click="handleAdd">新增作品</n-button>
-      </n-space>
-    </template>
-
-    <n-data-table
-      v-model:checked-row-keys="checkedKeys"
-      :columns="columns"
-      :data="tableData"
-      :loading="loading"
-      :row-key="row => row.portfolioId"
-    />
-
-    <div style="margin-top: 16px; display: flex; justify-content: flex-end">
-      <n-pagination
-        v-model:page="pageNum"
-        :page-size="pageSize"
-        :page-sizes="[10, 20, 50]"
-        :total="total"
-        show-size-picker
-        @update:page="loadData"
-        @update:page-size="loadData"
+  <div class="portfolio-page">
+    <!-- 顶部统计 -->
+    <div class="stat-cards">
+      <BusinessMetricCard
+        label="全部作品"
+        :value="stats.total"
+        icon="🖼️"
+        variant="primary"
+      />
+      <BusinessMetricCard
+        label="已发布"
+        :value="stats.published"
+        icon="✅"
+        variant="success"
+      />
+      <BusinessMetricCard
+        label="草稿"
+        :value="stats.draft"
+        icon="📝"
+        variant="default"
       />
     </div>
+
+    <n-card :bordered="false" class="directory-card">
+      <div class="directory-layout">
+        <!-- 左侧：品类维度树 -->
+        <div class="directory-tree">
+          <div class="tree-header">品类筛选</div>
+          <div class="tree-items">
+            <div
+              class="tree-item"
+              :class="{ 'tree-item--active': selectedCategory === null }"
+              @click="selectCategory(null)"
+            >
+              全部 <span class="tree-item__count">{{ tableData.length }}</span>
+            </div>
+            <div
+              v-for="cat in categoryStats"
+              :key="cat.id"
+              class="tree-item"
+              :class="{ 'tree-item--active': selectedCategory === cat.id }"
+              @click="selectCategory(cat.id)"
+            >
+              {{ cat.name }} <span class="tree-item__count">{{ cat.count }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右侧：紧凑筛选 + 表格 -->
+        <div class="directory-main">
+          <!-- 紧凑筛选栏 -->
+          <div class="compact-filter">
+            <n-input
+              v-model:value="keyword"
+              placeholder="搜索标题..."
+              size="small"
+              clearable
+              @keyup.enter="loadData"
+              style="width: 200px"
+            >
+              <template #prefix>
+                <n-icon><Search /></n-icon>
+              </template>
+            </n-input>
+            <n-button size="small" type="primary" @click="loadData">搜索</n-button>
+            <n-divider vertical />
+            <n-space :size="6">
+              <n-button :disabled="!checkedKeys.length" size="small" type="error" ghost @click="handleBatchDelete">
+                批量删除{{ checkedKeys.length ? `(${checkedKeys.length})` : '' }}
+              </n-button>
+              <n-button size="small" type="primary" @click="handleAdd">新增作品</n-button>
+            </n-space>
+          </div>
+
+          <!-- 表格 -->
+          <n-data-table
+            v-model:checked-row-keys="checkedKeys"
+            :columns="columns"
+            :data="displayData"
+            :loading="loading"
+            :row-key="row => row.portfolioId"
+            size="small"
+            :bordered="false"
+          />
+
+          <!-- 分页 -->
+          <div class="compact-pagination">
+            <n-pagination
+              v-model:page="pageNum"
+              :page-size="pageSize"
+              :page-sizes="[10, 20, 50]"
+              :total="total"
+              show-size-picker
+              size="small"
+              @update:page="loadData"
+              @update:page-size="loadData"
+            />
+          </div>
+        </div>
+      </div>
+    </n-card>
 
     <!-- 新增/编辑弹窗 -->
     <n-modal
@@ -85,7 +142,7 @@
           </n-upload>
         </n-form-item>
         <n-form-item label="描述">
-          <n-input v-model:value="formData.description" type="textarea" placeholder="作品描述" :rows="4" />
+          <n-input v-model:value="formData.description" type="textarea" placeholder="作品描述" :rows="3" />
         </n-form-item>
         <n-form-item label="状态">
           <n-switch v-model:value="formData.status" :checked-value="1" :unchecked-value="0">
@@ -98,81 +155,107 @@
         </n-form-item>
       </n-form>
     </n-modal>
-  </n-card>
+  </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, h } from 'vue';
-import { NButton, NTag, NSpace, NImage, useMessage, useDialog } from 'naive-ui';
+import { ref, computed, onMounted, h } from 'vue';
+import { NButton, NTag, NSpace, NInput, NIcon, NDivider, NForm, NFormItem, NSelect, NModal, NSwitch, NAlert, NPagination, NImage, NUpload, useMessage, useDialog } from 'naive-ui';
 import type { UploadCustomRequestOptions, UploadFileInfo } from 'naive-ui';
+import { Search } from '@vicons/ionicons5';
 import {
-  getPortfolioList,
-  addPortfolio,
-  updatePortfolio,
-  deletePortfolio,
-  batchDeletePortfolios,
-  togglePortfolioStatus,
+  getPortfolioList, addPortfolio, updatePortfolio,
+  deletePortfolio, batchDeletePortfolios, togglePortfolioStatus,
 } from '@/api/portfolio/index';
 import { getCategoryList } from '@/api/config/category';
 import { useGlobSetting } from '@/hooks/setting';
 import { ACCESS_TOKEN } from '@/store/mutation-types';
 import { storage } from '@/utils/Storage';
+import { BusinessMetricCard, StatusBadge } from '@/components/Business';
 
-const { uploadUrl, fileUrl } = useGlobSetting();
+const { uploadUrl } = useGlobSetting();
 const message = useMessage();
 const dialog = useDialog();
 const loading = ref(false);
-const tableData = ref([]);
+const tableData = ref<any[]>([]);
 const total = ref(0);
 const pageNum = ref(1);
 const pageSize = ref(10);
 
-const filterCategory = ref<number | null>(null);
 const keyword = ref('');
+const selectedCategory = ref<number | null>(null);
 const categoryOptions = ref<{ label: string; value: number }[]>([]);
 const categoryMap = ref<Record<number, string>>({});
 
 const checkedKeys = ref<number[]>([]);
-
 const showModal = ref(false);
 const isEdit = ref(false);
 const formRef = ref();
 const coverFileList = ref<UploadFileInfo[]>([]);
 const galleryFileList = ref<UploadFileInfo[]>([]);
-const formData = ref<any>({
-  title: '',
-  categoryId: null,
-  coverUrl: '',
-  imageUrls: [],
-  description: '',
-  status: 0,
-  sortOrder: 0,
+const formData = ref<any>({ title: '', categoryId: null, coverUrl: '', imageUrls: [], description: '', status: 0, sortOrder: 0 });
+
+const rules = { title: { required: true, message: '请输入作品标题', trigger: 'blur' } };
+
+// 统计
+const stats = computed(() => {
+  const all = tableData.value;
+  return {
+    total: all.length,
+    published: all.filter((r: any) => r.status === 1).length,
+    draft: all.filter((r: any) => r.status === 0).length,
+  };
 });
 
-const rules = {
-  title: { required: true, message: '请输入作品标题', trigger: 'blur' },
+// 分类统计
+const categoryStats = computed(() => {
+  const map: Record<number, number> = {};
+  tableData.value.forEach((r: any) => {
+    if (r.categoryId) map[r.categoryId] = (map[r.categoryId] || 0) + 1;
+  });
+  return Object.entries(map).map(([id, count]) => ({
+    id: Number(id),
+    name: categoryMap.value[Number(id)] || `ID#${id}`,
+    count,
+  }));
+});
+
+// 筛选后数据
+const displayData = computed(() => {
+  let list = [...tableData.value];
+  if (selectedCategory.value !== null) {
+    list = list.filter((r: any) => r.categoryId === selectedCategory.value);
+  }
+  if (keyword.value) {
+    const kw = keyword.value.toLowerCase();
+    list = list.filter((r: any) => (r.title || '').toLowerCase().includes(kw));
+  }
+  return list;
+});
+
+const selectCategory = (id: number | null) => {
+  selectedCategory.value = id;
+  pageNum.value = 1;
 };
 
-/** 将存储的相对路径转为通过 API 代理访问的 URL */
 function toFileUrl(url?: string | null) {
   if (!url) return '';
   if (/^https?:\/\//i.test(url)) return url;
-  // 相对路径如 /uploads/xxx.png → /api/v1/oss/files/uploads/xxx.png（走 Vite 代理，无跨域）
   return `/api/v1/oss/files${url}`;
 }
 
 const columns = [
-  { type: 'selection' },
+  { type: 'selection', width: 40 },
   {
     title: '封面',
     key: 'coverUrl',
-    width: 80,
+    width: 60,
     render(row: any) {
       if (!row.coverUrl) return '-';
       return h(NImage, {
         src: toFileUrl(row.coverUrl),
-        width: 50,
-        height: 50,
+        width: 44,
+        height: 44,
         objectFit: 'cover',
         style: 'border-radius: 4px',
         previewSrc: toFileUrl(row.coverUrl),
@@ -183,84 +266,64 @@ const columns = [
   {
     title: '品类',
     key: 'categoryId',
-    width: 100,
+    width: 90,
     render(row: any) {
       return categoryMap.value[row.categoryId] || '-';
-    },
+    }
   },
   {
     title: '状态',
     key: 'status',
-    width: 80,
+    width: 70,
     render(row: any) {
-      return h(NTag, { type: row.status === 1 ? 'success' : 'default', size: 'small' }, {
-        default: () => (row.status === 1 ? '已发布' : '草稿'),
-      });
-    },
+      return h(StatusBadge, { status: row.status === 1 ? 'published' : 'draft', size: 'small', round: true,
+        map: { published: { label: '已发布', type: 'success' }, draft: { label: '草稿', type: 'default' } } });
+    }
   },
-  { title: '浏览量', key: 'viewCount', width: 80 },
+  { title: '浏览', key: 'viewCount', width: 60, render: (r: any) => r.viewCount || 0 },
   { title: '排序', key: 'sortOrder', width: 60 },
-  { title: '创建时间', key: 'createTime', width: 170 },
   {
     title: '操作',
     key: 'actions',
-    width: 200,
+    width: 180,
     render(row: any) {
-      return h(NSpace, {}, {
+      return h(NSpace, { size: 4 }, {
         default: () => [
-          h(NButton, { size: 'small', type: 'primary', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
-          h(
-            NButton,
-            { size: 'small', type: row.status === 1 ? 'warning' : 'success', onClick: () => handleToggleStatus(row) },
-            { default: () => (row.status === 1 ? '下架' : '发布') }
-          ),
-          h(NButton, { size: 'small', type: 'error', onClick: () => handleDelete(row) }, { default: () => '删除' }),
-        ],
+          h(NButton, { size: 'tiny', type: 'primary', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
+          h(NButton, { size: 'tiny', type: row.status === 1 ? 'warning' : 'success', onClick: () => handleToggleStatus(row) },
+            { default: () => row.status === 1 ? '下架' : '发布' }),
+          h(NButton, { size: 'tiny', type: 'error', onClick: () => handleDelete(row) }, { default: () => '删除' }),
+        ]
       });
-    },
-  },
+    }
+  }
 ];
 
 const loadData = async () => {
   loading.value = true;
   try {
     const params: any = { pageNum: pageNum.value, pageSize: pageSize.value };
-    if (filterCategory.value != null) params.categoryId = filterCategory.value;
     if (keyword.value) params.keyword = keyword.value;
     const res: any = await getPortfolioList(params);
     tableData.value = res.records || [];
     total.value = res.total || 0;
-  } catch (e) {
-    console.error(e);
-  } finally {
-    loading.value = false;
-  }
+  } catch (e) { console.error(e); }
+  finally { loading.value = false; }
 };
 
 const loadCategories = async () => {
   try {
     const cats = await getCategoryList();
     categoryOptions.value = cats.map((c: any) => ({ label: c.name, value: c.categoryId }));
-    const cMap: any = {};
-    cats.forEach((c: any) => { cMap[c.categoryId] = c.name; });
-    categoryMap.value = cMap;
-  } catch (e) {
-    console.error(e);
-  }
+    categoryMap.value = Object.fromEntries(cats.map((c: any) => [c.categoryId, c.name]));
+  } catch (e) { console.error(e); }
 };
 
-onMounted(() => {
-  loadData();
-  loadCategories();
-});
+onMounted(() => { loadData(); loadCategories(); });
 
-/** 上传图片到服务器 */
 async function handleUpload(options: UploadCustomRequestOptions) {
   const file = options.file.file;
-  if (!file) {
-    options.onError();
-    return;
-  }
+  if (!file) { options.onError(); return; }
   try {
     const fd = new FormData();
     fd.append('file', file);
@@ -272,24 +335,17 @@ async function handleUpload(options: UploadCustomRequestOptions) {
     });
     const result = await response.json();
     if (!response.ok || result.code !== 200 || !result.data) {
-      message.error(result.msg || '图片上传失败');
-      options.onError();
-      return;
+      message.error(result.msg || '图片上传失败'); options.onError(); return;
     }
     options.file.url = result.data;
     options.onFinish();
   } catch (error) {
-    console.error(error);
-    message.error('图片上传失败');
-    options.onError();
+    message.error('图片上传失败'); options.onError();
   }
 }
 
-/** 从文件列表提取已上传的 URL */
 function getUrlsFromFileList(fileList: UploadFileInfo[]) {
-  return fileList
-    .map((f) => f.url || f.status === 'finished' && f.url)
-    .filter((url): url is string => typeof url === 'string' && !!url);
+  return fileList.map((f) => f.url || (f.status === 'finished' && f.url)).filter((url): url is string => typeof url === 'string' && !!url);
 }
 
 const handleAdd = () => {
@@ -303,24 +359,8 @@ const handleAdd = () => {
 const handleEdit = (row: any) => {
   isEdit.value = true;
   formData.value = { ...row };
-  // 封面图回显
-  if (row.coverUrl) {
-    coverFileList.value = [{
-      id: 'cover-existing',
-      name: 'cover.jpg',
-      status: 'finished',
-      url: row.coverUrl,
-    }];
-  } else {
-    coverFileList.value = [];
-  }
-  // 图片集回显
-  galleryFileList.value = (row.imageUrls || []).map((url: string, idx: number) => ({
-    id: `gallery-${idx}`,
-    name: `image-${idx}.jpg`,
-    status: 'finished',
-    url,
-  }));
+  coverFileList.value = row.coverUrl ? [{ id: 'cover-existing', name: 'cover.jpg', status: 'finished', url: row.coverUrl }] : [];
+  galleryFileList.value = (row.imageUrls || []).map((url: string, idx: number) => ({ id: `gallery-${idx}`, name: `image-${idx}.jpg`, status: 'finished', url }));
   showModal.value = true;
 };
 
@@ -330,23 +370,12 @@ const handleSubmit = () => {
       try {
         const coverUrls = getUrlsFromFileList(coverFileList.value);
         const galleryUrls = getUrlsFromFileList(galleryFileList.value);
-        const data = {
-          ...formData.value,
-          coverUrl: coverUrls[0] || '',
-          imageUrls: galleryUrls,
-        };
-        if (isEdit.value) {
-          await updatePortfolio(formData.value.portfolioId, data);
-          message.success('修改成功');
-        } else {
-          await addPortfolio(data);
-          message.success('新增成功');
-        }
+        const data = { ...formData.value, coverUrl: coverUrls[0] || '', imageUrls: galleryUrls };
+        if (isEdit.value) { await updatePortfolio(formData.value.portfolioId, data); message.success('修改成功'); }
+        else { await addPortfolio(data); message.success('新增成功'); }
         showModal.value = false;
         loadData();
-      } catch (e) {
-        console.error(e);
-      }
+      } catch (e) { console.error(e); }
     }
   });
   return false;
@@ -354,33 +383,19 @@ const handleSubmit = () => {
 
 const handleDelete = (row: any) => {
   dialog.warning({
-    title: '确认删除',
-    content: `确认删除作品「${row.title}」吗？`,
-    positiveText: '确认',
-    negativeText: '取消',
-    onPositiveClick: async () => {
-      await deletePortfolio(row.portfolioId);
-      message.success('已删除');
-      loadData();
-    },
+    title: '确认删除', content: `确认删除作品「${row.title}」吗？`,
+    positiveText: '确认', negativeText: '取消',
+    onPositiveClick: async () => { await deletePortfolio(row.portfolioId); message.success('已删除'); loadData(); },
   });
 };
 
 const handleBatchDelete = () => {
   dialog.warning({
-    title: '确认批量删除',
-    content: `确定要删除选中的 ${checkedKeys.value.length} 个作品吗？`,
-    positiveText: '确认',
-    negativeText: '取消',
+    title: '确认批量删除', content: `确定要删除选中的 ${checkedKeys.value.length} 个作品吗？`,
+    positiveText: '确认', negativeText: '取消',
     onPositiveClick: async () => {
-      try {
-        await batchDeletePortfolios(checkedKeys.value);
-        message.success('批量删除成功');
-        checkedKeys.value = [];
-        loadData();
-      } catch (e) {
-        console.error(e);
-      }
+      try { await batchDeletePortfolios(checkedKeys.value); message.success('批量删除成功'); checkedKeys.value = []; loadData(); }
+      catch (e) { console.error(e); }
     },
   });
 };
@@ -389,15 +404,110 @@ const handleToggleStatus = (row: any) => {
   const newStatus = row.status === 1 ? 0 : 1;
   const label = newStatus === 1 ? '发布' : '下架';
   dialog.warning({
-    title: `确认${label}`,
-    content: `确定要${label}作品「${row.title}」吗？`,
-    positiveText: '确认',
-    negativeText: '取消',
-    onPositiveClick: async () => {
-      await togglePortfolioStatus(row.portfolioId, newStatus);
-      message.success(`${label}成功`);
-      loadData();
-    },
+    title: `确认${label}`, content: `确定要${label}作品「${row.title}」吗？`,
+    positiveText: '确认', negativeText: '取消',
+    onPositiveClick: async () => { await togglePortfolioStatus(row.portfolioId, newStatus); message.success(`${label}成功`); loadData(); },
   });
 };
 </script>
+
+<style scoped>
+.portfolio-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.directory-card :deep(.n-card__content) {
+  padding: 0;
+}
+
+.directory-layout {
+  display: flex;
+  height: calc(100vh - 260px);
+  min-height: 400px;
+}
+
+.directory-tree {
+  width: 160px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-light);
+  background: var(--page-bg);
+}
+
+.tree-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.tree-items {
+  padding: 8px 0;
+}
+
+.tree-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.tree-item:hover { background: var(--row-selected-bg); }
+
+.tree-item--active {
+  background: var(--row-selected-bg);
+  color: var(--primary-color);
+  font-weight: 600;
+  border-left: 3px solid var(--primary-color);
+}
+
+.tree-item__count {
+  font-size: 11px;
+  color: var(--text-placeholder);
+  background: var(--border-light);
+  padding: 1px 6px;
+  border-radius: 8px;
+}
+
+.tree-item--active .tree-item__count {
+  background: var(--primary-bg);
+  color: var(--primary-color);
+}
+
+.directory-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 14px 16px;
+  gap: 12px;
+}
+
+.compact-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.compact-pagination {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-light);
+}
+</style>

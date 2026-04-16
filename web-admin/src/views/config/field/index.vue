@@ -296,44 +296,48 @@
   .empty-hint {
     text-align: center;
     padding: 60px 0;
-    color: #999;
+    color: var(--text-placeholder);
     font-size: 14px;
-    background: #f9f9f9;
-    border-radius: 4px;
+    background: var(--page-bg);
+    border-radius: var(--panel-radius);
   }
-  
+
   .drag-container {
-    border: 1px solid #eee;
-    border-radius: 4px;
+    border: 1px solid var(--border-light);
+    border-radius: var(--panel-radius);
   }
 
   .field-header {
     display: flex;
-    background: #fafafa;
+    background: var(--page-bg);
     padding: 12px;
-    font-weight: bold;
-    border-bottom: 1px solid #eee;
+    font-weight: 600;
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-light);
   }
 
   .field-item {
     display: flex;
     align-items: center;
     padding: 12px;
-    border-bottom: 1px solid #eee;
-    background: #fff;
+    border-bottom: 1px solid var(--border-light);
+    background: var(--panel-bg);
     transition: background 0.2s;
   }
-  
+
   .field-item:hover {
-    background: #fafafa;
+    background: var(--row-hover-bg);
   }
 
   .col-drag { width: 40px; text-align: center; }
   .drag-handle { cursor: grab; }
   .drag-handle:active { cursor: grabbing; }
 
-  .col-label { flex: 1; }
-  .col-key { flex: 1; font-family: monospace; }
+  .col-label { flex: 1; color: var(--text-primary); }
+  .col-key { flex: 1; font-family: monospace; color: var(--text-secondary); font-size: 12px; }
   .col-type { width: 150px; }
   .col-req { width: 100px; }
   .col-action { width: 120px; text-align: right; }

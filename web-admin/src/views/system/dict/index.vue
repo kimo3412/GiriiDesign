@@ -259,6 +259,6 @@
 
 <style scoped>
   :deep(.selected-row) {
-    background-color: rgba(45, 140, 240, 0.08);
+    background-color: var(--row-selected-bg);
   }
 </style>

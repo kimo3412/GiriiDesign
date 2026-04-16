@@ -2,162 +2,211 @@
   <div class="request-page">
     <!-- 顶部统计卡片 -->
     <div class="stat-cards">
-      <div class="stat-card stat-pending" @click="filterByStatus(0)">
-        <div class="stat-number">{{ stats.pending }}</div>
-        <div class="stat-label">待处理</div>
-        <div class="stat-icon">📩</div>
-      </div>
-      <div class="stat-card stat-converted" @click="filterByStatus(1)">
-        <div class="stat-number">{{ stats.converted }}</div>
-        <div class="stat-label">已转单</div>
-        <div class="stat-icon">✅</div>
-      </div>
-      <div class="stat-card stat-closed" @click="filterByStatus(2)">
-        <div class="stat-number">{{ stats.closed }}</div>
-        <div class="stat-label">已关闭</div>
-        <div class="stat-icon">🚫</div>
-      </div>
-      <div class="stat-card stat-total" @click="filterByStatus(null)">
-        <div class="stat-number">{{ stats.total }}</div>
-        <div class="stat-label">全部</div>
-        <div class="stat-icon">📊</div>
-      </div>
+      <BusinessMetricCard
+        label="待处理"
+        :value="stats.pending"
+        icon="📩"
+        variant="warning"
+        :clickable="true"
+        @click="filterByStatus(0)"
+      />
+      <BusinessMetricCard
+        label="已转单"
+        :value="stats.converted"
+        icon="✅"
+        variant="success"
+        :clickable="true"
+        @click="filterByStatus(1)"
+      />
+      <BusinessMetricCard
+        label="已关闭"
+        :value="stats.closed"
+        icon="🚫"
+        variant="error"
+        :clickable="true"
+        @click="filterByStatus(2)"
+      />
+      <BusinessMetricCard
+        label="全部"
+        :value="stats.total"
+        icon="📊"
+        variant="primary"
+        :clickable="true"
+        @click="filterByStatus(null)"
+      />
     </div>
 
-    <!-- 筛选与列表 -->
-    <n-card :bordered="false">
-      <template #header>
-        <n-space align="center" :size="12">
-          <span style="font-weight: 600; font-size: 16px;">意向池</span>
-          <n-tag v-if="filterStatus !== null" closable @close="filterByStatus(null)" size="small">
-            {{ statusMap[filterStatus]?.label }}
-          </n-tag>
-        </n-space>
-      </template>
-      <template #header-extra>
-        <n-space :size="8">
-          <n-select
-            v-model:value="filterCategory"
-            :options="categoryOptions"
-            placeholder="品类"
-            style="width: 140px"
-            size="small"
-            clearable
-            @update:value="loadData"
-          />
-          <n-input
-            v-model:value="searchText"
-            placeholder="搜索描述..."
-            size="small"
-            style="width: 160px"
-            clearable
-          />
-        </n-space>
-      </template>
-
-      <n-data-table
-        :columns="columns"
-        :data="filteredData"
-        :loading="loading"
-        :row-key="row => row.requestId"
-        :row-class-name="rowClassName"
-        striped
-        size="small"
-      />
-
-      <div style="margin-top: 16px; display: flex; justify-content: flex-end">
-        <n-pagination
-          v-model:page="pageNum"
-          :page-size="pageSize"
-          :page-sizes="[10, 20, 50]"
-          :total="total"
-          show-size-picker
-          @update:page="loadData"
-          @update:page-size="loadData"
+    <!-- 筛选栏 -->
+    <n-card :bordered="false" size="small">
+      <n-space align="center" :size="12">
+        <span style="font-weight: 600; font-size: 15px;">意向池</span>
+        <n-tag v-if="filterStatus !== null" closable @close="filterByStatus(null)" size="small" round>
+          {{ statusMap[filterStatus]?.label }}
+        </n-tag>
+        <n-divider vertical />
+        <n-select
+          v-model:value="filterCategory"
+          :options="categoryOptions"
+          placeholder="品类"
+          style="width: 130px"
+          size="small"
+          clearable
+          @update:value="loadData"
         />
-      </div>
+        <n-input
+          v-model:value="searchText"
+          placeholder="搜索描述..."
+          size="small"
+          style="width: 160px"
+          clearable
+          @keyup.enter="loadData"
+        />
+        <n-button size="small" type="primary" @click="loadData">搜索</n-button>
+      </n-space>
     </n-card>
 
-    <!-- 意向详情抽屉 -->
-    <n-drawer v-model:show="showDetail" :width="520" placement="right">
-      <n-drawer-content v-if="detailData">
-        <template #header>
-          <div class="drawer-header">
-            <span class="drawer-title">意向 #{{ detailData.requestId }}</span>
-            <n-tag :type="statusMap[detailData.status]?.type" size="small">
-              {{ statusMap[detailData.status]?.label }}
-            </n-tag>
+    <!-- Master-Detail 主从布局 -->
+    <n-card :bordered="false" class="master-detail-card">
+      <div class="master-detail">
+        <!-- 左侧：精简列表 -->
+        <div class="master-list">
+          <div v-if="loading && filteredData.length === 0" class="master-loading">
+            <n-spin size="medium" />
           </div>
-        </template>
-
-        <!-- 客户信息 -->
-        <div class="detail-section">
-          <div class="detail-section-title">客户信息</div>
-          <div class="detail-grid">
-            <div class="detail-item">
-              <span class="detail-label">客户</span>
-              <span class="detail-value">{{ detailData.userName || ('用户#' + detailData.userId) }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">品类</span>
-              <span class="detail-value">{{ getCategoryName(detailData.categoryId) }}</span>
-            </div>
-            <div class="detail-item">
-              <span class="detail-label">提交时间</span>
-              <span class="detail-value">{{ detailData.createTime }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- 客户描述 -->
-        <div class="detail-section">
-          <div class="detail-section-title">客户描述</div>
-          <div class="detail-desc">{{ detailData.description || '客户未填写额外描述' }}</div>
-        </div>
-
-        <!-- 定制参数 -->
-        <div class="detail-section">
-          <div class="detail-section-title">定制参数</div>
-          <div class="custom-params" v-if="parsedCustomData">
-            <div v-for="(value, key) in parsedCustomData" :key="key" class="param-row">
-              <span class="param-key">{{ key }}</span>
-              <span class="param-value">{{ value }}</span>
+          <EmptyStateGuide
+            v-else-if="filteredData.length === 0"
+            icon="📭"
+            title="暂无意向单"
+            description="没有符合筛选条件的意向单"
+            :action-label="undefined"
+          />
+          <div
+            v-else
+            class="master-list__items"
+          >
+            <div
+              v-for="row in filteredData"
+              :key="row.requestId"
+              class="master-item"
+              :class="{ 'master-item--active': selectedId === row.requestId, 'master-item--pending': row.status === 0 }"
+              @click="handleSelect(row)"
+            >
+              <div class="master-item__header">
+                <span class="master-item__id">#{{ row.requestId }}</span>
+                <StatusBadge :status="row.status" size="small" round />
+              </div>
+              <div class="master-item__customer">
+                {{ row.userName || (`用户#${row.userId}`) }}
+              </div>
+              <div class="master-item__footer">
+                <span class="master-item__category">{{ getCategoryName(row.categoryId) }}</span>
+                <span class="master-item__time">{{ row.createTime?.slice(5, 16) || '-' }}</span>
+              </div>
+              <div v-if="row.status === 0" class="master-item__badge">待处理</div>
             </div>
           </div>
-          <div v-else class="detail-desc">无定制参数</div>
-        </div>
 
-        <!-- 参考图片 -->
-        <div class="detail-section" v-if="parsedImages.length > 0">
-          <div class="detail-section-title">参考图片</div>
-          <div class="image-gallery">
-            <n-image
-              v-for="(img, idx) in parsedImages"
-              :key="idx"
-              :src="img"
-              width="100"
-              height="100"
-              object-fit="cover"
-              style="border-radius: 4px;"
+          <!-- 分页 -->
+          <div class="master-pagination">
+            <n-pagination
+              v-model:page="pageNum"
+              :page-size="pageSize"
+              :page-sizes="[10, 20, 50]"
+              :total="total"
+              show-size-picker
+              size="small"
+              @update:page="loadData"
+              @update:page-size="loadData"
             />
           </div>
         </div>
 
-        <template #footer v-if="detailData?.status === 0">
-          <n-space justify="end">
-            <n-button @click="openClose" type="error" ghost>
-              关闭意向
-            </n-button>
-            <n-button @click="openConvert" type="primary">
-              转为正式订单 →
-            </n-button>
-          </n-space>
-        </template>
-      </n-drawer-content>
-    </n-drawer>
+        <!-- 右侧：详情面板 -->
+        <div class="detail-panel">
+          <EmptyStateGuide
+            v-if="!selectedId"
+            icon="👈"
+            title="请选择一个意向"
+            description="点击左侧列表查看详情"
+          />
+          <template v-else-if="detailData">
+            <!-- 详情头部 -->
+            <div class="detail-header">
+              <div class="detail-header__left">
+                <span class="detail-header__title">意向 #{{ detailData.requestId }}</span>
+                <StatusBadge :status="detailData.status" round show-dot />
+              </div>
+              <n-space v-if="detailData?.status === 0" :size="8">
+                <n-button size="small" type="error" ghost @click="openClose">关闭</n-button>
+                <n-button size="small" type="primary" @click="openConvert">转为正式订单 →</n-button>
+              </n-space>
+            </div>
+
+            <n-divider />
+
+            <!-- 客户信息 -->
+            <div class="detail-section">
+              <div class="detail-section__title">客户信息</div>
+              <div class="detail-grid">
+                <div class="detail-item">
+                  <span class="detail-item__label">客户</span>
+                  <span class="detail-item__value">{{ detailData.userName || (`用户#${detailData.userId}`) }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-item__label">品类</span>
+                  <span class="detail-item__value">{{ getCategoryName(detailData.categoryId) }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-item__label">提交时间</span>
+                  <span class="detail-item__value">{{ detailData.createTime }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 客户描述 -->
+            <div class="detail-section">
+              <div class="detail-section__title">客户描述</div>
+              <div class="detail-desc">{{ detailData.description || '客户未填写额外描述' }}</div>
+            </div>
+
+            <!-- 定制参数 -->
+            <div class="detail-section">
+              <div class="detail-section__title">定制参数</div>
+              <div class="custom-params" v-if="parsedCustomData">
+                <div v-for="(value, key) in parsedCustomData" :key="key" class="param-row">
+                  <span class="param-key">{{ key }}</span>
+                  <span class="param-value">{{ value }}</span>
+                </div>
+              </div>
+              <div v-else class="detail-desc">无定制参数</div>
+            </div>
+
+            <!-- 参考图片 -->
+            <div class="detail-section" v-if="parsedImages.length > 0">
+              <div class="detail-section__title">参考图片</div>
+              <div class="image-gallery">
+                <n-image
+                  v-for="(img, idx) in parsedImages"
+                  :key="idx"
+                  :src="img"
+                  width="80"
+                  height="80"
+                  object-fit="cover"
+                  style="border-radius: 6px;"
+                />
+              </div>
+            </div>
+          </template>
+          <div v-else class="detail-loading">
+            <n-spin size="medium" />
+          </div>
+        </div>
+      </div>
+    </n-card>
 
     <!-- 转单弹窗 -->
-    <n-modal v-model:show="showConvert" title="意向转正式订单" preset="dialog" positive-text="确认转单" negative-text="取消" @positive-click="handleConvert" style="width: 600px">
+    <n-modal v-model:show="showConvert" title="意向转正式订单" preset="dialog"
+      positive-text="确认转单" negative-text="取消" @positive-click="handleConvert" style="width: 600px">
       <div class="convert-hint">
         <n-alert type="info" :bordered="false">
           转单后将创建正式订单，并启动对应品类的工作流。客户可在小程序查看订单进度。
@@ -176,7 +225,6 @@
             @update:value="handleBomTemplateChange"
           />
         </n-form-item>
-        <!-- BOM物料预览 -->
         <div v-if="bomPreviewItems.length > 0" class="bom-preview">
           <div class="bom-preview-title">物料明细预览</div>
           <n-data-table :columns="bomPreviewColumns" :data="bomPreviewItems" :bordered="false" size="tiny" />
@@ -211,12 +259,13 @@
     </n-modal>
 
     <!-- 关闭弹窗 -->
-    <n-modal v-model:show="showClose" title="关闭意向" preset="dialog" positive-text="确认关闭" negative-text="取消" @positive-click="handleClose" style="width: 420px">
+    <n-modal v-model:show="showClose" title="关闭意向" preset="dialog"
+      positive-text="确认关闭" negative-text="取消" @positive-click="handleClose" style="width: 420px">
       <n-alert type="warning" :bordered="false" style="margin-bottom: 12px;">
         关闭后该意向将标记为已关闭，不可恢复。
       </n-alert>
       <n-form-item label="关闭原因">
-        <n-input v-model:value="closeReason" type="textarea" placeholder="请输入关闭原因（如：客户主动取消、需求暂不支持等）" :autosize="{ minRows: 2 }" />
+        <n-input v-model:value="closeReason" type="textarea" placeholder="请输入关闭原因" :autosize="{ minRows: 2 }" />
       </n-form-item>
     </n-modal>
   </div>
@@ -224,12 +273,13 @@
 
 <script lang="ts" setup>
 import { ref, computed, onMounted, h } from 'vue';
-import { NButton, NTag, NSpace, NImage, useMessage } from 'naive-ui';
+import { NButton, NTag, NSpace, NImage, NDivider, NCard, NPagination, NGrid, NGi, NForm, NFormItem, NInput, NInputNumber, NDatePicker, NSelect, NAlert, NModal, NSpin, useMessage } from 'naive-ui';
 import { getRequestList, getRequestDetail, convertRequest, closeRequest } from '@/api/order/index';
 import { getCategoryList } from '@/api/config/category';
 import { getFieldList } from '@/api/config/field';
 import { getDesignersByCategory } from '@/api/system/adminList';
 import { getBomTemplateList, getBomTemplateDetail } from '@/api/supply/index';
+import { BusinessMetricCard, StatusBadge, EmptyStateGuide } from '@/components/Business';
 
 const message = useMessage();
 const loading = ref(false);
@@ -241,6 +291,11 @@ const searchText = ref('');
 
 const filterStatus = ref<number | null>(null);
 const filterCategory = ref(null);
+
+// Master-Detail
+const selectedId = ref<number | null>(null);
+const detailData = ref<any>(null);
+const fieldLabelMap = ref<Record<string, string>>({});
 
 const statusMap: any = {
   0: { label: '待处理', type: 'warning' },
@@ -285,12 +340,7 @@ const filteredData = computed(() => {
   return list;
 });
 
-// 详情抽屉
-const showDetail = ref(false);
-const detailData = ref<any>(null);
-const fieldLabelMap = ref<Record<string, string>>({});
-
-// 将英文 fieldKey 翻译为中文 label
+// 详情面板
 const parsedCustomData = computed(() => {
   if (!detailData.value?.customData) return null;
   try {
@@ -323,14 +373,13 @@ const convertForm = ref({
   bomTemplateId: null as number | null,
 });
 
-// BOM 模板
 const bomTemplateOptions = ref<any[]>([]);
 const bomPreviewItems = ref<any[]>([]);
 const bomPreviewCost = ref('0.00');
 const bomPreviewColumns = [
   { title: '物料', key: 'name', width: 120 },
   { title: 'SKU', key: 'sku', width: 90 },
-  { title: '用量', key: 'quantity', width: 70, align: 'right' as const },
+  { title: '用量', key: 'quantity', width: 70, align: 'center' as const },
   { title: '单价', key: 'unitPrice', width: 80, align: 'right' as const, render: (row: any) => `¥${row.unitPrice}` },
   { title: '小计', key: 'subtotal', width: 80, align: 'right' as const, render: (row: any) => `¥${row.subtotal}` },
 ];
@@ -341,79 +390,11 @@ const closeReason = ref('');
 
 const getCategoryName = (id: number) => categoryMap.value[id] || `品类#${id}`;
 
-const rowClassName = (row: any) => {
-  if (row.status === 0) return 'row-pending';
-  return '';
-};
-
-const columns = [
-  { title: '#', key: 'requestId', width: 60, align: 'center' as const },
-  {
-    title: '品类',
-    key: 'categoryId',
-    width: 100,
-    render(row: any) {
-      return h('span', {}, getCategoryName(row.categoryId));
-    }
-  },
-  {
-    title: '客户',
-    key: 'userId',
-    width: 90,
-    render(row: any) {
-      return h('span', { style: { color: '#555' } }, row.userName || `用户#${row.userId}`);
-    }
-  },
-  {
-    title: '需求描述',
-    key: 'description',
-    ellipsis: { tooltip: true },
-    render(row: any) {
-      return h('span', { style: { color: row.description ? '#333' : '#bbb' } },
-        row.description || '客户未填写描述');
-    }
-  },
-  {
-    title: '状态',
-    key: 'status',
-    width: 90,
-    align: 'center' as const,
-    render(row: any) {
-      const s = statusMap[row.status];
-      return s ? h(NTag, { type: s.type, size: 'small', round: true }, { default: () => s.label }) : '';
-    }
-  },
-  {
-    title: '提交时间',
-    key: 'createTime',
-    width: 160,
-    render(row: any) {
-      return h('span', { style: { color: '#999', fontSize: '12px' } }, row.createTime || '-');
-    }
-  },
-  {
-    title: '操作',
-    key: 'actions',
-    width: 120,
-    align: 'center' as const,
-    render(row: any) {
-      return h(NSpace, { size: 4, justify: 'center' }, {
-        default: () => [
-          h(NButton, { size: 'tiny', type: 'primary', text: true, onClick: () => handleViewDetail(row) },
-            { default: () => '详情' }),
-          row.status === 0
-            ? h(NButton, { size: 'tiny', type: 'success', text: true, onClick: () => handleQuickConvert(row) },
-              { default: () => '转单' })
-            : null,
-        ].filter(Boolean)
-      });
-    }
-  },
-];
-
 const filterByStatus = (status: number | null) => {
   filterStatus.value = status;
   pageNum.value = 1;
+  selectedId.value = null;
+  detailData.value = null;
   loadData();
 };
 
@@ -422,7 +403,7 @@ const loadData = async () => {
   try {
     const params: any = { pageNum: pageNum.value, pageSize: pageSize.value };
     if (filterCategory.value != null) params.categoryId = filterCategory.value;
-    if (filterStatus.value != null) params.status = filterStatus.value;
+    if (filterStatus.value !== null) params.status = filterStatus.value;
     const res = await getRequestList(params);
     tableData.value = toArray(res);
     total.value = res?.total || 0;
@@ -430,36 +411,19 @@ const loadData = async () => {
   finally { loading.value = false; }
 };
 
-onMounted(async () => {
-  loadData();
-  try {
-    const cats = toArray(await getCategoryList());
-    categoryOptions.value = cats.map((c: any) => ({ label: c.name, value: c.categoryId }));
-    categoryMap.value = Object.fromEntries(cats.map((c: any) => [c.categoryId, c.name]));
-  } catch (e) { console.error(e); }
-});
-
-const handleViewDetail = async (row: any) => {
+const handleSelect = async (row: any) => {
+  selectedId.value = row.requestId;
+  detailData.value = null;
   try {
     detailData.value = await getRequestDetail(row.requestId);
-    // 加载该品类的字段定义，用于 key → label 映射
     if (detailData.value?.categoryId) {
       try {
         const fields = toArray(await getFieldList(detailData.value.categoryId));
         fieldLabelMap.value = Object.fromEntries(
           (fields || []).map((f: any) => [f.fieldKey, f.label])
         );
-      } catch (e) { console.error('加载字段定义失败', e); }
+      } catch (e) { /* ignore field load error */ }
     }
-    showDetail.value = true;
-  } catch (e) { console.error(e); }
-};
-
-const handleQuickConvert = async (row: any) => {
-  try {
-    detailData.value = await getRequestDetail(row.requestId);
-    showDetail.value = false;
-    openConvert();
   } catch (e) { console.error(e); }
 };
 
@@ -468,23 +432,15 @@ const openConvert = async () => {
   bomPreviewItems.value = [];
   bomPreviewCost.value = '0.00';
   bomTemplateOptions.value = [];
-  // 根据意向的品类加载负责该品类的设计师
   if (detailData.value?.categoryId) {
     try {
       const designers = toArray(await getDesignersByCategory(detailData.value.categoryId));
       designerOptions.value = designers.map((d: any) => ({ label: d.nickname || d.username, value: d.adminId }));
-    } catch (e) {
-      console.error('加载设计师失败', e);
-      designerOptions.value = [];
-    }
-    // 加载该品类的 BOM 模板
+    } catch (e) { designerOptions.value = []; }
     try {
       const templates = toArray(await getBomTemplateList({ categoryId: detailData.value.categoryId }));
       bomTemplateOptions.value = templates.map((t: any) => ({ label: t.name, value: t.templateId }));
-    } catch (e) {
-      console.error('加载BOM模板失败', e);
-      bomTemplateOptions.value = [];
-    }
+    } catch (e) { bomTemplateOptions.value = []; }
   } else {
     designerOptions.value = [];
   }
@@ -493,11 +449,7 @@ const openConvert = async () => {
 
 const handleBomTemplateChange = async (templateId: number | null) => {
   convertForm.value.bomTemplateId = templateId;
-  if (!templateId) {
-    bomPreviewItems.value = [];
-    bomPreviewCost.value = '0.00';
-    return;
-  }
+  if (!templateId) { bomPreviewItems.value = []; bomPreviewCost.value = '0.00'; return; }
   try {
     const detail = await getBomTemplateDetail(templateId);
     const items = (detail?.items || []).map((item: any) => ({
@@ -510,10 +462,7 @@ const handleBomTemplateChange = async (templateId: number | null) => {
     bomPreviewItems.value = items;
     const total = items.reduce((sum: number, i: any) => sum + parseFloat(i.subtotal), 0);
     bomPreviewCost.value = total.toFixed(2);
-  } catch (e) {
-    console.error('加载BOM模板详情失败', e);
-    bomPreviewItems.value = [];
-  }
+  } catch (e) { bomPreviewItems.value = []; }
 };
 
 const handleConvert = async () => {
@@ -532,7 +481,8 @@ const handleConvert = async () => {
     });
     message.success('转单成功！订单已创建');
     showConvert.value = false;
-    showDetail.value = false;
+    detailData.value = null;
+    selectedId.value = null;
     loadData();
   } catch (e) { console.error(e); }
 };
@@ -548,102 +498,181 @@ const handleClose = async () => {
     await closeRequest(detailData.value.requestId, { closeReason: closeReason.value });
     message.success('已关闭');
     showClose.value = false;
-    showDetail.value = false;
+    detailData.value = null;
+    selectedId.value = null;
     loadData();
   } catch (e) { console.error(e); }
 };
+
+onMounted(async () => {
+  loadData();
+  try {
+    const cats = toArray(await getCategoryList());
+    categoryOptions.value = cats.map((c: any) => ({ label: c.name, value: c.categoryId }));
+    categoryMap.value = Object.fromEntries(cats.map((c: any) => [c.categoryId, c.name]));
+  } catch (e) { console.error(e); }
+});
 </script>
 
 <style scoped>
 .request-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
-/* 统计卡片 */
+/* 统计卡片区 */
 .stat-cards {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 12px;
 }
 
-.stat-card {
-  background: #fff;
-  border-radius: 10px;
-  padding: 20px 24px;
-  cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
+/* Master-Detail 主容器 */
+.master-detail-card :deep(.n-card__content) {
+  padding: 0;
+}
+
+.master-detail {
+  display: flex;
+  height: calc(100vh - 320px);
+  min-height: 400px;
+}
+
+/* 左侧列表 */
+.master-list {
+  width: 340px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
 }
 
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+.master-list__items {
+  flex: 1;
+  overflow-y: auto;
 }
 
-.stat-number {
-  font-size: 32px;
-  font-weight: 700;
-  line-height: 1.2;
-  margin-bottom: 4px;
+.master-item {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-light);
+  cursor: pointer;
+  transition: background 0.15s;
+  position: relative;
 }
 
-.stat-label {
+.master-item:hover {
+  background: var(--row-selected-bg);
+}
+
+.master-item--active {
+  background: var(--row-selected-bg);
+  border-left: 3px solid var(--primary-color);
+}
+
+.master-item--pending {
+  background: var(--row-pending-bg);
+}
+
+.master-item--pending.master-item--active {
+  background: var(--row-pending-bg);
+}
+
+.master-item__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.master-item__id {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.master-item__customer {
   font-size: 13px;
-  color: #888;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.stat-icon {
+.master-item__footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.master-item__badge {
   position: absolute;
-  top: 16px;
-  right: 20px;
-  font-size: 28px;
-  opacity: 0.6;
+  top: 10px;
+  right: 10px;
+  font-size: 10px;
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
+  padding: 1px 6px;
+  border-radius: 8px;
+  border: 1px solid var(--status-warning-border);
 }
 
-.stat-pending .stat-number { color: #E5A84B; }
-.stat-converted .stat-number { color: #5B8C5A; }
-.stat-closed .stat-number { color: #D35D6E; }
-.stat-total .stat-number { color: #4B7BEC; }
-
-.stat-pending { border-bottom: 3px solid #E5A84B; }
-.stat-converted { border-bottom: 3px solid #5B8C5A; }
-.stat-closed { border-bottom: 3px solid #D35D6E; }
-.stat-total { border-bottom: 3px solid #4B7BEC; }
-
-/* 表格行样式 */
-:deep(.row-pending) {
-  background: #FFFBE6 !important;
+.master-pagination {
+  padding: 10px 12px;
+  border-top: 1px solid var(--border-light);
+  display: flex;
+  justify-content: flex-end;
 }
 
-/* 抽屉样式 */
-.drawer-header {
+.master-loading,
+.detail-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+/* 右侧详情面板 */
+.detail-panel {
+  flex: 1;
+  padding: 20px 24px;
+  overflow-y: auto;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.detail-header__left {
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
-.drawer-title {
-  font-size: 16px;
-  font-weight: 600;
+.detail-header__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
 }
 
 .detail-section {
   margin-bottom: 24px;
 }
 
-.detail-section-title {
-  font-size: 13px;
+.detail-section__title {
+  font-size: 12px;
   font-weight: 600;
-  color: #999;
-  letter-spacing: 1px;
+  color: var(--text-tertiary);
+  letter-spacing: 0.5px;
   text-transform: uppercase;
-  margin-bottom: 12px;
+  margin-bottom: 10px;
   padding-bottom: 8px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .detail-grid {
@@ -655,41 +684,40 @@ const handleClose = async () => {
 .detail-item {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
-.detail-label {
+.detail-item__label {
   font-size: 12px;
-  color: #999;
+  color: var(--text-tertiary);
 }
 
-.detail-value {
+.detail-item__value {
   font-size: 14px;
-  color: #333;
+  color: var(--text-primary);
   font-weight: 500;
 }
 
 .detail-desc {
   font-size: 14px;
-  color: #555;
+  color: var(--text-secondary);
   line-height: 1.6;
-  background: #f9f9f9;
+  background: var(--page-bg);
   padding: 12px 16px;
   border-radius: 6px;
 }
 
-/* 定制参数 */
 .custom-params {
-  background: #f9f9f9;
+  background: var(--page-bg);
   border-radius: 6px;
-  padding: 4px 0;
+  overflow: hidden;
 }
 
 .param-row {
   display: flex;
   justify-content: space-between;
   padding: 8px 16px;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .param-row:last-child {
@@ -698,16 +726,15 @@ const handleClose = async () => {
 
 .param-key {
   font-size: 13px;
-  color: #888;
+  color: var(--text-tertiary);
 }
 
 .param-value {
   font-size: 13px;
-  color: #333;
+  color: var(--text-primary);
   font-weight: 500;
 }
 
-/* 图片画廊 */
 .image-gallery {
   display: flex;
   flex-wrap: wrap;
@@ -721,7 +748,7 @@ const handleClose = async () => {
 
 /* BOM预览 */
 .bom-preview {
-  background: #f9fafb;
+  background: var(--page-bg);
   border-radius: 6px;
   padding: 10px 12px;
   margin-bottom: 12px;
@@ -730,7 +757,7 @@ const handleClose = async () => {
 .bom-preview-title {
   font-size: 13px;
   font-weight: 600;
-  color: #666;
+  color: var(--text-secondary);
   margin-bottom: 8px;
 }
 
@@ -741,12 +768,12 @@ const handleClose = async () => {
   gap: 8px;
   padding-top: 8px;
   font-size: 13px;
-  color: #666;
+  color: var(--text-secondary);
 }
 
 .bom-cost-value {
   font-weight: 700;
   font-size: 15px;
-  color: #e53e3e;
+  color: var(--money-color);
 }
 </style>

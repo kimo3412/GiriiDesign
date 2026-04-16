@@ -380,14 +380,14 @@ function getNodeFieldSummary(nodeFormFields?: string) {
 .empty-hint {
   padding: 56px 0;
   text-align: center;
-  color: #999;
-  background: #fafafa;
-  border-radius: 8px;
+  color: var(--text-placeholder);
+  background: var(--page-bg);
+  border-radius: var(--panel-radius);
 }
 
 .step-table {
-  border: 1px solid #eee;
-  border-radius: 8px;
+  border: 1px solid var(--border-light);
+  border-radius: var(--panel-radius);
   overflow: hidden;
 }
 
@@ -399,17 +399,21 @@ function getNodeFieldSummary(nodeFormFields?: string) {
 }
 
 .step-header {
-  background: #fafafa;
+  background: var(--page-bg);
   font-weight: 600;
+  font-size: 12px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .step-item {
-  border-top: 1px solid #f1f1f1;
-  background: #fff;
+  border-top: 1px solid var(--border-light);
+  background: var(--panel-bg);
 }
 
 .step-item:hover {
-  background: #fcfcfc;
+  background: var(--row-hover-bg);
 }
 
 .col-drag {
@@ -428,13 +432,15 @@ function getNodeFieldSummary(nodeFormFields?: string) {
 
 .col-fields {
   width: 220px;
-  color: #666;
+  color: var(--text-secondary);
   font-size: 12px;
 }
 
 .col-meta {
   width: 90px;
   text-align: center;
+  color: var(--text-secondary);
+  font-size: 13px;
 }
 
 .col-action {
@@ -450,12 +456,12 @@ function getNodeFieldSummary(nodeFormFields?: string) {
 
 .step-name {
   font-weight: 600;
-  color: #222;
+  color: var(--text-primary);
 }
 
 .step-desc {
   margin-top: 4px;
-  color: #888;
+  color: var(--text-tertiary);
   font-size: 12px;
 }
 </style>

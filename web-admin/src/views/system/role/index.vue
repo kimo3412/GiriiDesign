@@ -1,16 +1,75 @@
 <template>
-  <n-card title="角色管理" :bordered="false">
-    <template #header-extra>
-      <n-button type="primary" @click="handleAdd">新增角色</n-button>
-    </template>
+  <div class="role-page">
+    <!-- 顶部统计 -->
+    <div class="stat-cards">
+      <BusinessMetricCard label="全部角色" :value="stats.total" icon="📋" variant="primary" />
+      <BusinessMetricCard label="内置角色" :value="stats.builtin" icon="🔒" variant="info" />
+      <BusinessMetricCard label="自定义" :value="stats.custom" icon="🛠️" variant="success" />
+    </div>
 
-    <n-data-table
-      :columns="columns"
-      :data="tableData"
-      :loading="loading"
-      :row-key="row => row.roleId"
-    />
+    <n-card :bordered="false" class="directory-card">
+      <div class="directory-layout">
+        <!-- 左侧：类型维度树 -->
+        <div class="directory-tree">
+          <div class="tree-header">类型筛选</div>
+          <div class="tree-items">
+            <div
+              class="tree-item"
+              :class="{ 'tree-item--active': selectedType === null }"
+              @click="selectType(null)"
+            >
+              全部 <span class="tree-item__count">{{ stats.total }}</span>
+            </div>
+            <div
+              class="tree-item"
+              :class="{ 'tree-item--active': selectedType === 'builtin' }"
+              @click="selectType('builtin')"
+            >
+              <span class="tree-item__dot" style="background: var(--status-info-text)"></span>
+              内置角色 <span class="tree-item__count">{{ stats.builtin }}</span>
+            </div>
+            <div
+              class="tree-item"
+              :class="{ 'tree-item--active': selectedType === 'custom' }"
+              @click="selectType('custom')"
+            >
+              <span class="tree-item__dot" style="background: var(--status-success-text)"></span>
+              自定义 <span class="tree-item__count">{{ stats.custom }}</span>
+            </div>
+          </div>
+        </div>
 
+        <!-- 右侧：紧凑筛选 + 表格 -->
+        <div class="directory-main">
+          <div class="compact-filter">
+            <n-input
+              v-model:value="keyword"
+              placeholder="搜索角色名称..."
+              size="small"
+              clearable
+              @keyup.enter="loadData"
+              style="width: 200px"
+            >
+              <template #prefix><n-icon><Search /></n-icon></template>
+            </n-input>
+            <n-button size="small" type="primary" @click="loadData">搜索</n-button>
+            <n-divider vertical />
+            <n-button size="small" type="primary" @click="handleAdd">新增角色</n-button>
+          </div>
+
+          <n-data-table
+            :columns="columns"
+            :data="displayData"
+            :loading="loading"
+            :row-key="row => row.roleId"
+            size="small"
+            :bordered="false"
+          />
+        </div>
+      </div>
+    </n-card>
+
+    <!-- 新增/编辑弹窗 -->
     <n-modal
       v-model:show="showModal"
       :title="isEdit ? '编辑角色' : '新增角色'"
@@ -34,7 +93,6 @@
           <n-input v-model:value="formData.remark" type="textarea" placeholder="请输入备注" />
         </n-form-item>
         <n-form-item label="菜单权限" path="menuIds">
-          <!-- 这里简写，直接使用级联选择器加载菜单，更高级的系统会用 Tree 组件 -->
           <n-tree
             block-line
             cascade
@@ -50,12 +108,15 @@
         </n-form-item>
       </n-form>
     </n-modal>
-  </n-card>
+  </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, h } from 'vue';
-import { NButton, NSelect, NSpace, useMessage, useDialog } from 'naive-ui';
+import { ref, computed, onMounted, h } from 'vue';
+import { NButton, NSelect, NSpace, NIcon, NDivider } from 'naive-ui';
+import { Search } from '@vicons/ionicons5';
+import { useMessage, useDialog } from 'naive-ui';
+import { BusinessMetricCard } from '@/components/Business';
 import { getRoleList, getRoleDetail, addRole, updateRole, deleteRole, type RoleSaveDTO, ROLE_TYPE_OPTIONS, ROLE_TYPE_MAP } from '@/api/system/roleList';
 import { getMenuList } from '@/api/system/menuConfig';
 
@@ -63,10 +124,11 @@ const message = useMessage();
 const dialog = useDialog();
 
 const loading = ref(false);
-const tableData = ref([]);
+const tableData = ref<any[]>([]);
+const keyword = ref('');
+const selectedType = ref<'builtin' | 'custom' | null>(null);
 
 const menuTreeData = ref([]);
-
 const showModal = ref(false);
 const isEdit = ref(false);
 const formRef = ref();
@@ -83,24 +145,57 @@ const rules = {
   roleKey: { required: true, message: '请输入标识', trigger: 'blur' },
 };
 
+// 内置角色标识
+const BUILTIN_KEYS = ['admin', 'designer'];
+
+const stats = computed(() => {
+  const all = tableData.value;
+  return {
+    total: all.length,
+    builtin: all.filter((r: any) => BUILTIN_KEYS.includes(r.roleKey || '')).length,
+    custom: all.filter((r: any) => !BUILTIN_KEYS.includes(r.roleKey || '')).length,
+  };
+});
+
+const displayData = computed(() => {
+  let list = [...tableData.value];
+  if (selectedType.value === 'builtin') {
+    list = list.filter((r: any) => BUILTIN_KEYS.includes(r.roleKey || ''));
+  } else if (selectedType.value === 'custom') {
+    list = list.filter((r: any) => !BUILTIN_KEYS.includes(r.roleKey || ''));
+  }
+  if (keyword.value) {
+    const kw = keyword.value.toLowerCase();
+    list = list.filter((r: any) =>
+      (r.roleName || '').toLowerCase().includes(kw) ||
+      (r.roleKey || '').toLowerCase().includes(kw)
+    );
+  }
+  return list;
+});
+
+const selectType = (val: 'builtin' | 'custom' | null) => {
+  selectedType.value = val;
+};
+
 const columns = [
   { title: 'ID', key: 'roleId', width: 60 },
-  { title: '角色名', key: 'roleName' },
-  { title: '角色标识', key: 'roleKey' },
-  { title: '角色类型', key: 'roleType', render(row: any) {
+  { title: '角色名', key: 'roleName', ellipsis: { tooltip: true } },
+  { title: '角色标识', key: 'roleKey', width: 120, ellipsis: { tooltip: true } },
+  { title: '角色类型', key: 'roleType', width: 100, render(row: any) {
     return ROLE_TYPE_MAP[row.roleType] || row.roleType || '-';
   }},
-  { title: '备注', key: 'remark' },
-  { title: '创建时间', key: 'createTime' },
+  { title: '备注', key: 'remark', ellipsis: { tooltip: true }, render: (r: any) => r.remark || '-' },
+  { title: '创建时间', key: 'createTime', width: 150, render: (r: any) => r.createTime ? r.createTime.slice(0, 16) : '-' },
   {
     title: '操作',
     key: 'actions',
-    width: 150,
+    width: 120,
     render(row: any) {
-      return h(NSpace, {}, {
+      return h(NSpace, { size: 4 }, {
         default: () => [
-          h(NButton, { size: 'small', type: 'primary', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
-          h(NButton, { size: 'small', type: 'error', disabled: row.roleId === 1 || row.roleId === 2, onClick: () => handleDelete(row) }, { default: () => '删除' })
+          h(NButton, { size: 'tiny', type: 'primary', onClick: () => handleEdit(row) }, { default: () => '编辑' }),
+          h(NButton, { size: 'tiny', type: 'error', disabled: row.roleId === 1 || row.roleId === 2, onClick: () => handleDelete(row) }, { default: () => '删除' })
         ]
       });
     }
@@ -111,19 +206,14 @@ const loadData = async () => {
   loading.value = true;
   try {
     tableData.value = await getRoleList() as any;
-  } catch (e) {
-    console.error(e);
-  } finally {
-    loading.value = false;
-  }
+  } catch (e) { console.error(e); }
+  finally { loading.value = false; }
 };
 
 const loadMenus = async () => {
   try {
     menuTreeData.value = await getMenuList() as any;
-  } catch (e) {
-    console.error(e);
-  }
+  } catch (e) { console.error(e); }
 };
 
 onMounted(() => {
@@ -133,13 +223,7 @@ onMounted(() => {
 
 const handleAdd = () => {
   isEdit.value = false;
-  formData.value = {
-    roleName: '',
-    roleKey: '',
-    roleType: '',
-    remark: '',
-    menuIds: []
-  };
+  formData.value = { roleName: '', roleKey: '', roleType: '', remark: '', menuIds: [] };
   showModal.value = true;
 };
 
@@ -147,14 +231,9 @@ const handleEdit = async (row: any) => {
   try {
     const res = await getRoleDetail(row.roleId);
     isEdit.value = true;
-    formData.value = {
-      ...res.role,
-      menuIds: res.menuIds || []
-    };
+    formData.value = { ...res.role, menuIds: res.menuIds || [] };
     showModal.value = true;
-  } catch (e) {
-    console.error(e);
-  }
+  } catch (e) { console.error(e); }
 };
 
 const handleDelete = (row: any) => {
@@ -168,9 +247,7 @@ const handleDelete = (row: any) => {
         await deleteRole(row.roleId);
         message.success('删除成功');
         loadData();
-      } catch (e) {
-        console.error(e);
-      }
+      } catch (e) { console.error(e); }
     }
   });
 };
@@ -193,11 +270,98 @@ const handleSubmit = (e: MouseEvent) => {
         }
         showModal.value = false;
         loadData();
-      } catch (err) {
-        console.error(err);
-      }
+      } catch (err) { console.error(err); }
     }
   });
   return false;
 };
 </script>
+
+<style scoped>
+.role-page {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.directory-card :deep(.n-card__content) { padding: 0; }
+
+.directory-layout {
+  display: flex;
+  height: calc(100vh - 260px);
+  min-height: 400px;
+}
+
+.directory-tree {
+  width: 170px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-light);
+  background: var(--page-bg);
+}
+
+.tree-header {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 12px 16px 8px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.tree-items { padding: 8px 0; }
+
+.tree-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.tree-item:hover { background: var(--row-selected-bg); }
+.tree-item--active {
+  background: var(--row-selected-bg);
+  color: var(--primary-color);
+  font-weight: 600;
+  border-left: 3px solid var(--primary-color);
+}
+.tree-item__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.tree-item__count {
+  font-size: 11px;
+  color: var(--text-placeholder);
+  background: var(--border-light);
+  padding: 1px 6px;
+  border-radius: 8px;
+  margin-left: auto;
+}
+.tree-item--active .tree-item__count { background: var(--primary-bg); color: var(--primary-color); }
+
+.directory-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 14px 16px;
+  gap: 12px;
+}
+
+.compact-filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+</style>
