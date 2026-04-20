@@ -199,7 +199,7 @@ const statusMap: any = {
 const getCategoryName = (id: number) => categoryMap.value[id] || `品类#${id}`;
 
 const totalUnread = computed(() =>
-  conversations.value.reduce((sum, c) => sum + (c.unread_count || 0), 0)
+  conversations.value.reduce((sum, c) => sum + Number(c.unreadCount || 0), 0)
 );
 
 const filteredConversations = computed(() => {
@@ -231,7 +231,10 @@ onUnmounted(() => {
 const fetchConversations = async () => {
   try {
     const res = await fetchConvApi();
-    conversations.value = res || [];
+    conversations.value = (res || []).map((item: any) => ({
+      ...item,
+      unreadCount: Number(item.unreadCount ?? item.unread_count ?? 0),
+    }));
   } catch (e) { console.error('获取会话列表失败', e); }
 };
 

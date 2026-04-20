@@ -1,5 +1,10 @@
 <template>
   <view class="chat-page">
+    <!-- 连接状态栏 -->
+    <view v-if="!isConnected" class="connection-bar">
+      <text class="connection-bar__text">{{ reconnecting ? '正在重连...' : '连接已断开' }}</text>
+    </view>
+
     <!-- 消息列表 -->
     <scroll-view
       class="message-area"
@@ -21,8 +26,7 @@
 
           <!-- 消息体 -->
           <view class="msg-body">
-            <view class="msg-bubble">
-              <!-- 图片 -->
+            <view class="msg-bubble" :class="isMyMsg(msg) ? 'bubble--mine' : 'bubble--other'">
               <image
                 v-if="isImageMsg(msg)"
                 class="msg-image"
@@ -30,7 +34,6 @@
                 mode="widthFix"
                 @click="previewImage(msg.content)"
               />
-              <!-- 文字 -->
               <text v-else class="msg-text">{{ msg.content }}</text>
             </view>
             <text class="msg-time">{{ formatTime(msg.createTime) }}</text>
@@ -39,11 +42,6 @@
       </view>
       <view style="height: 20rpx;"></view>
     </scroll-view>
-
-    <!-- 连接状态提示 -->
-    <view v-if="!isConnected" class="connection-hint">
-      <text>连接已断开，正在重连...</text>
-    </view>
 
     <!-- 输入区 -->
     <view class="input-area">
@@ -59,7 +57,11 @@
           <view class="icon-btn" @click="chooseImage">
             <text>📷</text>
           </view>
-          <view class="send-btn" @click="sendTextMsg">
+          <view
+            class="send-btn"
+            :class="{ 'send-btn--disabled': !canSend }"
+            @click="sendTextMsg"
+          >
             <text class="send-text">发送</text>
           </view>
         </view>
@@ -69,7 +71,7 @@
 </template>
 
 <script setup>
-import { ref, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onUnmounted, nextTick } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import request from '@/utils/request'
 import storage from '@/utils/storage'
@@ -79,11 +81,17 @@ const inputText = ref('')
 const scrollToId = ref('')
 const chatOrderId = ref(null)
 const isConnected = ref(false)
+const reconnecting = ref(false)
 
 let socketTask = null
 let reconnectTimer = null
 let reconnectAttempts = 0
-const MAX_RECONNECT_ATTEMPTS = 5
+const MAX_RECONNECT = 5
+const RECONNECT_DELAY = 3000
+
+const canSend = computed(() => {
+  return isConnected.value && inputText.value.trim().length > 0
+})
 
 onLoad((options) => {
   if (options && options.orderId) {
@@ -97,22 +105,38 @@ onLoad((options) => {
 })
 
 onUnmounted(() => {
+  clearReconnect()
   if (socketTask) {
     socketTask.close({ code: 1000, reason: '页面关闭' })
     socketTask = null
   }
+})
+
+const clearReconnect = () => {
   if (reconnectTimer) {
     clearTimeout(reconnectTimer)
     reconnectTimer = null
   }
-})
+}
+
+const scheduleReconnect = () => {
+  if (reconnectAttempts >= MAX_RECONNECT) {
+    reconnecting.value = false
+    return
+  }
+  reconnecting.value = true
+  reconnectTimer = setTimeout(() => {
+    reconnectAttempts++
+    connectWS()
+  }, RECONNECT_DELAY)
+}
 
 const fetchHistory = async () => {
   try {
     const params = {}
     if (chatOrderId.value) params.orderId = chatOrderId.value
     const data = await request({
-      url: `/v1/app/chat`,
+      url: '/v1/app/chat',
       method: 'GET',
       data: params
     })
@@ -127,21 +151,20 @@ const connectWS = () => {
   const token = storage.getToken()
   if (!token) return
 
-  const wsUrl = `ws://localhost:8081/ws/chat?token=${token}`
+  const wsUrl = 'ws://localhost:8081/ws/chat?token=' + token
 
   socketTask = uni.connectSocket({
     url: wsUrl,
-    complete: () => {}
+    fail: () => {
+      isConnected.value = false
+      reconnecting.value = false
+    }
   })
 
   socketTask.onOpen(() => {
-    console.log('WebSocket 已连接')
     isConnected.value = true
+    reconnecting.value = false
     reconnectAttempts = 0
-    if (reconnectTimer) {
-      clearTimeout(reconnectTimer)
-      reconnectTimer = null
-    }
   })
 
   socketTask.onMessage((res) => {
@@ -158,48 +181,34 @@ const connectWS = () => {
     }
   })
 
-  socketTask.onError((err) => {
-    console.error('WebSocket 错误', err)
-  })
-
   socketTask.onClose(() => {
-    console.log('WebSocket 已断开')
     isConnected.value = false
-    scheduleReconnect()
-  })
-}
-
-const scheduleReconnect = () => {
-  if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
-    console.log('WebSocket 重连次数已用完')
-    uni.showToast({ title: '连接已断开，请退出重试', icon: 'none' })
-    return
-  }
-  const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000)
-  reconnectAttempts++
-  console.log(`${delay / 1000}s 后尝试第 ${reconnectAttempts} 次重连`)
-  reconnectTimer = setTimeout(() => {
-    if (socketTask) {
-      socketTask.close({ code: 1000, reason: '重连' })
-      socketTask = null
+    if (!reconnectTimer && reconnectAttempts < MAX_RECONNECT) {
+      scheduleReconnect()
     }
-    connectWS()
-  }, delay)
+  })
+
+  socketTask.onError(() => {
+    isConnected.value = false
+  })
 }
 
 const sendTextMsg = () => {
   const text = inputText.value.trim()
-  if (!text) return
+  if (!text || !canSend.value) return
   sendMessage(text, 'text')
   inputText.value = ''
 }
 
 const chooseImage = () => {
+  if (!isConnected.value) {
+    uni.showToast({ title: '连接已断开', icon: 'none' })
+    return
+  }
   uni.chooseImage({
     count: 1,
     sizeType: ['compressed'],
     success: (res) => {
-      // 暂时用本地路径发送
       sendMessage(res.tempFilePaths[0], 'image')
     }
   })
@@ -267,7 +276,17 @@ const isImageMsg = (msg) => {
   background: #F5F2EE;
 }
 
-/* 消息区 */
+.connection-bar {
+  background: rgba(211, 60, 60, 0.1);
+  padding: 10rpx 24rpx;
+  text-align: center;
+}
+
+.connection-bar__text {
+  font-size: 22rpx;
+  color: #d35d6e;
+}
+
 .message-area {
   flex: 1;
   overflow: hidden;
@@ -277,21 +296,25 @@ const isImageMsg = (msg) => {
   padding: 20rpx 24rpx;
 }
 
-/* 消息行 */
 .msg-row {
   display: flex;
   margin-bottom: 28rpx;
   align-items: flex-start;
+  animation: fadeInUp 0.2s ease;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(10rpx); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .msg-row.is-mine {
   flex-direction: row-reverse;
 }
 
-/* 头像 */
 .msg-avatar {
-  width: 64rpx;
-  height: 64rpx;
+  width: 68rpx;
+  height: 68rpx;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -315,81 +338,56 @@ const isImageMsg = (msg) => {
   font-weight: 500;
 }
 
-/* 消息体 */
 .msg-body {
-  max-width: 72%;
+  max-width: 70%;
   display: flex;
   flex-direction: column;
 }
 
-.is-mine .msg-body {
-  align-items: flex-end;
-}
+.is-mine .msg-body { align-items: flex-end; }
+.is-other .msg-body { align-items: flex-start; }
 
-.is-other .msg-body {
-  align-items: flex-start;
-}
-
-/* 气泡 */
 .msg-bubble {
   padding: 20rpx 28rpx;
-  border-radius: 20rpx;
   word-break: break-all;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 
-.is-other .msg-bubble {
-  background: #FFFFFF;
-  border-top-left-radius: 4rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
+.bubble--other {
+  background: #fff;
+  border-radius: 4rpx 20rpx 20rpx 20rpx;
+  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.06);
 }
 
-.is-mine .msg-bubble {
+.bubble--mine {
   background: #4A5D4E;
-  border-top-right-radius: 4rpx;
-}
-
-.is-mine .msg-text {
-  color: #fff;
-}
-
-.is-other .msg-text {
-  color: #333;
+  border-radius: 20rpx 4rpx 20rpx 20rpx;
 }
 
 .msg-text {
   font-size: 28rpx;
-  letter-spacing: 1rpx;
+  letter-spacing: 0.5px;
 }
+
+.bubble--mine .msg-text { color: #fff; }
+.bubble--other .msg-text { color: #2c2c2c; }
 
 .msg-image {
   max-width: 100%;
-  border-radius: 12rpx;
+  border-radius: 14rpx;
 }
 
 .msg-time {
   font-size: 20rpx;
-  color: #aaa;
+  color: #bbb;
   margin-top: 8rpx;
-  letter-spacing: 1rpx;
 }
 
-/* 连接状态提示 */
-.connection-hint {
-  background: #fff3eb;
-  padding: 12rpx 24rpx;
-  text-align: center;
-
-  text {
-    font-size: 22rpx;
-    color: #c65a3b;
-  }
-}
-
-/* 输入区 */
 .input-area {
-  background: #fff;
-  border-top: 1rpx solid #E8E4E0;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8rpx);
+  -webkit-backdrop-filter: blur(8rpx);
+  border-top: 1rpx solid #e8e4e0;
   padding: 16rpx 24rpx;
   padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
 }
@@ -434,6 +432,10 @@ const isImageMsg = (msg) => {
   align-items: center;
   justify-content: center;
   border-radius: 36rpx;
+  transition: opacity 0.15s;
+
+  &:active { opacity: 0.8; }
+  &--disabled { background: #bbb; opacity: 0.6; }
 }
 
 .send-text {

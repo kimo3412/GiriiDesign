@@ -5,6 +5,7 @@ import cn.hutool.json.JSONUtil;
 import com.designstudio.chat.domain.DsChatMessage;
 import com.designstudio.chat.service.ChatService;
 import com.designstudio.common.security.JwtUtils;
+import com.designstudio.common.service.AiCustomerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -13,7 +14,9 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
 /**
  * 聊天 WebSocket 核心处理器
@@ -27,6 +30,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final SessionManager sessionManager;
     private final ChatService chatService;
     private final JwtUtils jwtUtils;
+    private final AiCustomerService aiCustomerService;
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
@@ -104,6 +108,47 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         // 回声确认给发送方
         pushJson.set("type", "SEND_ACK");
         session.sendMessage(new TextMessage(pushJson.toString()));
+
+        // AI 自动回复（仅当客户端发消息时触发）
+        if (aiCustomerService.isEnabled() && "client".equals(userType)) {
+            CompletableFuture.runAsync(() -> {
+                try {
+                    List<DsChatMessage> recent = chatService.getRecentMessages(chatUserId, 10);
+                    List<AiCustomerService.Message> messages = recent.stream()
+                            .map(m -> new AiCustomerService.Message(
+                                    m.getSenderType() == 0 ? "user" : "assistant",
+                                    m.getContent() != null ? m.getContent() : ""))
+                            .toList();
+                    // 加入当前消息
+                    messages.add(new AiCustomerService.Message("user", content));
+
+                    String aiReply = aiCustomerService.getResponse(chatUserId, messages);
+                    if (aiReply != null && !aiReply.isBlank()) {
+                        // 持久化 AI 消息
+                        DsChatMessage aiMsg = chatService.saveMessage(
+                                chatUserId, 2, null, aiReply, 0, orderId);
+
+                        JSONObject aiPush = new JSONObject();
+                        aiPush.set("type", "NEW_MSG");
+                        aiPush.set("messageId", aiMsg.getMsgId());
+                        aiPush.set("userId", chatUserId);
+                        aiPush.set("orderId", orderId);
+                        aiPush.set("senderType", "ai");
+                        aiPush.set("senderId", null);
+                        aiPush.set("content", aiReply);
+                        aiPush.set("msgType", "text");
+                        aiPush.set("contentType", 0);
+                        aiPush.set("createTime", aiMsg.getCreateTime().format(FMT));
+
+                        String clientKey = sessionManager.buildKey("client", chatUserId);
+                        sessionManager.sendTo(clientKey, aiPush.toString());
+                        sessionManager.broadcastToAdmins(aiPush.toString());
+                    }
+                } catch (Exception e) {
+                    log.error("AI 自动回复失败: {}", e.getMessage());
+                }
+            });
+        }
 
         log.debug("消息已处理: {} -> chatUserId={}", userType, chatUserId);
     }

@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.util.List;
 
 /**
  * 当前登录用户信息
@@ -27,6 +28,9 @@ public class LoginUser implements Serializable {
 
     /** 昵称 */
     private String nickname;
+
+    /** 实际角色标识列表 */
+    private List<String> roleKeys;
 
     // ===== 便捷方法（兼容 AdminController 调用） =====
 

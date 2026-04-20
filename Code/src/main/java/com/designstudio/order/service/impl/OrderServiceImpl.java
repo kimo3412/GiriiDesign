@@ -23,6 +23,7 @@ import com.designstudio.order.domain.DsOrderProgress;
 import com.designstudio.order.mapper.DsOrderMapper;
 import com.designstudio.order.mapper.DsOrderProgressMapper;
 import com.designstudio.order.service.OrderService;
+import com.designstudio.common.service.NotificationService;
 import com.designstudio.supply.domain.DsBomItem;
 import com.designstudio.supply.domain.DsMaterial;
 import com.designstudio.supply.mapper.DsBomItemMapper;
@@ -55,6 +56,7 @@ public class OrderServiceImpl implements OrderService {
     private final DsBomItemMapper bomItemMapper;
     private final DsMaterialMapper materialMapper;
     private final ObjectMapper objectMapper;
+    private final NotificationService notificationService;
 
     @Override
     public IPage<DsOrder> listOrders(Integer status, Long categoryId, Long designerId, Long pageNum, Long pageSize) {
@@ -68,6 +70,7 @@ public class OrderServiceImpl implements OrderService {
         if (designerId != null) {
             wrapper.eq(DsOrder::getDesignerId, designerId);
         }
+        applyDesignerScope(wrapper);
         wrapper.orderByDesc(DsOrder::getCreateTime);
         Page<DsOrder> page = new Page<>(pageNum, pageSize);
         IPage<DsOrder> result = orderMapper.selectPage(page, wrapper);
@@ -81,6 +84,7 @@ public class OrderServiceImpl implements OrderService {
         if (order == null) {
             return null;
         }
+        ensureDesignerCanAccess(order);
         fillOrderDisplayName(order);
 
         OrderController.OrderDetailVO vo = new OrderController.OrderDetailVO();
@@ -97,6 +101,7 @@ public class OrderServiceImpl implements OrderService {
         if (categoryId != null) {
             orderWrapper.eq(DsOrder::getCategoryId, categoryId);
         }
+        applyDesignerScope(orderWrapper);
         List<DsOrder> orders = orderMapper.selectList(orderWrapper);
         if (orders.isEmpty()) {
             return Collections.emptyList();
@@ -174,6 +179,14 @@ public class OrderServiceImpl implements OrderService {
         progress.setCreateTime(LocalDateTime.now());
         progress.setDelFlag(0);
         progressMapper.insert(progress);
+
+        // 通知客户节点推进
+        if (order.getUserId() != null) {
+            notificationService.sendToUser(order.getUserId(),
+                    "订单进度更新",
+                    "您的订单已推进至新节点：" + nextStep.getStepName(),
+                    "workbench", orderId, "order");
+        }
     }
 
     @Override
@@ -183,6 +196,13 @@ public class OrderServiceImpl implements OrderService {
         order.setBlockReason(blockReason);
         touchOrderForUpdate(order);
         orderMapper.updateById(order);
+
+        if (order.getUserId() != null) {
+            notificationService.sendToUser(order.getUserId(),
+                    "订单阻塞通知",
+                    "您的订单生产暂时受阻：" + blockReason,
+                    "order_status", orderId, "order");
+        }
     }
 
     @Override
@@ -192,6 +212,13 @@ public class OrderServiceImpl implements OrderService {
         order.setBlockReason(null);
         touchOrderForUpdate(order);
         orderMapper.updateById(order);
+
+        if (order.getUserId() != null) {
+            notificationService.sendToUser(order.getUserId(),
+                    "订单恢复通知",
+                    "您的订单已解除阻塞，生产继续推进",
+                    "order_status", orderId, "order");
+        }
     }
 
     @Override
@@ -237,6 +264,11 @@ public class OrderServiceImpl implements OrderService {
 
             // 扣减库存
             allocateOrderMaterials(orderId);
+
+            notificationService.sendToUser(userId,
+                    "定金支付成功",
+                    "您已成功支付定金 ¥" + order.getPrepayAmount() + "，订单正式进入生产",
+                    "payment", orderId, "order");
             return;
         }
 
@@ -248,6 +280,11 @@ public class OrderServiceImpl implements OrderService {
 
             recordProgress(orderId, order.getCurrentStepId(), "客户已支付尾款：¥"
                     + order.getTotalAmount().subtract(order.getPrepayAmount()), null, null);
+
+            notificationService.sendToUser(userId,
+                    "尾款支付成功",
+                    "您已完成尾款支付，订单即将安排发货",
+                    "payment", orderId, "order");
             return;
         }
 
@@ -382,6 +419,7 @@ public class OrderServiceImpl implements OrderService {
         if (selectedStepId != null) {
             wrapper.eq(DsOrder::getCurrentStepId, selectedStepId);
         }
+        applyDesignerScope(wrapper);
 
         WorkbenchController.WorkbenchVO vo = new WorkbenchController.WorkbenchVO();
         vo.setCategoryId(categoryId);
@@ -503,7 +541,39 @@ public class OrderServiceImpl implements OrderService {
         if (order == null) {
             throw new RuntimeException("订单不存在");
         }
+        ensureDesignerCanAccess(order);
         return order;
+    }
+
+    private void applyDesignerScope(LambdaQueryWrapper<DsOrder> wrapper) {
+        Long designerId = getCurrentDesignerId();
+        if (designerId != null) {
+            wrapper.eq(DsOrder::getDesignerId, designerId);
+        }
+    }
+
+    private void ensureDesignerCanAccess(DsOrder order) {
+        Long designerId = getCurrentDesignerId();
+        if (designerId != null && !Objects.equals(order.getDesignerId(), designerId)) {
+            throw new RuntimeException("无权访问其他设计师负责的订单");
+        }
+    }
+
+    private Long getCurrentDesignerId() {
+        LoginUser loginUser = LoginHelper.getLoginUser();
+        if (loginUser == null || loginUser.getAdminId() == null) {
+            return null;
+        }
+        List<String> roleKeys = loginUser.getRoleKeys();
+        if (roleKeys == null || roleKeys.isEmpty()) {
+            return null;
+        }
+        boolean isAdmin = roleKeys.stream().anyMatch(role -> "admin".equalsIgnoreCase(role));
+        boolean isDesigner = roleKeys.stream().anyMatch(role -> "designer".equalsIgnoreCase(role));
+        if (isDesigner && !isAdmin) {
+            return loginUser.getAdminId();
+        }
+        return null;
     }
 
     private void fillOrderDisplayName(DsOrder order) {
@@ -602,6 +672,16 @@ public class OrderServiceImpl implements OrderService {
         progress.setOperatorId(null);
         progress.setCreateTime(LocalDateTime.now());
         progressMapper.insert(progress);
+
+        if (order.getUserId() != null) {
+            String notifyContent = needsBalancePayment
+                    ? "您的订单已生产完毕，请前往支付尾款"
+                    : "您的订单已生产完毕，即将安排发货，请注意查收";
+            notificationService.sendToUser(order.getUserId(),
+                    "生产完毕通知",
+                    notifyContent,
+                    "order_status", order.getOrderId(), "order");
+        }
     }
 
     private Long resolveWorkbenchStepId(Long categoryId, List<DsWorkflowStep> steps) {

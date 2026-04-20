@@ -20,26 +20,58 @@
           v-for="order in orders"
           :key="order.orderId"
           class="order-card"
+          :class="{ 'order-card--active': order.status === 1 }"
           @click="goToDetail(order.orderId)"
         >
-          <view class="order-header">
-            <text class="order-no">订单号: {{ order.orderSn }}</text>
-            <text class="order-status">{{ getStatusText(order.status) }}</text>
+          <!-- 卡片顶部：订单号 + 状态标签 -->
+          <view class="order-card__top">
+            <text class="order-no">#{{ order.orderSn }}</text>
+            <view
+              class="status-tag"
+              :style="{
+                background: getStatusBg(order.status),
+                color: getStatusColor(order.status)
+              }"
+            >
+              <text class="status-tag__dot" :style="{ background: getStatusColor(order.status) }"></text>
+              {{ getStatusText(order.status) }}
+            </view>
           </view>
-          <view class="order-body">
-            <text class="order-category">{{ order.categoryName }}</text>
-            <text class="order-amount">¥{{ order.totalAmount }}</text>
+
+          <!-- 卡片中部：品类 + 金额 -->
+          <view class="order-card__body">
+            <view class="order-info">
+              <text class="order-category">{{ order.categoryName || '轻奢定制' }}</text>
+              <text class="order-time">{{ order.createTime }}</text>
+            </view>
+            <view class="order-price">
+              <text class="price-symbol">¥</text>
+              <text class="price-value">{{ order.totalAmount }}</text>
+            </view>
           </view>
-          <view class="order-footer">
-            <text class="order-time">{{ order.createTime }}</text>
+
+          <!-- 卡片底部：操作按钮 -->
+          <view v-if="order.status === 0 || order.status === 3 || order.status === 6" class="order-card__footer">
             <view class="order-actions">
-              <button v-if="order.status === 0" class="action-btn pay-btn" @click.stop="handlePay(order, 0)">
+              <button
+                v-if="order.status === 0"
+                class="action-btn action-btn--primary"
+                @click.stop="handlePay(order, 0)"
+              >
                 支付定金 ¥{{ order.prepayAmount }}
               </button>
-              <button v-if="order.status === 6" class="action-btn pay-btn" @click.stop="handlePay(order, 6)">
+              <button
+                v-if="order.status === 6"
+                class="action-btn action-btn--primary"
+                @click.stop="handlePay(order, 6)"
+              >
                 支付尾款 ¥{{ (order.totalAmount - order.prepayAmount).toFixed(2) }}
               </button>
-              <button v-if="order.status === 3" class="action-btn" @click.stop="confirmReceive(order.orderId)">
+              <button
+                v-if="order.status === 3"
+                class="action-btn"
+                @click.stop="confirmReceive(order.orderId)"
+              >
                 确认收货
               </button>
             </view>
@@ -49,7 +81,8 @@
 
       <!-- 空状态 -->
       <view v-else class="empty">
-        <text class="empty-text">暂无订单</text>
+        <view class="empty-icon">📋</view>
+        <text class="empty-text">暂无相关订单</text>
       </view>
 
       <!-- 加载更多 -->
@@ -104,7 +137,6 @@ const fetchOrders = async (refresh = false) => {
 
     const data = await getOrderList(params)
 
-    // 后端返回的是 List 数组，不是分页对象
     const list = Array.isArray(data) ? data : (data.list || [])
 
     if (refresh) {
@@ -164,7 +196,7 @@ const confirmReceive = async (id) => {
 const handlePay = (order, type) => {
   const typeName = type === 0 ? '定金' : '尾款'
   const amount = type === 0 ? order.prepayAmount : (order.totalAmount - order.prepayAmount).toFixed(2)
-  
+
   uni.showModal({
     title: `支付${typeName}`,
     content: `将模拟支付 ¥${amount}，确定要付款吗？`,
@@ -201,9 +233,30 @@ const getStatusText = (status) => {
   return map[status] || '未知'
 }
 
+/**
+ * 订单状态颜色
+ */
+const statusColorMap = {
+  0: '#f39c12',
+  1: '#4A5D4E',
+  2: '#9b59b6',
+  3: '#3498db',
+  4: '#95a5a6',
+  5: '#e0e0e0',
+  6: '#f39c12'
+}
+
+const getStatusColor = (status) => {
+  return statusColorMap[status] || '#999'
+}
+
+const getStatusBg = (status) => {
+  const color = getStatusColor(status)
+  return color + '18'
+}
+
 import { onShow } from '@dcloudio/uni-app'
 
-// tabBar 页面每次显示时刷新
 onShow(() => {
   fetchOrders(true)
 })
@@ -214,27 +267,28 @@ onShow(() => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: #f8f8f8;
+  background: #F5F2EE;
 }
 
 .tabs {
   display: flex;
   background: #fff;
-  border-bottom: 1rpx solid #e5e5e5;
+  border-bottom: 1rpx solid #e8e4e0;
+  padding: 0 8rpx;
 }
 
 .tab-item {
   flex: 1;
   text-align: center;
-  padding: 24rpx 0;
+  padding: 28rpx 0;
   font-size: 28rpx;
-  color: #666;
+  color: #999;
   position: relative;
+  transition: color 0.2s;
 
   &.active {
     color: #4A5D4E;
-    font-size: 30rpx;
-    font-weight: bold;
+    font-weight: 600;
 
     &::after {
       content: '';
@@ -242,9 +296,9 @@ onShow(() => {
       bottom: 0;
       left: 50%;
       transform: translateX(-50%);
-      width: 40rpx;
+      width: 48rpx;
       height: 4rpx;
-      background: #1a1a1a;
+      background: #4A5D4E;
       border-radius: 2rpx;
     }
   }
@@ -256,105 +310,150 @@ onShow(() => {
 
 .order-list {
   padding: 20rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
 }
 
 .order-card {
   background: #fff;
-  border-radius: 12rpx;
-  padding: 24rpx;
+  border-radius: 16rpx;
+  padding: 28rpx;
+  box-shadow: 0 2rpx 12rpx rgba(74, 93, 78, 0.06);
+  transition: transform 0.18s, box-shadow 0.18s;
+
+  &:active {
+    transform: scale(0.975);
+  }
+
+  &--active {
+    border-left: 5rpx solid #4A5D4E;
+  }
+}
+
+.order-card__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20rpx;
 }
 
-.order-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16rpx;
-
-  .order-no {
-    font-size: 24rpx;
-    color: #999;
-  }
-
-  .order-status {
-    font-size: 26rpx;
-    color: #4A5D4E;
-    font-weight: 500;
-  }
+.order-no {
+  font-size: 22rpx;
+  color: #bbb;
+  letter-spacing: 0.5px;
 }
 
-.order-body {
-  display: flex;
-  justify-content: space-between;
+.status-tag {
+  display: inline-flex;
   align-items: center;
-  padding: 16rpx 0;
-  border-top: 1rpx solid #f5f5f5;
-  border-bottom: 1rpx solid #f5f5f5;
-
-  .order-category {
-    font-size: 30rpx;
-    font-weight: 500;
-    color: #333;
-  }
-
-  .order-amount {
-    font-size: 32rpx;
-    font-weight: bold;
-    color: #e74c3c;
-  }
+  gap: 8rpx;
+  padding: 6rpx 16rpx;
+  border-radius: 999rpx;
+  font-size: 22rpx;
+  font-weight: 500;
 }
 
-.order-footer {
+.status-tag__dot {
+  width: 8rpx;
+  height: 8rpx;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.order-card__body {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-top: 16rpx;
+  align-items: flex-end;
+  padding: 18rpx 0;
+  border-top: 1rpx dashed #e8e4e0;
+  border-bottom: 1rpx dashed #e8e4e0;
+}
 
-  .order-time {
-    font-size: 24rpx;
-    color: #999;
-  }
+.order-info {
+  display: flex;
+  flex-direction: column;
+  gap: 6rpx;
+}
+
+.order-category {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #2c2c2c;
+}
+
+.order-time {
+  font-size: 22rpx;
+  color: #bbb;
+}
+
+.order-price {
+  display: flex;
+  align-items: baseline;
+  gap: 2rpx;
+}
+
+.price-symbol {
+  font-size: 22rpx;
+  color: #d35d6e;
+  font-weight: 500;
+}
+
+.price-value {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #d35d6e;
+  letter-spacing: -0.5px;
+}
+
+.order-card__footer {
+  margin-top: 20rpx;
 }
 
 .order-actions {
   display: flex;
   gap: 16rpx;
+  justify-content: flex-end;
+}
 
-  .action-btn {
-    padding: 10rpx 28rpx;
-    font-size: 24rpx;
-    background: #1a1a1a;
-    color: #fff;
-    border-radius: 4rpx;
-    border: none;
-    margin: 0;
+.action-btn {
+  padding: 12rpx 28rpx;
+  font-size: 24rpx;
+  background: #2c2c2c;
+  color: #fff;
+  border-radius: 999rpx;
+  border: none;
+  margin: 0;
+  transition: opacity 0.15s;
 
-    &::after {
-      border: none;
-    }
-  }
+  &:active { opacity: 0.8; }
+  &::after { border: none; }
 
-  .pay-btn {
+  &--primary {
     background: #4A5D4E;
   }
 }
 
 .empty {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
   height: 400rpx;
+  gap: 16rpx;
+}
 
-  .empty-text {
-    font-size: 28rpx;
-    color: #999;
-  }
+.empty-icon { font-size: 72rpx; opacity: 0.4; }
+
+.empty-text {
+  font-size: 28rpx;
+  color: #bbb;
 }
 
 .loading {
   text-align: center;
   padding: 20rpx;
   font-size: 24rpx;
-  color: #999;
+  color: #bbb;
 }
 </style>

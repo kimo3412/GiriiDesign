@@ -77,24 +77,17 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import { onShow, onLoad } from '@dcloudio/uni-app'
+import { onLoad } from '@dcloudio/uni-app'
 import { getPortfolioList } from '@/api/portfolio'
 import { getBannerList } from '@/api/banner'
 
-// 轮播图（从后端获取）
+// 默认轮播图（数据库无数据时兜底）
 const banners = ref([
   { image: '/static/images/zehana_couture_1774340712019.png', label: '2026 高定系列', headline: '静谧奢华' },
   { image: '/static/images/zehana_leather_1774340726407.png', label: '手工皮具', headline: '永恒优雅' }
 ])
 
 const portfolios = ref([])
-
-const normalizeList = (data) => {
-  if (Array.isArray(data)) return data
-  if (Array.isArray(data?.records)) return data.records
-  if (Array.isArray(data?.list)) return data.list
-  return []
-}
 
 // 把数据平分为两列，做简单的瀑布流
 const splitPortfolios = computed(() => {
@@ -124,8 +117,7 @@ const goToDetail = (id) => {
 const fetchPortfolios = async () => {
   try {
     const data = await getPortfolioList()
-    // 后端返回格式可能是 { list: [...] } 或直接是 [...]
-    portfolios.value = normalizeList(data)
+    portfolios.value = (data && data.list) ? data.list : (Array.isArray(data) ? data : [])
   } catch (err) {
     console.error('获取作品列表失败', err)
   }
@@ -134,12 +126,12 @@ const fetchPortfolios = async () => {
 const fetchBanners = async () => {
   try {
     const data = await getBannerList()
-    const list = normalizeList(data)
+    const list = Array.isArray(data) ? data : (data?.list || [])
     if (list.length > 0) {
       banners.value = list.map(item => ({
-        image: item.imageUrl,
+        image: item.imageUrl || item.image,
         label: item.title || '',
-        headline: ''
+        headline: item.linkUrl || ''
       }))
     }
   } catch (err) {
@@ -148,14 +140,14 @@ const fetchBanners = async () => {
 }
 
 onLoad(() => {
-  fetchPortfolios()
   fetchBanners()
+  fetchPortfolios()
 })
 </script>
 
 <style lang="scss" scoped>
 .index-container {
-  background: $background-color;
+  background: #F5F2EE;
   min-height: 100vh;
   padding-bottom: 60rpx;
 }
@@ -165,7 +157,7 @@ onLoad(() => {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background-color: $white;
+  background-color: #fff;
   letter-spacing: 4rpx;
 
   .brand-title {
@@ -183,9 +175,9 @@ onLoad(() => {
 }
 
 .banner {
-  height: 800rpx;
+  height: 760rpx;
   width: 100%;
-  
+
   .banner-swiper {
     height: 100%;
   }
@@ -203,7 +195,7 @@ onLoad(() => {
     .banner-mask {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.1), rgba(0,0,0,0.6));
+      background: linear-gradient(to bottom, rgba(0,0,0,0.08), rgba(0,0,0,0.55));
     }
 
     .banner-text-box {
@@ -212,10 +204,10 @@ onLoad(() => {
       left: 40rpx;
       display: flex;
       flex-direction: column;
-      
+
       .banner-label {
         font-size: 20rpx;
-        color: rgba(255,255,255,0.8);
+        color: rgba(255,255,255,0.75);
         letter-spacing: 6rpx;
         margin-bottom: 12rpx;
       }
@@ -233,38 +225,46 @@ onLoad(() => {
   padding: 40rpx 40rpx;
   display: flex;
   gap: 30rpx;
-  background-color: $white;
+  background-color: #fff;
 
   .entry-card {
     flex: 1;
-    background: #fdfdfd;
-    border: 1px solid $border-color;
+    background: #F5F2EE;
+    border: 1rpx solid #e8e4e0;
     padding: 40rpx 30rpx;
     display: flex;
     flex-direction: column;
     position: relative;
-    box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.02);
-    transition: all 0.3s ease;
+    box-shadow: 0 2rpx 16rpx rgba(74, 93, 78, 0.05);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+    &:active {
+      transform: translateY(-4rpx);
+      box-shadow: 0 8rpx 28rpx rgba(74, 93, 78, 0.12);
+    }
 
     .entry-en {
       font-size: 20rpx;
-      color: $text-color-light;
+      color: #bbb;
       letter-spacing: 2rpx;
       margin-bottom: 8rpx;
     }
     .entry-cn {
       font-size: 32rpx;
-      color: $text-color;
+      color: #2c2c2c;
       font-weight: 400;
     }
     .entry-arrow {
       position: absolute;
       bottom: 40rpx;
       right: 30rpx;
-      color: $primary-color;
+      color: #4A5D4E;
       font-size: 36rpx;
       font-weight: 300;
+      transition: transform 0.2s ease;
     }
+
+    &:active .entry-arrow { transform: translateX(6rpx); }
   }
 }
 
@@ -306,19 +306,19 @@ onLoad(() => {
 }
 
 .portfolio-card {
-  background: $white;
-  border-radius: $border-radius-sm;
+  background: #fff;
+  border-radius: 14rpx;
   overflow: hidden;
-  box-shadow: 0 6rpx 24rpx rgba(0,0,0,0.04);
-  
+  box-shadow: 0 4rpx 20rpx rgba(74, 93, 78, 0.07);
+
   .img-placeholder {
     width: 100%;
-    height: 480rpx; 
+    height: 480rpx;
     background: linear-gradient(135deg, #7F9E8B, #4A5D4E);
     display: flex;
     align-items: center;
     justify-content: center;
-    
+
     .placeholder-text {
       color: rgba(255,255,255,0.6);
       font-family: 'Times New Roman', serif;
@@ -329,7 +329,8 @@ onLoad(() => {
 
   .portfolio-img {
     width: 100%;
-    display: block; 
+    display: block;
+    animation: imgFadeIn 0.4s ease;
   }
 
   .portfolio-info {
@@ -337,7 +338,7 @@ onLoad(() => {
 
     .p-title {
       font-size: 26rpx;
-      color: $text-color;
+      color: #2c2c2c;
       font-weight: 500;
       line-height: 1.4;
       display: block;
@@ -348,46 +349,50 @@ onLoad(() => {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      
+
       .p-category {
         font-size: 20rpx;
-        color: $primary-color;
-        border: 1px solid rgba(74, 93, 78, 0.3);
+        color: #4A5D4E;
+        border: 1rpx solid rgba(74, 93, 78, 0.25);
         padding: 2rpx 12rpx;
         border-radius: 4rpx;
       }
       .p-views {
         font-size: 20rpx;
-        color: $text-color-light;
+        color: #bbb;
       }
     }
   }
 }
-</style>
 
-<style lang="scss" scoped>
+@keyframes imgFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 .floating-chat {
   position: fixed;
   right: 40rpx;
   bottom: 160rpx;
   width: 100rpx;
   height: 100rpx;
-  background: #1a1a1a;
+  background: #2c2c2c;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 10rpx 30rpx rgba(0,0,0,0.15);
+  box-shadow: 0 8rpx 30rpx rgba(44, 44, 44, 0.2);
   z-index: 999;
-  transition: transform 0.3s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 
   &:active {
     transform: scale(0.9);
+    box-shadow: 0 4rpx 16rpx rgba(44, 44, 44, 0.15);
   }
 
   .chat-icon {
     color: #fff;
-    font-size: 48rpx;
+    font-size: 44rpx;
   }
 }
 </style>

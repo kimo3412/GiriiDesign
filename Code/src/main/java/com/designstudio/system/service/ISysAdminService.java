@@ -14,6 +14,8 @@ public interface ISysAdminService extends IService<SysAdmin> {
 
     SysAdmin getByUsername(String username);
 
+    List<String> getRoleKeysByAdminId(Long adminId);
+
     List<SysAdmin> listAdmins();
 
     SysAdminController.AdminDetailVO getAdminDetail(Long id);

@@ -10,6 +10,7 @@ import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -33,11 +34,18 @@ public class JwtUtils {
      * @return token 字符串
      */
     public String generateToken(Long userId, String userType, String username, String nickname) {
+        return generateToken(userId, userType, username, nickname, null);
+    }
+
+    public String generateToken(Long userId, String userType, String username, String nickname, List<String> roles) {
         Map<String, Object> claims = new HashMap<>();
         claims.put("userId", userId);
         claims.put("userType", userType);
         claims.put("username", username);
         claims.put("nickname", nickname);
+        if (roles != null && !roles.isEmpty()) {
+            claims.put("roles", roles);
+        }
 
         return Jwts.builder()
                 .claims(claims)
@@ -78,6 +86,19 @@ public class JwtUtils {
     public String getNicknameFromToken(String token) {
         Claims claims = parseToken(token);
         return claims.get("nickname", String.class);
+    }
+
+    /**
+     * Get role keys from token.
+     */
+    @SuppressWarnings("unchecked")
+    public List<String> getRolesFromToken(String token) {
+        Claims claims = parseToken(token);
+        Object roles = claims.get("roles");
+        if (roles instanceof List<?> roleList) {
+            return roleList.stream().map(String::valueOf).toList();
+        }
+        return List.of();
     }
 
     /**

@@ -1,7 +1,7 @@
 <template>
   <div class="action-panel" :class="`action-panel--${layout}`">
     <n-space :size="6" :wrap="true">
-      <slot />
+      <slot></slot>
     </n-space>
   </div>
 </template>

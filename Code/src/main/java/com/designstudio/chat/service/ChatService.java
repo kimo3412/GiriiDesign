@@ -40,4 +40,9 @@ public interface ChatService {
      */
     DsChatMessage saveMessage(Long chatUserId, int senderType, Long senderId,
                               String content, int contentType, Long orderId);
+
+    /**
+     * 获取最近 N 条聊天记录（用于 AI 上下文）
+     */
+    List<DsChatMessage> getRecentMessages(Long chatUserId, int limit);
 }

@@ -11,8 +11,10 @@ import { GLOB_CONFIG_FILE_NAME } from '../../constant';
 
 export function configHtmlPlugin(env: ViteEnv, isBuild: boolean) {
   const { VITE_GLOB_APP_TITLE, VITE_PUBLIC_PATH } = env;
-
-  const path = VITE_PUBLIC_PATH.endsWith('/') ? VITE_PUBLIC_PATH : `${VITE_PUBLIC_PATH}/`;
+  const publicPath = typeof VITE_PUBLIC_PATH === 'string' && VITE_PUBLIC_PATH.length
+    ? VITE_PUBLIC_PATH
+    : '/';
+  const path = publicPath.endsWith('/') ? publicPath : `${publicPath}/`;
 
   const getAppConfigSrc = () => {
     return `${path || '/'}${GLOB_CONFIG_FILE_NAME}?v=${pkg.version}-${new Date().getTime()}`;
@@ -22,8 +24,8 @@ export function configHtmlPlugin(env: ViteEnv, isBuild: boolean) {
     minify: isBuild,
     inject: {
       // Inject data into ejs template
-      data: {
-        title: VITE_GLOB_APP_TITLE,
+        data: {
+        title: VITE_GLOB_APP_TITLE || 'Design Studio Admin',
       },
       // Embed the generated app.config.js file
       tags: isBuild

@@ -9,6 +9,7 @@ import com.designstudio.system.domain.DsDesignerCategory;
 import com.designstudio.system.mapper.SysAdminMapper;
 import com.designstudio.system.mapper.SysAdminRoleMapper;
 import com.designstudio.system.mapper.DesignerCategoryMapper;
+import com.designstudio.system.mapper.SysRoleMapper;
 import com.designstudio.system.service.ISysAdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,6 +30,7 @@ public class SysAdminServiceImpl extends ServiceImpl<SysAdminMapper, SysAdmin> i
 
     private final SysAdminRoleMapper adminRoleMapper;
     private final DesignerCategoryMapper designerCategoryMapper;
+    private final SysRoleMapper roleMapper;
     private final PasswordEncoder passwordEncoder;
 
     @Override
@@ -36,6 +38,11 @@ public class SysAdminServiceImpl extends ServiceImpl<SysAdminMapper, SysAdmin> i
         return getOne(new LambdaQueryWrapper<SysAdmin>()
                 .eq(SysAdmin::getUsername, username)
                 .eq(SysAdmin::getDelFlag, 0));
+    }
+
+    @Override
+    public List<String> getRoleKeysByAdminId(Long adminId) {
+        return roleMapper.selectRoleKeysByAdminId(adminId);
     }
 
     @Override

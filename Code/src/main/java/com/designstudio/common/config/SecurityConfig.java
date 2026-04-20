@@ -16,7 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
- * Spring Security 安全配置
+ * Spring Security configuration.
  */
 @Configuration
 @EnableWebSecurity
@@ -29,39 +29,59 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // 关闭 CSRF（前后端分离项目不需要）
                 .csrf(AbstractHttpConfigurer::disable)
-                // 无状态 Session
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // 请求授权规则
                 .authorizeHttpRequests(auth -> auth
-                        // 公开接口（登录、注册、API 文档等）
                         .requestMatchers(
                                 "/api/v1/auth/**",
                                 "/api/v1/app/auth/**",
                                 "/api/v1/app/public/**",
                                 "/api/v1/portfolios",
                                 "/api/v1/portfolios/**",
-                                "/api/v1/categories")
-                        .permitAll()
-                        // Swagger / SpringDoc
+                                "/api/v1/categories"
+                        ).permitAll()
                         .requestMatchers(
                                 "/swagger-ui/**",
                                 "/swagger-ui.html",
                                 "/api-docs/**",
-                                "/v3/api-docs/**")
-                        .permitAll()
-                        // 静态资源
+                                "/v3/api-docs/**"
+                        ).permitAll()
                         .requestMatchers("/uploads/**").permitAll()
-                        // WebSocket
                         .requestMatchers("/ws/**").permitAll()
-                        // 预检请求
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // 后台管理接口
-                        .requestMatchers("/api/v1/admin/**").hasAnyRole("ADMIN", "DESIGNER")
-                        // 其余接口需认证
+                        .requestMatchers(
+                                "/api/v1/admin/users/**",
+                                "/api/v1/admin/roles/**",
+                                "/api/v1/admin/menu-list/**",
+                                "/api/v1/admin/dict/**",
+                                "/api/v1/admin/logs/**",
+                                "/api/v1/admin/ai-config/**"
+                        ).hasRole("ADMIN")
+                        .requestMatchers("/api/v1/admin/customers/**").hasAnyRole("ADMIN", "CUSTOMER_SERVICE")
+                        .requestMatchers("/api/v1/admin/chat/**").hasAnyRole("ADMIN", "DESIGNER", "CUSTOMER_SERVICE")
+                        .requestMatchers("/api/v1/admin/statistics/**").hasAnyRole("ADMIN", "FINANCE")
+                        .requestMatchers(HttpMethod.GET, "/api/v1/admin/orders/**").hasAnyRole("ADMIN", "DESIGNER", "FINANCE")
+                        .requestMatchers(
+                                "/api/v1/admin/materials/**",
+                                "/api/v1/admin/bom-templates/**"
+                        ).hasAnyRole("ADMIN", "DESIGNER", "STOREKEEPER", "PURCHASER")
+                        .requestMatchers("/api/v1/admin/workbench/**").hasAnyRole("ADMIN", "DESIGNER")
+                        .requestMatchers("/api/v1/admin/orders/**").hasAnyRole("ADMIN", "DESIGNER")
+                        .requestMatchers("/api/v1/admin/requests/**").hasAnyRole("ADMIN", "DESIGNER", "CUSTOMER_SERVICE")
+                        .requestMatchers(
+                                "/api/v1/admin/portfolios/**",
+                                "/api/v1/admin/categories/**",
+                                "/api/v1/admin/banners/**"
+                        ).hasAnyRole("ADMIN", "DESIGNER")
+                        .requestMatchers("/api/v1/admin/**").hasAnyRole(
+                                "ADMIN",
+                                "DESIGNER",
+                                "STOREKEEPER",
+                                "PURCHASER",
+                                "FINANCE",
+                                "CUSTOMER_SERVICE"
+                        )
                         .anyRequest().authenticated())
-                // 在 UsernamePasswordAuthenticationFilter 前添加 JWT 过滤器
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

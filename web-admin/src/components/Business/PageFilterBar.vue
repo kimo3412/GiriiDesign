@@ -20,7 +20,7 @@
 
     <!-- 中间 slot（额外筛选项） -->
     <div v-if="$slots.extra" class="filter-bar__extra">
-      <slot name="extra" />
+      <slot name="extra"></slot>
     </div>
 
     <!-- 标签筛选区 -->
@@ -42,7 +42,7 @@
 
     <!-- 右侧 slot（操作按钮） -->
     <div v-if="$slots.actions" class="filter-bar__actions">
-      <slot name="actions" />
+      <slot name="actions"></slot>
     </div>
   </div>
 </template>

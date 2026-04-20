@@ -205,7 +205,8 @@
     </n-card>
 
     <!-- 转单弹窗 -->
-    <n-modal v-model:show="showConvert" title="意向转正式订单" preset="dialog"
+    <n-modal
+v-model:show="showConvert" title="意向转正式订单" preset="dialog"
       positive-text="确认转单" negative-text="取消" @positive-click="handleConvert" style="width: 600px">
       <div class="convert-hint">
         <n-alert type="info" :bordered="false">
@@ -259,7 +260,8 @@
     </n-modal>
 
     <!-- 关闭弹窗 -->
-    <n-modal v-model:show="showClose" title="关闭意向" preset="dialog"
+    <n-modal
+v-model:show="showClose" title="关闭意向" preset="dialog"
       positive-text="确认关闭" negative-text="取消" @positive-click="handleClose" style="width: 420px">
       <n-alert type="warning" :bordered="false" style="margin-bottom: 12px;">
         关闭后该意向将标记为已关闭，不可恢复。

@@ -72,6 +72,15 @@ springdoc:
     tags-sorter: alpha
     operations-sorter: alpha
 
+# ==================== AI 智能客服配置 ====================
+ai:
+  customer-service:
+    enabled: false
+    api-url: https://ark.cn-beijing.volces.com/api/v3/bots/your-bot-id/completions
+    api-key: your-api-key
+    model: your-model-name
+    system-prompt: "你是ZeHana独立设计师工作室的智能客服，名为小Z。熟悉定制家具、软装设计、生产流程等问题。请用专业、友好的语气回复客户，长度适中。如遇到无法回答的问题，请引导客户联系人工客服。"
+
 # ==================== 日志配置 ====================
 logging:
   level:

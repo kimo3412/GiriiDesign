@@ -139,7 +139,7 @@
               'workflow-step--future': index > currentStepIndex - 1,
             }"
           >
-            <div class="workflow-step__dot" />
+            <div class="workflow-step__dot"></div>
             <div class="workflow-step__info">
               <span class="workflow-step__name">{{ step.stepName }}</span>
               <span v-if="step.expectedDurationDays" class="workflow-step__duration">预计{{ step.expectedDurationDays }}天</span>
@@ -165,7 +165,7 @@
             :key="item.progressId"
             class="timeline-item"
           >
-            <div class="timeline-item__dot" />
+            <div class="timeline-item__dot"></div>
             <div class="timeline-item__body">
               <div class="timeline-item__title">{{ getStepName(item.stepId) }}</div>
               <div class="timeline-item__desc">{{ item.description || '无说明' }}</div>
@@ -214,14 +214,16 @@
     </div>
 
     <!-- ===================== 弹窗们 ===================== -->
-    <n-modal v-model:show="showAdvanceModal" title="推进到下一节点" preset="dialog"
+    <n-modal
+v-model:show="showAdvanceModal" title="推进到下一节点" preset="dialog"
       positive-text="确认推进" negative-text="取消" @positive-click="handleAdvance">
       <n-form-item label="进度说明">
         <n-input v-model:value="advanceDesc" type="textarea" placeholder="可选填写本次推进说明" />
       </n-form-item>
     </n-modal>
 
-    <n-modal v-model:show="showBlockModal" title="标记阻塞" preset="dialog"
+    <n-modal
+v-model:show="showBlockModal" title="标记阻塞" preset="dialog"
       positive-text="确认阻塞" negative-text="取消" @positive-click="handleBlock">
       <n-alert type="warning" :bordered="false" style="margin-bottom: 12px;">阻塞后需解除才可继续推进</n-alert>
       <n-form-item label="阻塞原因">
@@ -229,7 +231,8 @@
       </n-form-item>
     </n-modal>
 
-    <n-modal v-model:show="showDelayModal" title="登记延期" preset="dialog"
+    <n-modal
+v-model:show="showDelayModal" title="登记延期" preset="dialog"
       positive-text="保存" negative-text="取消" @positive-click="handleDelay">
       <n-form-item label="新的预计日期">
         <n-date-picker v-model:formatted-value="delayExpectedDate" type="date" value-format="yyyy-MM-dd" style="width: 100%" />
@@ -239,14 +242,16 @@
       </n-form-item>
     </n-modal>
 
-    <n-modal v-model:show="showShipModal" title="标记发货" preset="dialog"
+    <n-modal
+v-model:show="showShipModal" title="标记发货" preset="dialog"
       positive-text="确认发货" negative-text="取消" @positive-click="handleShip">
       <n-form-item label="发货说明">
         <n-input v-model:value="shipDesc" type="textarea" placeholder="可选填写物流或发货说明" />
       </n-form-item>
     </n-modal>
 
-    <n-modal v-model:show="showCancelModal" title="取消订单" preset="dialog"
+    <n-modal
+v-model:show="showCancelModal" title="取消订单" preset="dialog"
       positive-text="确认取消" negative-text="返回" @positive-click="handleCancel">
       <n-alert type="error" :bordered="false" style="margin-bottom: 12px;">取消后不可恢复</n-alert>
       <n-form-item label="取消原因">
@@ -254,7 +259,8 @@
       </n-form-item>
     </n-modal>
 
-    <n-modal v-model:show="showProgressModal" title="添加进度记录" preset="dialog"
+    <n-modal
+v-model:show="showProgressModal" title="添加进度记录" preset="dialog"
       positive-text="提交" negative-text="取消" @positive-click="handleAddProgress">
       <n-form-item label="进度描述">
         <n-input v-model:value="progressDesc" type="textarea" placeholder="描述当前进度" />

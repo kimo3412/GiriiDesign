@@ -22,9 +22,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * JWT 鉴权过滤器
- * <p>
- * 每次请求从 Header 中提取 Token，校验有效性后设置 SecurityContext
+ * JWT authentication filter.
  */
 @Slf4j
 @Component
@@ -41,41 +39,49 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain) throws ServletException, IOException {
+                                    HttpServletResponse response,
+                                    FilterChain filterChain) throws ServletException, IOException {
         String token = getTokenFromHeader(request);
 
         if (StringUtils.hasText(token) && jwtUtils.validateToken(token)) {
-            // 检查 Token 是否在黑名单中
             Boolean inBlacklist = redisTemplate.hasKey(BLACKLIST_PREFIX + token);
             if (Boolean.TRUE.equals(inBlacklist)) {
                 writeErrorResponse(response, ErrorCode.TOKEN_INVALID);
                 return;
             }
 
-            // 提取用户信息，设置到 SecurityContext
             Long userId = jwtUtils.getUserIdFromToken(token);
             String userType = jwtUtils.getUserTypeFromToken(token);
             String username = jwtUtils.getUsernameFromToken(token);
             String nickname = jwtUtils.getNicknameFromToken(token);
+            List<String> roleKeys = jwtUtils.getRolesFromToken(token);
 
-            // 根据用户类型设置角色
-            List<SimpleGrantedAuthority> authorities = Collections.singletonList(
-                    new SimpleGrantedAuthority("ROLE_" + userType.toUpperCase()));
+            List<SimpleGrantedAuthority> authorities = buildAuthorities(userType, roleKeys);
 
             LoginUser loginUser = LoginUser.builder()
                     .userId(userId)
                     .userType(userType)
                     .username(username)
                     .nickname(nickname)
+                    .roleKeys(roleKeys)
                     .build();
-            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(loginUser,
-                    null, authorities);
 
+            UsernamePasswordAuthenticationToken authentication =
+                    new UsernamePasswordAuthenticationToken(loginUser, null, authorities);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private List<SimpleGrantedAuthority> buildAuthorities(String userType, List<String> roleKeys) {
+        if (roleKeys != null && !roleKeys.isEmpty()) {
+            return roleKeys.stream()
+                    .filter(StringUtils::hasText)
+                    .map(role -> new SimpleGrantedAuthority("ROLE_" + role.toUpperCase()))
+                    .toList();
+        }
+        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + userType.toUpperCase()));
     }
 
     private String getTokenFromHeader(HttpServletRequest request) {

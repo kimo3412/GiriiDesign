@@ -16,6 +16,14 @@
 
     <!-- 高级感菜单 -->
     <view class="menu-section">
+      <view class="menu-item" @click="goTo('/pages/user/notification/index')">
+        <text class="menu-text">通知中心</text>
+        <view class="menu-right">
+          <view v-if="unreadCount > 0" class="badge">{{ unreadCount > 99 ? '99+' : unreadCount }}</view>
+          <text class="menu-cn">消息与进度提醒</text>
+        </view>
+      </view>
+      <view class="menu-divider"></view>
       <view class="menu-item" @click="goTo('/pages/chat/index')">
         <text class="menu-text">专属客服</text>
         <text class="menu-cn">联系您的私人管家</text>
@@ -49,13 +57,25 @@ import { ref } from 'vue'
 import { onShow } from '@dcloudio/uni-app'
 import { useUserStore } from '@/store/user'
 import storage from '@/utils/storage'
+import { getUnreadCount } from '@/api/notification'
 
 const userStore = useUserStore()
 
 const userInfo = ref({})
+const unreadCount = ref(0)
 
 const updateUserInfo = () => {
   userInfo.value = storage.getUserInfo() || {}
+}
+
+const fetchUnreadCount = async () => {
+  if (!userStore.isLoggedIn) return
+  try {
+    const count = await getUnreadCount()
+    unreadCount.value = count || 0
+  } catch (e) {
+    // ignore
+  }
 }
 
 const goTo = (url) => {
@@ -100,24 +120,25 @@ const handleLogout = () => {
 
 onShow(() => {
   updateUserInfo()
+  fetchUnreadCount()
 })
 </script>
 
 <style lang="scss" scoped>
 .user-container {
   min-height: 100vh;
-  background: $background-color;
+  background: #F5F2EE;
   display: flex;
   flex-direction: column;
 }
 
 .user-header {
   padding: 80rpx 60rpx;
-  background-color: $white;
+  background-color: #fff;
   display: flex;
   justify-content: center;
   align-items: center;
-  box-shadow: 0 10rpx 40rpx rgba(0,0,0,0.02);
+  box-shadow: 0 4rpx 24rpx rgba(74, 93, 78, 0.06);
   margin-bottom: 40rpx;
 }
 
@@ -129,11 +150,11 @@ onShow(() => {
 }
 
 .avatar-box {
-  width: 160rpx;
-  height: 160rpx;
+  width: 140rpx;
+  height: 140rpx;
   border-radius: 50%;
-  border: 1px solid $border-color;
-  padding: 8rpx;
+  padding: 6rpx;
+  box-shadow: 0 0 0 2rpx $primary-color;
 }
 
 .avatar {
@@ -147,12 +168,12 @@ onShow(() => {
   height: 100%;
   border-radius: 50%;
   background: $primary-color;
-  color: $white;
+  color: #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'Times New Roman', serif;
-  font-size: 80rpx;
+  font-size: 72rpx;
 }
 
 .user-info {
@@ -160,22 +181,22 @@ onShow(() => {
 
   .nickname {
     display: block;
-    font-size: 32rpx;
-    font-weight: 300;
-    color: $text-color;
-    letter-spacing: 4rpx;
+    font-size: 30rpx;
+    font-weight: 400;
+    color: #2c2c2c;
+    letter-spacing: 3rpx;
     margin-bottom: 8rpx;
   }
 
   .phone {
-    font-size: 20rpx;
-    color: $text-color-light;
-    letter-spacing: 2rpx;
+    font-size: 22rpx;
+    color: #bbb;
+    letter-spacing: 1px;
   }
 }
 
 .menu-section {
-  background: $white;
+  background: #fff;
   padding: 0 40rpx;
 }
 
@@ -183,23 +204,42 @@ onShow(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 40rpx 10rpx;
-  
+  padding: 36rpx 10rpx;
+  &:active { opacity: 0.7; }
+
   .menu-text {
     font-size: 26rpx;
-    color: $text-color;
+    color: #2c2c2c;
     letter-spacing: 2rpx;
+  }
+
+  .menu-right {
+    display: flex;
+    align-items: center;
+    gap: 12rpx;
   }
 
   .menu-cn {
     font-size: 22rpx;
-    color: $text-color-light;
+    color: #bbb;
   }
 }
 
+.badge {
+  background: #E85D4A;
+  color: #fff;
+  font-size: 18rpx;
+  min-width: 32rpx;
+  height: 32rpx;
+  line-height: 32rpx;
+  border-radius: 16rpx;
+  text-align: center;
+  padding: 0 8rpx;
+}
+
 .menu-divider {
-  height: 1px;
-  background-color: #f0f0f0;
+  height: 1rpx;
+  background-color: #e8e4e0;
   margin: 0 10rpx;
 }
 
@@ -213,18 +253,13 @@ onShow(() => {
   height: 90rpx;
   line-height: 90rpx;
   background: transparent;
-  color: $text-color-light;
+  color: #bbb;
   font-size: 24rpx;
-  letter-spacing: 4rpx;
-  border: 1px solid $border-color;
-  border-radius: 0; // 高定直角
+  letter-spacing: 3rpx;
+  border: 1rpx solid #e8e4e0;
+  border-radius: 0;
 
-  &::after {
-    border: none;
-  }
-  
-  &:active {
-    background-color: #f9f9f9;
-  }
+  &::after { border: none; }
+  &:active { background-color: rgba(0, 0, 0, 0.03); }
 }
 </style>

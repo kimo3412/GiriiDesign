@@ -122,4 +122,16 @@ public class ChatServiceImpl implements ChatService {
         messageMapper.insert(msg);
         return msg;
     }
+
+    @Override
+    public List<DsChatMessage> getRecentMessages(Long chatUserId, int limit) {
+        LambdaQueryWrapper<DsChatMessage> wrapper = new LambdaQueryWrapper<DsChatMessage>()
+                .eq(DsChatMessage::getUserId, chatUserId)
+                .orderByDesc(DsChatMessage::getCreateTime)
+                .last("LIMIT " + limit);
+        List<DsChatMessage> list = messageMapper.selectList(wrapper);
+        // 反转，按时间正序
+        java.util.Collections.reverse(list);
+        return list;
+    }
 }

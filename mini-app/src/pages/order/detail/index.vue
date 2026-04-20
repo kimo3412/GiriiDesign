@@ -50,85 +50,90 @@
       </view>
     </view>
 
+    <!-- 流程进度：时间线 + 行内下拉 -->
     <view class="section">
       <text class="section-title">流程进度</text>
       <view class="timeline-card">
         <view
           v-for="(step, index) in workflowSteps"
           :key="step.stepId || index"
-          class="timeline-item"
+          class="timeline-section"
         >
-          <view class="timeline-left">
-            <view
-              class="timeline-dot"
-              :class="{
-                done: index < currentStepIndex,
-                current: index === currentStepIndex,
-                pending: index > currentStepIndex
-              }"
-            />
-            <view v-if="index < workflowSteps.length - 1" class="timeline-line" />
-          </view>
-          <view class="timeline-body">
-            <view class="timeline-top">
-              <text class="timeline-name">{{ step.stepName }}</text>
-              <text v-if="step.expectedDurationDays != null" class="timeline-days">
-                预计 {{ step.expectedDurationDays }} 天
-              </text>
-            </view>
-            <text class="timeline-desc">{{ step.nodeDescription || '该节点暂无补充说明' }}</text>
-            <text v-if="getProgressAtStep(step.stepId)" class="timeline-time">
-              {{ getProgressAtStep(step.stepId).createTime }}
-            </text>
-            <text v-if="index === currentStepIndex && hasRollback" class="timeline-rework">
-              当前流程包含返工记录，请以最新进度为准
-            </text>
-          </view>
-        </view>
-      </view>
-    </view>
-
-    <view class="section">
-      <text class="section-title">进度动态</text>
-      <view class="timeline-card">
-        <view v-if="timelineEvents.length === 0" class="empty-progress">
-          <text>当前订单暂无进度记录</text>
-        </view>
-        <view v-else>
+          <!-- 时间线行：点击展开下拉 -->
           <view
-            v-for="item in timelineEvents"
-            :key="item.progressId"
-            class="progress-item"
+            class="timeline-row"
+            :class="{ 'timeline-row--active': index === currentStepIndex }"
+            @click="toggleStep(step.stepId)"
           >
-            <view class="progress-header">
-              <view class="progress-header__left">
-                <text class="progress-time">{{ item.createTime }}</text>
-                <text v-if="item.operatorName" class="progress-operator">{{ item.operatorName }}</text>
+            <view class="timeline-left">
+              <view
+                class="timeline-dot"
+                :class="{
+                  'done': index < currentStepIndex,
+                  'current': index === currentStepIndex,
+                  'pending': index > currentStepIndex
+                }"
+              />
+              <view v-if="index < workflowSteps.length - 1" class="timeline-line" />
+            </view>
+            <view class="timeline-body">
+              <view class="timeline-top">
+                <text class="timeline-name">{{ step.stepName }}</text>
+                <text v-if="step.expectedDurationDays != null" class="timeline-days">
+                  预计 {{ step.expectedDurationDays }} 天
+                </text>
+                <text class="timeline-count" v-if="getStepProgressCount(step.stepId)">
+                  {{ getStepProgressCount(step.stepId) }} 条
+                </text>
               </view>
-              <text class="progress-tag" :class="`tag-${item.eventType}`">
-                {{ item.eventLabel }}
+              <text class="timeline-desc">{{ step.nodeDescription || '' }}</text>
+              <text v-if="index === currentStepIndex && hasRollback" class="timeline-rework">
+                当前流程包含返工记录，请以最新进度为准
               </text>
             </view>
-            <text class="progress-step">{{ item.stepName }}</text>
-            <text v-if="item.description" class="progress-desc">{{ item.description }}</text>
-            <view v-if="item.formEntries?.length" class="progress-fields">
+            <text class="timeline-arrow" :class="{ 'timeline-arrow--open': expandedStepId == step.stepId }">›</text>
+          </view>
+
+          <!-- 下拉展开区：记录列表 -->
+          <view
+            v-show="expandedStepId == step.stepId"
+            class="timeline-dropdown"
+          >
+            <view v-if="getStepAllProgress(step.stepId).length" class="dropdown-records">
               <view
-                v-for="entry in item.formEntries"
-                :key="`${item.progressId}-${entry.key}`"
-                class="progress-field"
+                v-for="item in getStepAllProgress(step.stepId)"
+                :key="item.progressId"
+                class="record-item"
               >
-                <text class="progress-field__label">{{ entry.label }}</text>
-                <text class="progress-field__value">{{ formatEntryValue(entry) }}</text>
+                <view class="record-header">
+                  <text class="record-time">{{ item.createTime }}</text>
+                  <text v-if="item.operatorName" class="record-operator">{{ item.operatorName }}</text>
+                  <text class="record-tag" :class="'tag-' + item.eventType">{{ item.eventLabel }}</text>
+                </view>
+                <text v-if="item.description" class="record-desc">{{ item.description }}</text>
+                <view v-if="item.formEntries && item.formEntries.length" class="record-fields">
+                  <view
+                    v-for="entry in item.formEntries"
+                    :key="item.progressId + '-' + entry.key"
+                    class="record-field"
+                  >
+                    <text class="record-field__label">{{ entry.label }}</text>
+                    <text class="record-field__value">{{ formatEntryValue(entry) }}</text>
+                  </view>
+                </view>
+                <view v-if="parseImageUrls(item.imageUrls).length" class="record-images">
+                  <image
+                    v-for="img in parseImageUrls(item.imageUrls)"
+                    :key="img"
+                    class="record-image"
+                    :src="toFileUrl(img)"
+                    mode="aspectFill"
+                  />
+                </view>
               </view>
             </view>
-            <view v-if="parseImageUrls(item.imageUrls).length" class="progress-images">
-              <image
-                v-for="image in parseImageUrls(item.imageUrls)"
-                :key="image"
-                class="progress-image"
-                :src="toFileUrl(image)"
-                mode="aspectFill"
-              />
+            <view v-else class="dropdown-empty">
+              <text>暂无记录</text>
             </view>
           </view>
         </view>
@@ -174,11 +179,11 @@
     </view>
 
     <view class="bottom-action">
-      <button class="chat-btn" @click="goToChat">联系设计师</button>
-      <button v-if="order.status === 0" class="pay-btn" @click="handlePay">
+      <button class="action-btn action-btn--outline" @click="goToChat">联系设计师</button>
+      <button v-if="order.status === 0" class="action-btn action-btn--primary" @click="handlePay">
         支付定金 ¥{{ order.prepayAmount || 0 }}
       </button>
-      <button v-if="order.status === 6" class="pay-btn" @click="handlePay">
+      <button v-if="order.status === 6" class="action-btn action-btn--primary" @click="handlePay">
         支付尾款 ¥{{ balanceAmount }}
       </button>
     </view>
@@ -196,7 +201,6 @@ const orderId = ref(0)
 const order = ref({})
 const workflowSteps = ref([])
 const progressList = ref([])
-const timelineEvents = ref([])
 const currentStepIndex = ref(-1)
 const currentStepName = ref('')
 const hasRollback = ref(0)
@@ -207,6 +211,21 @@ const expectedDateText = ref('')
 const currentStepElapsedDays = ref(null)
 const currentStepExpectedDays = ref(null)
 
+// 展开状态（只展开一个，互斥）
+const expandedStepId = ref(null)
+
+const toggleStep = (stepId) => {
+  expandedStepId.value = (expandedStepId.value == stepId) ? null : stepId
+}
+
+const getStepAllProgress = (stepId) => {
+  return progressList.value.filter((item) => item.stepId == stepId)
+}
+
+const getStepProgressCount = (stepId) => {
+  return progressList.value.filter((item) => item.stepId == stepId).length
+}
+
 const isOrderFinished = computed(() => {
   const s = order.value.status
   return s === 4 || s === 5
@@ -214,10 +233,10 @@ const isOrderFinished = computed(() => {
 
 const currentStepText = computed(() => {
   if (order.value.isBlocked === 1) {
-    return currentStepName.value ? `当前暂停在：${currentStepName.value}` : '当前订单已暂停'
+    return currentStepName.value ? '当前暂停在：' + currentStepName.value : '当前订单已暂停'
   }
   if (currentStepName.value) {
-    return `当前节点：${currentStepName.value}`
+    return '当前节点：' + currentStepName.value
   }
   return '等待系统分配生产节点'
 })
@@ -234,7 +253,6 @@ const fetchTimeline = async () => {
     order.value = data.order || {}
     workflowSteps.value = data.workflowSteps || []
     progressList.value = data.progressList || []
-    timelineEvents.value = [...(data.timelineEvents || [])].reverse()
     currentStepIndex.value = data.currentStepIndex ?? -1
     currentStepName.value = data.currentStepName || ''
     hasRollback.value = data.hasRollback || 0
@@ -244,6 +262,12 @@ const fetchTimeline = async () => {
     expectedDateText.value = data.expectedDateText || ''
     currentStepElapsedDays.value = data.currentStepElapsedDays ?? null
     currentStepExpectedDays.value = data.currentStepExpectedDays ?? null
+
+    // 默认展开当前阶段
+    const currentStep = (data.workflowSteps || [])[data.currentStepIndex ?? -1]
+    if (currentStep) {
+      expandedStepId.value = currentStep.stepId
+    }
   } catch (err) {
     uni.showToast({ title: '获取订单失败', icon: 'none' })
   }
@@ -262,11 +286,6 @@ const getStatusText = (status) => {
   return map[status] || '未知状态'
 }
 
-const getProgressAtStep = (stepId) => {
-  const matched = progressList.value.filter((item) => item.stepId === stepId)
-  return matched.length ? matched[matched.length - 1] : null
-}
-
 const parseImageUrls = (value) => {
   if (!value) return []
   try {
@@ -281,19 +300,17 @@ const parseImageUrls = (value) => {
 
 const toFileUrl = (url) => {
   if (!url) return ''
-  if (/^https?:\/\//i.test(url)) {
-    return url
-  }
-  return `${fileBaseUrl}${url}`
+  if (/^https?:\/\//i.test(url)) return url
+  return fileBaseUrl + url
 }
 
 const formatEntryValue = (entry) => {
   if (!entry) return '-'
-  return entry.unit ? `${entry.value} ${entry.unit}` : entry.value
+  return entry.unit ? entry.value + ' ' + entry.unit : entry.value
 }
 
 const goToChat = () => {
-  uni.navigateTo({ url: `/pages/chat/index?orderId=${orderId.value}` })
+  uni.navigateTo({ url: '/pages/chat/index?orderId=' + orderId.value })
 }
 
 const handlePay = () => {
@@ -320,7 +337,7 @@ onLoad((options) => {
 .order-detail-container {
   min-height: 100vh;
   background: #f5f2ee;
-  padding-bottom: 120rpx;
+  padding-bottom: 140rpx;
 }
 
 .status-card {
@@ -403,13 +420,8 @@ onLoad((options) => {
   line-height: 1.5;
 }
 
-.status-alert--warm {
-  background: rgba(255, 214, 153, 0.18);
-}
-
-.status-alert--cancel {
-  background: rgba(255, 180, 180, 0.18);
-}
+.status-alert--warm { background: rgba(255, 214, 153, 0.18); }
+.status-alert--cancel { background: rgba(255, 180, 180, 0.18); }
 
 .section {
   margin-top: 20rpx;
@@ -424,7 +436,6 @@ onLoad((options) => {
   font-weight: 600;
 }
 
-.timeline-card,
 .info-card {
   background: #fff;
   border-radius: 18rpx;
@@ -481,15 +492,34 @@ onLoad((options) => {
   font-weight: 600;
 }
 
-.timeline-item {
+/* 时间线 */
+.timeline-card {
+  background: #fff;
+  border-radius: 18rpx;
+  padding: 8rpx 0;
+}
+
+.timeline-section {
+  position: relative;
+}
+
+.timeline-row {
   display: flex;
+  align-items: flex-start;
   gap: 20rpx;
+  padding: 20rpx 24rpx;
+  transition: background 0.15s;
+
+  &:active { background: #f9f8f6; }
+  &--active { background: #f9f8f6; }
 }
 
 .timeline-left {
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex-shrink: 0;
+  padding-top: 4rpx;
 }
 
 .timeline-dot {
@@ -497,167 +527,172 @@ onLoad((options) => {
   height: 22rpx;
   border-radius: 50%;
   background: #d9d9d9;
+  flex-shrink: 0;
 }
-
-.timeline-dot.done {
-  background: #4a5d4e;
-}
-
+.timeline-dot.done { background: #4a5d4e; }
 .timeline-dot.current {
   background: #c4785b;
   box-shadow: 0 0 0 8rpx rgba(196, 120, 91, 0.18);
 }
+.timeline-dot.pending { background: #e0e0e0; }
 
 .timeline-line {
   width: 2rpx;
   flex: 1;
   background: #e8e4e0;
-  min-height: 60rpx;
+  min-height: 40rpx;
+  margin-top: 8rpx;
 }
 
 .timeline-body {
   flex: 1;
-  padding-bottom: 28rpx;
+  min-width: 0;
 }
 
-.timeline-top,
-.progress-header {
+.timeline-top {
   display: flex;
-  justify-content: space-between;
-  gap: 16rpx;
+  align-items: center;
+  gap: 12rpx;
+  flex-wrap: wrap;
 }
 
-.timeline-name,
-.progress-step {
+.timeline-name {
   font-size: 28rpx;
   color: #1f1f1f;
   font-weight: 600;
 }
 
-.timeline-days,
-.timeline-time,
-.progress-time {
+.timeline-days {
   font-size: 22rpx;
   color: #999;
 }
 
-.timeline-desc,
-.progress-desc {
+.timeline-count {
+  font-size: 20rpx;
+  color: #b8a49a;
+  background: #f5f3ef;
+  padding: 2rpx 10rpx;
+  border-radius: 999rpx;
+}
+
+.timeline-desc {
   display: block;
-  margin-top: 10rpx;
-  color: #666;
-  font-size: 24rpx;
-  line-height: 1.6;
+  margin-top: 6rpx;
+  color: #999;
+  font-size: 22rpx;
 }
 
 .timeline-rework {
   display: inline-block;
-  margin-top: 12rpx;
-  padding: 8rpx 16rpx;
+  margin-top: 8rpx;
+  padding: 6rpx 14rpx;
   border-radius: 999rpx;
   background: #fff3ef;
   color: #c65a3b;
-  font-size: 22rpx;
+  font-size: 20rpx;
 }
 
-.empty-progress {
-  padding: 36rpx 0;
-  text-align: center;
-  color: #999;
-  font-size: 24rpx;
+.timeline-arrow {
+  font-size: 32rpx;
+  color: #ccc;
+  transition: transform 0.2s ease;
+  line-height: 1;
+  flex-shrink: 0;
+  padding-top: 2rpx;
+}
+.timeline-arrow--open { transform: rotate(90deg); color: #4a5d4e; }
+
+/* 下拉展开区 */
+.timeline-dropdown {
+  margin: 0 24rpx 8rpx 68rpx;
+  padding: 16rpx 20rpx;
+  background: #faf9f7;
+  border-radius: 14rpx;
+  border: 1rpx solid #f0ebe6;
+  animation: dropdownOpen 0.2s ease;
 }
 
-.progress-item {
-  padding: 18rpx 0;
-  border-bottom: 1rpx solid #f1f1f1;
+@keyframes dropdownOpen {
+  from { opacity: 0; transform: translateY(-8rpx); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-.progress-item:last-child {
-  border-bottom: none;
+.dropdown-records {}
+
+.record-item {
+  padding: 16rpx 0;
+  border-bottom: 1rpx solid #f0ebe6;
+}
+.record-item:last-child { border-bottom: none; }
+
+.record-header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  flex-wrap: wrap;
+  margin-bottom: 6rpx;
 }
 
-.progress-tag {
-  padding: 6rpx 14rpx;
+.record-time { font-size: 20rpx; color: #999; }
+.record-operator { font-size: 20rpx; color: #8b7767; }
+
+.record-tag {
+  padding: 4rpx 12rpx;
   border-radius: 999rpx;
   font-size: 20rpx;
 }
 
-.tag-progress {
-  background: #eef3ff;
-  color: #3f63b8;
-}
-
-.tag-rollback {
-  background: #fff1eb;
-  color: #c65a3b;
-}
-
-.tag-block {
-  background: #fff0f1;
-  color: #c93f55;
-}
-
-.tag-unblock {
-  background: #eef9f1;
-  color: #2d8a57;
-}
-
-.tag-payment {
-  background: #fff8e6;
-  color: #b8860b;
-}
-
-.progress-header__left {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-}
-
-.progress-operator {
-  font-size: 20rpx;
-  color: #8b7767;
-}
-
-.progress-fields {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12rpx;
-  margin-top: 14rpx;
-}
-
-.progress-field {
-  min-width: calc(50% - 6rpx);
-  padding: 14rpx 16rpx;
-  border-radius: 14rpx;
-  background: #f8f7f4;
-}
-
-.progress-field__label {
+.record-desc {
   display: block;
-  color: #8b7767;
-  font-size: 20rpx;
-}
-
-.progress-field__value {
-  display: block;
-  margin-top: 8rpx;
-  color: #2c2c2c;
+  color: #666;
   font-size: 24rpx;
+  line-height: 1.5;
+  margin-top: 4rpx;
 }
 
-.progress-images {
+.record-fields {
   display: flex;
   flex-wrap: wrap;
-  gap: 14rpx;
-  margin-top: 16rpx;
+  gap: 10rpx;
+  margin-top: 12rpx;
 }
 
-.progress-image {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 16rpx;
+.record-field {
+  min-width: calc(50% - 5rpx);
+  padding: 12rpx 14rpx;
+  border-radius: 10rpx;
+  background: #fff;
+}
+
+.record-field__label { display: block; color: #8b7767; font-size: 20rpx; }
+.record-field__value { display: block; margin-top: 4rpx; color: #2c2c2c; font-size: 24rpx; }
+
+.record-images {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-top: 12rpx;
+}
+
+.record-image {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 12rpx;
   background: #f1f1f1;
 }
+
+.dropdown-empty {
+  text-align: center;
+  color: #bbb;
+  font-size: 24rpx;
+  padding: 20rpx 0;
+}
+
+.tag-progress { background: #eef3ff; color: #3f63b8; }
+.tag-rollback { background: #fff1eb; color: #c65a3b; }
+.tag-block { background: #fff0f1; color: #c93f55; }
+.tag-unblock { background: #eef9f1; color: #2d8a57; }
+.tag-payment { background: #fff8e6; color: #b8860b; }
 
 .info-row {
   display: flex;
@@ -665,15 +700,9 @@ onLoad((options) => {
   padding: 18rpx 0;
   border-bottom: 1rpx solid #f1f1f1;
 }
+.info-row:last-child { border-bottom: none; }
 
-.info-row:last-child {
-  border-bottom: none;
-}
-
-.info-label {
-  color: #999;
-  font-size: 24rpx;
-}
+.info-label { color: #999; font-size: 24rpx; }
 
 .info-value {
   max-width: 60%;
@@ -682,11 +711,9 @@ onLoad((options) => {
   font-size: 24rpx;
 }
 
-.price {
-  color: #d35d6e;
-  font-weight: 600;
-}
+.price { color: #d35d6e; font-weight: 600; }
 
+/* 底部按钮：全圆角胶囊 */
 .bottom-action {
   position: fixed;
   left: 0;
@@ -696,32 +723,33 @@ onLoad((options) => {
   gap: 20rpx;
   padding: 20rpx 24rpx;
   padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1rpx solid rgba(0, 0, 0, 0.06);
 }
 
-.chat-btn,
-.pay-btn {
+.action-btn {
   flex: 1;
   height: 88rpx;
   line-height: 88rpx;
-  border-radius: 44rpx;
+  border-radius: 999rpx;
   font-size: 26rpx;
   border: none;
-}
+  margin: 0;
 
-.chat-btn::after,
-.pay-btn::after {
-  border: none;
-}
+  &::after { border: none; }
+  &:active { opacity: 0.85; }
 
-.chat-btn {
-  background: #fff;
-  color: #2c2c2c;
-  border: 1rpx solid #2c2c2c;
-}
+  &--primary {
+    background: #2c2c2c;
+    color: #fff;
+  }
 
-.pay-btn {
-  background: #2c2c2c;
-  color: #fff;
+  &--outline {
+    background: #fff;
+    color: #2c2c2c;
+    border: 1rpx solid #2c2c2c;
+  }
 }
 </style>

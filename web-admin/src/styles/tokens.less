@@ -1,63 +1,59 @@
 /**
- * 语义化视觉 Token
- * 所有页面应引用这些变量，而非直接写颜色值/阴影值/圆角值
- * 参考 PAGE_REDESIGN_PLAN.md 第三节
+ * Semantic design tokens for admin pages.
+ * Prefer these variables over hard-coded colors, shadows, and radii.
  */
 
-// ==================== 状态色 ====================
 :root {
-  // 通用状态
+  /* status */
   --status-success-bg: #f0f9eb;
   --status-success-border: #e1f3d8;
-  --status-success-text: #5B8C5A;
+  --status-success-text: #5b8c5a;
 
-  --status-warning-bg: #FFF8E6;
-  --status-warning-border: #FFE7B3;
-  --status-warning-text: #E5A84B;
+  --status-warning-bg: #fff8e6;
+  --status-warning-border: #ffe7b3;
+  --status-warning-text: #e5a84b;
 
-  --status-error-bg: #FFF1F0;
-  --status-error-border: #FFCCC7;
-  --status-error-text: #D35D6E;
+  --status-error-bg: #fff1f0;
+  --status-error-border: #ffccc7;
+  --status-error-text: #d35d6e;
 
-  --status-info-bg: #F0F5FF;
-  --status-info-border: #D9E2FF;
-  --status-info-text: #4B7BEC;
+  --status-info-bg: #f0f5ff;
+  --status-info-border: #d9e2ff;
+  --status-info-text: #4b7bec;
 
-  --status-default-bg: #F5F5F5;
-  --status-default-border: #E0E0E0;
+  --status-default-bg: #f5f5f5;
+  --status-default-border: #e0e0e0;
   --status-default-text: #666666;
 
-  // 主色调
-  --primary-color: #4B7BEC;
-  --primary-hover: #3258D0;
-  --primary-bg: #EEF2FF;
+  /* brand */
+  --primary-color: #4b7bec;
+  --primary-hover: #3258d0;
+  --primary-bg: #eef2ff;
 
-  // 文字层级
-  --text-primary: #1A1A1A;
+  /* text */
+  --text-primary: #1a1a1a;
   --text-secondary: #555555;
   --text-tertiary: #888888;
-  --text-placeholder: #BBBBBB;
+  --text-placeholder: #bbbbbb;
 
-  // 边框/分割线
-  --border-color: #EBEBEB;
-  --border-light: #F0F0F0;
-  --divider-color: #E8E8E8;
+  /* borders */
+  --border-color: #ebebeb;
+  --border-light: #f0f0f0;
+  --divider-color: #e8e8e8;
 
-  // 面板
-  --panel-bg: #FFFFFF;
+  /* panels */
+  --panel-bg: #ffffff;
   --panel-radius: 10px;
   --panel-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
   --panel-shadow-hover: 0 4px 16px rgba(0, 0, 0, 0.08);
 
-  // 背景
-  --page-bg: #F5F7FA;
-  --card-bg: #FFFFFF;
+  /* backgrounds */
+  --page-bg: #f5f7fa;
+  --card-bg: #ffffff;
+  --row-pending-bg: #fffbe6;
+  --row-selected-bg: #eef2ff;
 
-  // 行状态底色
-  --row-pending-bg: #FFFBE6;
-  --row-selected-bg: #EEF2FF;
-
-  // 金额色
-  --money-color: #E53E3E;
-  --money-positive: #5B8C5A;
+  /* money */
+  --money-color: #e53e3e;
+  --money-positive: #5b8c5a;
 }
