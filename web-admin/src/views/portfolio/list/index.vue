@@ -121,7 +121,7 @@
         <n-form-item label="封面图">
           <n-upload
             v-model:file-list="coverFileList"
-            list-type="image-card"
+            list-type="image"
             :custom-request="handleUpload"
             :max="1"
             accept="image/*"
@@ -132,7 +132,7 @@
         <n-form-item label="图片集">
           <n-upload
             v-model:file-list="galleryFileList"
-            list-type="image-card"
+            list-type="image"
             :custom-request="handleUpload"
             :max="9"
             multiple
@@ -419,9 +419,13 @@ const handleToggleStatus = (row: any) => {
 }
 
 .stat-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.stat-cards :deep(.metric-card) {
+  flex: 0 1 180px;
 }
 
 .directory-card :deep(.n-card__content) {

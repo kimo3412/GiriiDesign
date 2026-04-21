@@ -1,10 +1,18 @@
 <template>
   <div class="role-page">
-    <!-- 顶部统计 -->
-    <div class="stat-cards">
-      <BusinessMetricCard label="全部角色" :value="stats.total" icon="📋" variant="primary" />
-      <BusinessMetricCard label="内置角色" :value="stats.builtin" icon="🔒" variant="info" />
-      <BusinessMetricCard label="自定义" :value="stats.custom" icon="🛠️" variant="success" />
+    <div class="page-summary">
+      <span class="page-summary__item">
+        <span class="page-summary__label">全部角色</span>
+        <span class="page-summary__value">{{ stats.total }}</span>
+      </span>
+      <span class="page-summary__item">
+        <span class="page-summary__label">内置角色</span>
+        <span class="page-summary__value">{{ stats.builtin }}</span>
+      </span>
+      <span class="page-summary__item">
+        <span class="page-summary__label">自定义</span>
+        <span class="page-summary__value">{{ stats.custom }}</span>
+      </span>
     </div>
 
     <n-card :bordered="false" class="directory-card">
@@ -116,7 +124,6 @@ import { ref, computed, onMounted, h } from 'vue';
 import { NButton, NSelect, NSpace, NIcon, NDivider } from 'naive-ui';
 import { Search } from '@vicons/ionicons5';
 import { useMessage, useDialog } from 'naive-ui';
-import { BusinessMetricCard } from '@/components/Business';
 import { getRoleList, getRoleDetail, addRole, updateRole, deleteRole, type RoleSaveDTO, ROLE_TYPE_OPTIONS, ROLE_TYPE_MAP } from '@/api/system/roleList';
 import { getMenuList } from '@/api/system/menuConfig';
 
@@ -284,11 +291,33 @@ const handleSubmit = (e: MouseEvent) => {
   gap: 12px;
 }
 
-.stat-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+.page-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
+
+.page-summary__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-light);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.page-summary__label {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.page-summary__value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
 
 .directory-card :deep(.n-card__content) { padding: 0; }
 

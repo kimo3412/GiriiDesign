@@ -1,23 +1,31 @@
 <template>
   <div class="order-list-page">
-    <!-- 顶部统计 -->
-    <div class="stat-cards">
-      <BusinessMetricCard
-        v-for="stat in statusStats"
+    <div class="status-strip">
+      <button
+        type="button"
+        class="status-pill"
+        :class="{ 'status-pill--active': selectedStatus === null }"
+        @click="selectStatus(null)"
+      >
+        <span class="status-pill__label">全部订单</span>
+        <span class="status-pill__value">{{ stats.total }}</span>
+      </button>
+      <button
+        v-for="stat in statusQuickStats"
         :key="stat.value"
-        :label="stat.label"
-        :value="stat.count"
-        :icon="stat.icon"
-        :variant="stat.variant"
-        :clickable="true"
+        type="button"
+        class="status-pill"
+        :class="[`status-pill--${stat.variant}`, { 'status-pill--active': selectedStatus === stat.value }]"
         @click="selectStatus(stat.value)"
-      />
+      >
+        <span class="status-pill__label">{{ stat.label }}</span>
+        <span class="status-pill__value">{{ stat.count }}</span>
+      </button>
     </div>
 
     <n-card :bordered="false" class="directory-card">
       <div class="directory-layout">
-        <!-- 左侧：状态维度树 -->
-        <div class="directory-tree">
+        <aside class="directory-tree">
           <div class="tree-header">状态筛选</div>
           <div class="tree-items">
             <div
@@ -28,55 +36,54 @@
               全部 <span class="tree-item__count">{{ stats.total }}</span>
             </div>
             <div
-              v-for="s in statusDimTree"
-              :key="s.value"
+              v-for="status in statusDimTree"
+              :key="status.value"
               class="tree-item"
-              :class="{ 'tree-item--active': selectedStatus === s.value }"
-              @click="selectStatus(s.value)"
+              :class="{ 'tree-item--active': selectedStatus === status.value }"
+              @click="selectStatus(status.value)"
             >
-              <span class="tree-item__dot" :style="{ background: s.color }"></span>
-              {{ s.label }} <span class="tree-item__count">{{ s.count }}</span>
+              <span class="tree-item__dot" :style="{ background: status.color }"></span>
+              {{ status.label }}
+              <span class="tree-item__count">{{ status.count }}</span>
             </div>
           </div>
-        </div>
+        </aside>
 
-        <!-- 右侧：紧凑筛选 + 表格 -->
-        <div class="directory-main">
-          <!-- 紧凑筛选栏 -->
+        <section class="directory-main">
           <div class="compact-filter">
             <n-select
               v-model:value="filterCategory"
               :options="categoryOptions"
               placeholder="全部品类"
-              style="width: 130px"
-              size="small"
               clearable
+              size="small"
+              style="width: 140px"
               @update:value="loadData"
             />
             <n-input
               v-model:value="keyword"
               placeholder="搜索订单号/客户..."
-              size="small"
               clearable
+              size="small"
+              style="width: 220px"
               @keyup.enter="loadData"
-              style="width: 200px"
             >
-              <template #prefix><n-icon><Search /></n-icon></template>
+              <template #prefix>
+                <n-icon><Search /></n-icon>
+              </template>
             </n-input>
             <n-button size="small" type="primary" @click="loadData">搜索</n-button>
           </div>
 
-          <!-- 表格 -->
           <n-data-table
             :columns="columns"
             :data="displayData"
             :loading="loading"
-            :row-key="row => row.orderId"
+            :row-key="(row) => row.orderId"
             size="small"
             :bordered="false"
           />
 
-          <!-- 分页 -->
           <div class="compact-pagination">
             <n-pagination
               v-model:page="pageNum"
@@ -89,21 +96,21 @@
               @update:page-size="loadData"
             />
           </div>
-        </div>
+        </section>
       </div>
     </n-card>
   </div>
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, h } from 'vue';
+import { computed, h, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { NButton, NTag, NSpace, NIcon } from 'naive-ui';
+import { NButton, NIcon } from 'naive-ui';
 import { Search } from '@vicons/ionicons5';
 import { getOrderList } from '@/api/order/index';
 import { getCategoryList } from '@/api/config/category';
 import { getAdminList } from '@/api/system/adminList';
-import { BusinessMetricCard, StatusBadge } from '@/components/Business';
+import { StatusBadge } from '@/components/Business';
 
 const router = useRouter();
 
@@ -116,161 +123,212 @@ const pageSize = ref(10);
 const keyword = ref('');
 const selectedStatus = ref<number | null>(null);
 const filterCategory = ref<number | null>(null);
-const categoryOptions = ref<any[]>([]);
+const categoryOptions = ref<{ label: string; value: number }[]>([]);
 const categoryMap = ref<Record<number, string>>({});
 const adminMap = ref<Record<number, string>>({});
 
-// 状态定义
 const STATUS_LIST = [
-  { label: '待支付', value: 0, icon: '💳', variant: 'default' as const },
-  { label: '生产中', value: 1, icon: '🔨', variant: 'info' as const },
-  { label: '待发货', value: 2, icon: '📦', variant: 'warning' as const },
-  { label: '待收货', value: 3, icon: '🚚', variant: 'info' as const },
-  { label: '已完成', value: 4, icon: '✅', variant: 'success' as const },
-  { label: '已取消', value: 5, icon: '🚫', variant: 'error' as const },
-  { label: '待付尾款', value: 6, icon: '💰', variant: 'warning' as const },
+  { label: '待支付', value: 0, variant: 'default' as const },
+  { label: '生产中', value: 1, variant: 'info' as const },
+  { label: '待发货', value: 2, variant: 'warning' as const },
+  { label: '待收货', value: 3, variant: 'info' as const },
+  { label: '已完成', value: 4, variant: 'success' as const },
+  { label: '已取消', value: 5, variant: 'error' as const },
+  { label: '待付尾款', value: 6, variant: 'warning' as const },
 ];
 
-// 统计
+const statusBadgeMap = Object.fromEntries(
+  STATUS_LIST.map((item) => [
+    item.value,
+    { label: item.label, type: item.variant === 'default' ? 'default' : item.variant },
+  ])
+);
+
 const stats = computed(() => {
-  const all = tableData.value;
   const map: Record<number, number> = {};
-  STATUS_LIST.forEach(s => { map[s.value] = 0; });
-  all.forEach((r: any) => { if (map[r.status] !== undefined) map[r.status]++; });
-  return { total: all.length, ...map };
+  STATUS_LIST.forEach((item) => {
+    map[item.value] = 0;
+  });
+  tableData.value.forEach((row: any) => {
+    if (map[row.status] !== undefined) map[row.status] += 1;
+  });
+  return { total: tableData.value.length, ...map };
 });
 
 const statusDimTree = computed(() =>
-  STATUS_LIST.filter(s => stats.value[s.value] > 0).map(s => ({
-    ...s,
-    count: stats.value[s.value],
-    color: s.variant === 'success' ? 'var(--status-success-text)' :
-           s.variant === 'warning' ? 'var(--status-warning-text)' :
-           s.variant === 'error' ? 'var(--status-error-text)' :
-           s.variant === 'info' ? 'var(--status-info-text)' : 'var(--text-tertiary)',
+  STATUS_LIST.filter((item) => stats.value[item.value] > 0).map((item) => ({
+    ...item,
+    count: stats.value[item.value],
+    color:
+      item.variant === 'success'
+        ? 'var(--status-success-text)'
+        : item.variant === 'warning'
+          ? 'var(--status-warning-text)'
+          : item.variant === 'error'
+            ? 'var(--status-error-text)'
+            : item.variant === 'info'
+              ? 'var(--status-info-text)'
+              : 'var(--text-tertiary)',
   }))
 );
 
-const statusStats = computed(() => [
-  { label: '全部', value: -1, count: stats.value.total, icon: '📋', variant: 'primary' as const },
-  { label: '生产中', value: 1, count: stats.value[1] || 0, icon: '🔨', variant: 'info' as const },
-  { label: '待发货', value: 2, count: stats.value[2] || 0, icon: '📦', variant: 'warning' as const },
-  { label: '待收货', value: 3, count: stats.value[3] || 0, icon: '🚚', variant: 'info' as const },
-  { label: '已完成', value: 4, count: stats.value[4] || 0, icon: '✅', variant: 'success' as const },
+const statusQuickStats = computed(() => [
+  { label: '生产中', value: 1, count: stats.value[1] || 0, variant: 'info' as const },
+  { label: '待发货', value: 2, count: stats.value[2] || 0, variant: 'warning' as const },
+  { label: '待收货', value: 3, count: stats.value[3] || 0, variant: 'info' as const },
+  { label: '已完成', value: 4, count: stats.value[4] || 0, variant: 'success' as const },
 ]);
 
-// 筛选后数据（前端分页但保留筛选功能，实际分页由后端负责）
 const displayData = computed(() => {
   let list = [...tableData.value];
-  if (selectedStatus.value !== null) {
-    list = list.filter((r: any) => r.status === selectedStatus.value);
-  }
-  if (filterCategory.value !== null) {
-    list = list.filter((r: any) => r.categoryId === filterCategory.value);
-  }
-  if (keyword.value) {
-    const kw = keyword.value.toLowerCase();
-    list = list.filter((r: any) =>
-      (r.orderSn || '').toLowerCase().includes(kw) ||
-      (r.customerName || '').toLowerCase().includes(kw) ||
-      String(r.orderId).includes(kw)
+  if (selectedStatus.value !== null) list = list.filter((row: any) => row.status === selectedStatus.value);
+  if (filterCategory.value !== null) list = list.filter((row: any) => row.categoryId === filterCategory.value);
+  if (keyword.value.trim()) {
+    const kw = keyword.value.trim().toLowerCase();
+    list = list.filter(
+      (row: any) =>
+        (row.orderSn || '').toLowerCase().includes(kw) ||
+        (row.customerName || '').toLowerCase().includes(kw) ||
+        String(row.orderId).includes(kw)
     );
   }
   return list;
 });
-
-const selectStatus = (val: number | null) => {
-  selectedStatus.value = val;
-  pageNum.value = 1;
-};
 
 const columns = [
   { title: '订单号', key: 'orderSn', width: 180, ellipsis: { tooltip: true } },
   {
     title: '品类',
     key: 'categoryId',
-    width: 90,
-    render(row: any) { return categoryMap.value[row.categoryId] || '-'; }
+    width: 96,
+    render(row: any) {
+      return categoryMap.value[row.categoryId] || '-';
+    },
   },
   {
     title: '客户',
     key: 'customerName',
-    width: 80,
-    render(row: any) { return row.customerName || `用户#${row.userId}`; }
+    width: 90,
+    render(row: any) {
+      return row.customerName || `用户#${row.userId}`;
+    },
   },
   {
     title: '设计师',
     key: 'designerId',
-    width: 90,
-    render(row: any) { return adminMap.value[row.designerId] || '-'; }
+    width: 96,
+    render(row: any) {
+      return adminMap.value[row.designerId] || '-';
+    },
   },
   {
     title: '金额',
     key: 'totalAmount',
     width: 90,
     align: 'right' as const,
-    render(row: any) { return row.totalAmount ? `¥${Number(row.totalAmount).toFixed(0)}` : '-'; }
+    render(row: any) {
+      return row.totalAmount ? `¥${Number(row.totalAmount).toFixed(0)}` : '-';
+    },
   },
   {
     title: '状态',
     key: 'status',
-    width: 90,
+    width: 96,
     render(row: any) {
-      const s = STATUS_LIST.find(x => x.value === row.status);
-      return s ? h(StatusBadge, { status: row.status, round: true, size: 'small',
-        map: Object.fromEntries(STATUS_LIST.map(x => [x.value, { label: x.label, type: x.variant === 'default' ? 'default' : x.variant }]))
-      }) : '-';
-    }
+      return h(StatusBadge, {
+        status: row.status,
+        round: true,
+        size: 'small',
+        map: statusBadgeMap,
+      });
+    },
   },
   {
     title: '阻塞',
     key: 'isBlocked',
-    width: 70,
+    width: 78,
     render(row: any) {
-      return row.isBlocked === 1
-        ? h(StatusBadge, { status: 'blocked', round: true, size: 'small',
-            map: { blocked: { label: '已阻塞', type: 'error' } } })
-        : '';
-    }
+      if (row.isBlocked !== 1) return '';
+      return h(StatusBadge, {
+        status: 'blocked',
+        round: true,
+        size: 'small',
+        map: { blocked: { label: '已阻塞', type: 'error' } },
+      });
+    },
   },
-  { title: '交付日期', key: 'expectedDate', width: 110, render: (r: any) => r.expectedDate || '-' },
-  { title: '创建时间', key: 'createTime', width: 150, render: (r: any) => r.createTime ? r.createTime.slice(0, 16) : '-' },
+  {
+    title: '交付日期',
+    key: 'expectedDate',
+    width: 112,
+    render(row: any) {
+      return row.expectedDate || '-';
+    },
+  },
+  {
+    title: '创建时间',
+    key: 'createTime',
+    width: 150,
+    render(row: any) {
+      return row.createTime ? row.createTime.slice(0, 16) : '-';
+    },
+  },
   {
     title: '操作',
     key: 'actions',
-    width: 70,
+    width: 72,
     render(row: any) {
-      return h(NButton, {
-        size: 'tiny', type: 'primary', text: true,
-        onClick: () => router.push(`/order/detail/${row.orderId}`)
-      }, { default: () => '详情' });
-    }
-  }
+      return h(
+        NButton,
+        {
+          size: 'tiny',
+          type: 'primary',
+          text: true,
+          onClick: () => router.push(`/order/detail/${row.orderId}`),
+        },
+        { default: () => '详情' }
+      );
+    },
+  },
 ];
 
-const loadData = async () => {
+function selectStatus(value: number | null) {
+  selectedStatus.value = value;
+  pageNum.value = 1;
+}
+
+async function loadData() {
   loading.value = true;
   try {
     const params: any = { pageNum: pageNum.value, pageSize: pageSize.value };
-    if (filterCategory.value != null) params.categoryId = filterCategory.value;
+    if (filterCategory.value !== null) params.categoryId = filterCategory.value;
     const res: any = await getOrderList(params);
     tableData.value = res.records || [];
     total.value = res.total || 0;
-  } catch (e) { console.error(e); }
-  finally { loading.value = false; }
-};
+  } catch (error) {
+    console.error(error);
+  } finally {
+    loading.value = false;
+  }
+}
 
 onMounted(async () => {
-  loadData();
+  await loadData();
+
   try {
-    const cats = await getCategoryList();
-    categoryOptions.value = cats.map((c: any) => ({ label: c.name, value: c.categoryId }));
-    categoryMap.value = Object.fromEntries(cats.map((c: any) => [c.categoryId, c.name]));
-  } catch (e) { /* ignore */ }
+    const categories = await getCategoryList();
+    categoryOptions.value = categories.map((item: any) => ({ label: item.name, value: item.categoryId }));
+    categoryMap.value = Object.fromEntries(categories.map((item: any) => [item.categoryId, item.name]));
+  } catch (error) {
+    console.error(error);
+  }
+
   try {
     const admins = await getAdminList();
-    adminMap.value = Object.fromEntries(admins.map((a: any) => [a.adminId, a.nickname || a.username]));
-  } catch (e) { /* ignore */ }
+    adminMap.value = Object.fromEntries(admins.map((item: any) => [item.adminId, item.nickname || item.username]));
+  } catch (error) {
+    console.error(error);
+  }
 });
 </script>
 
@@ -281,18 +339,91 @@ onMounted(async () => {
   gap: 12px;
 }
 
-.stat-cards {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
+.status-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
-.directory-card :deep(.n-card__content) { padding: 0; }
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  background: var(--panel-bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.status-pill:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.status-pill--active {
+  border-color: var(--primary-color);
+  background: var(--primary-bg);
+  color: var(--primary-color);
+  box-shadow: inset 0 0 0 1px rgba(72, 115, 255, 0.06);
+}
+
+.status-pill__label {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.status-pill__value {
+  min-width: 24px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--border-light);
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.status-pill--active .status-pill__value {
+  background: rgba(72, 115, 255, 0.12);
+  color: var(--primary-color);
+}
+
+.status-pill--success.status-pill--active {
+  border-color: var(--status-success-text);
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
+}
+
+.status-pill--warning.status-pill--active {
+  border-color: var(--status-warning-text);
+  background: var(--status-warning-bg);
+  color: var(--status-warning-text);
+}
+
+.status-pill--info.status-pill--active {
+  border-color: var(--status-info-text);
+  background: var(--status-info-bg);
+  color: var(--status-info-text);
+}
+
+.status-pill--success.status-pill--active .status-pill__value,
+.status-pill--warning.status-pill--active .status-pill__value,
+.status-pill--info.status-pill--active .status-pill__value {
+  background: rgba(255, 255, 255, 0.72);
+  color: inherit;
+}
+
+.directory-card :deep(.n-card__content) {
+  padding: 0;
+}
 
 .directory-layout {
   display: flex;
-  height: calc(100vh - 260px);
-  min-height: 400px;
+  height: calc(100vh - 230px);
+  min-height: 420px;
 }
 
 .directory-tree {
@@ -303,57 +434,69 @@ onMounted(async () => {
 }
 
 .tree-header {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
   padding: 12px 16px 8px;
   border-bottom: 1px solid var(--border-light);
+  color: var(--text-tertiary);
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
-.tree-items { padding: 8px 0; }
+.tree-items {
+  padding: 8px 0;
+}
 
 .tree-item {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  font-size: 13px;
   color: var(--text-secondary);
+  font-size: 13px;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background 0.15s ease;
 }
-.tree-item:hover { background: var(--row-selected-bg); }
+
+.tree-item:hover {
+  background: var(--row-selected-bg);
+}
+
 .tree-item--active {
+  border-left: 3px solid var(--primary-color);
   background: var(--row-selected-bg);
   color: var(--primary-color);
   font-weight: 600;
-  border-left: 3px solid var(--primary-color);
 }
+
 .tree-item__dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
+
 .tree-item__count {
-  font-size: 11px;
-  color: var(--text-placeholder);
-  background: var(--border-light);
+  margin-left: auto;
   padding: 1px 6px;
   border-radius: 8px;
-  margin-left: auto;
+  background: var(--border-light);
+  color: var(--text-placeholder);
+  font-size: 11px;
 }
-.tree-item--active .tree-item__count { background: var(--primary-bg); color: var(--primary-color); }
+
+.tree-item--active .tree-item__count {
+  background: var(--primary-bg);
+  color: var(--primary-color);
+}
 
 .directory-main {
   flex: 1;
   display: flex;
   flex-direction: column;
+  gap: 12px;
   overflow: hidden;
   padding: 14px 16px;
-  gap: 12px;
 }
 
 .compact-filter {
@@ -367,5 +510,42 @@ onMounted(async () => {
   justify-content: flex-end;
   padding-top: 8px;
   border-top: 1px solid var(--border-light);
+}
+
+@media (max-width: 1024px) {
+  .directory-layout {
+    flex-direction: column;
+    height: auto;
+  }
+
+  .directory-tree {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .tree-items {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px;
+  }
+
+  .tree-item {
+    padding: 8px 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 999px;
+    background: var(--panel-bg);
+  }
+
+  .tree-item--active {
+    border-left-width: 1px;
+  }
+}
+
+@media (max-width: 768px) {
+  .compact-filter {
+    flex-wrap: wrap;
+  }
 }
 </style>

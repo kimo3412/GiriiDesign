@@ -1,10 +1,18 @@
 <template>
   <div class="admin-page">
-    <!-- 顶部统计 -->
-    <div class="stat-cards">
-      <BusinessMetricCard label="全部用户" :value="stats.total" icon="📋" variant="primary" />
-      <BusinessMetricCard label="正常" :value="stats.active" icon="✅" variant="success" />
-      <BusinessMetricCard label="已禁用" :value="stats.inactive" icon="🚫" variant="error" />
+    <div class="page-summary">
+      <span class="page-summary__item">
+        <span class="page-summary__label">全部用户</span>
+        <span class="page-summary__value">{{ stats.total }}</span>
+      </span>
+      <span class="page-summary__item">
+        <span class="page-summary__label">正常</span>
+        <span class="page-summary__value">{{ stats.active }}</span>
+      </span>
+      <span class="page-summary__item">
+        <span class="page-summary__label">已禁用</span>
+        <span class="page-summary__value">{{ stats.inactive }}</span>
+      </span>
     </div>
 
     <n-card :bordered="false" class="directory-card">
@@ -132,7 +140,6 @@ import { ref, computed, onMounted, h } from 'vue';
 import { NButton, NTag, NSpace, NIcon, NDivider } from 'naive-ui';
 import { Search } from '@vicons/ionicons5';
 import { useMessage, useDialog } from 'naive-ui';
-import { BusinessMetricCard } from '@/components/Business';
 import { getAdminList, getAdminDetail, addAdmin, updateAdmin, deleteAdmin, batchDeleteAdmins, updateDesignerCategories, type AdminSaveDTO } from '@/api/system/adminList';
 import { getRoleList } from '@/api/system/roleList';
 import { getCategoryList } from '@/api/config/category';
@@ -350,11 +357,33 @@ const handleSubmit = () => {
   gap: 12px;
 }
 
-.stat-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+.page-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
 }
+
+.page-summary__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border-light);
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.page-summary__label {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+.page-summary__value {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
 
 .directory-card :deep(.n-card__content) { padding: 0; }
 

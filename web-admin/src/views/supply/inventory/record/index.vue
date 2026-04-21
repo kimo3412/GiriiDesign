@@ -200,9 +200,13 @@ onMounted(loadData);
 }
 
 .stat-cards {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.stat-cards :deep(.metric-card) {
+  flex: 0 1 180px;
 }
 
 .directory-card :deep(.n-card__content) { padding: 0; }
