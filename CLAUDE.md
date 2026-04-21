@@ -4,15 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-这是一个面向独立设计师工作室的毕业设计项目，定位为"低代码生产管理平台"，解决非标定制、强沟通、长周期生产协同问题。
+这是一个面向独立设计师工作室的毕业设计项目，定位为“低代码生产流程管理平台”，用于解决非标定制、强沟通、长周期交付场景下的协同问题。
 
 - 后端：Spring Boot 3.4.3 + Java 17 + MyBatis-Plus + Redis + MySQL 8.0+
-- 管理后台：Vue 3 + TypeScript + Naive UI + Vite（基于 naive-ui-admin 二次开发）
+- 管理后台：Vue 3 + TypeScript + Naive UI + Vite
 - 微信小程序：Uni-app + Vue 3 + Pinia
 - 仓库结构：
-  - `Code/` 后端（Spring Boot）
-  - `web-admin/` 管理后台（Vue 3）
-  - `mini-app/` 微信小程序（Uni-app）
+  - `Code/`：后端
+  - `web-admin/`：管理后台
+  - `mini-app/`：微信小程序
 
 ## 常用命令
 
@@ -25,10 +25,11 @@ cd Code
 ./mvnw test
 ```
 
-若 `spring-boot:run` 找不到配置：
+快速编译校验：
 
 ```bash
-./mvnw spring-boot:run -Dspring-boot.run.arguments=--spring.config.location=file:src/main/resources/application.yml
+cd Code
+mvn -q -DskipTests compile
 ```
 
 ### 管理后台
@@ -59,40 +60,104 @@ npm run build:mp-weixin
 | 小程序 H5 调试 | 5173 | 仅 H5 调试场景 |
 
 - 管理后台代理：`/api` -> `http://localhost:8081/api`
-- 小程序请求基址：`mini-app/utils/request.js`
+- 小程序请求基地址：`mini-app/utils/request.js`
 - WebSocket：`ws://localhost:8081/ws/chat`
+
+## 当前真实状态
+
+以下内容是当前仓库和本地数据库已经落地过的状态，不要再按旧计划文档假设它们“尚未开发”。
+
+### 已完成或基本完成
+
+1. 管理后台核心列表页已完成分页接入
+   - 订单、意向、物料、BOM、作品集等都已按分页接口改造
+2. 小程序订单流程已做“仅展示当前及后续步骤”的简化
+3. 首页轮播图已数据库化
+   - 后端有 `ds_banner`
+   - 后台已有轮播图管理页
+   - 小程序首页已对接
+4. 上传静态资源访问已接通
+   - `/uploads/**` 由静态资源映射处理
+5. 聊天断线重连已落地
+6. AI 客服已接入聊天链路
+   - 客户消息可触发 AI 回复
+   - AI 回复会写入聊天消息
+   - AI 回复同时可推送到客户端和后台聊天端
+7. AI 客服已支持后台配置
+   - 后端有 `ds_ai_config`
+   - 后台页面路径：`/config/ai`
+   - 读取顺序：数据库优先，`application.yml` 兜底
+8. 通知系统已落地到小程序端
+   - 后端有 `ds_notification`
+   - 小程序有通知中心、未读数、单条已读、全部已读
+9. 多角色菜单和基础角色体系已扩展
+   - 已包含 `admin`、`designer`、`storekeeper`、`purchaser`、`finance`、`customer_service`
+10. 客户管理、库存管理、库存记录后台页已补齐，避免空白页
+
+### 已完成但仍需人工联调确认
+
+1. 角色隔离
+   - 菜单级隔离已做
+   - 后端接口级隔离已按模块和角色拆分
+   - 设计师看板/工作台/订单详情已限制为只看自己负责的订单
+2. AI 客服
+   - 代码链路已通
+   - 仍需配置真实 `apiUrl / apiKey / model / systemPrompt` 后再做最终验证
+3. 通知系统
+   - 当前只面向小程序端，不拆 web-admin 通知中心
+   - 需要人工验证通知触发点链路
+
+### 仍属后续规划
+
+1. SaaS 多租户隔离
+2. 聊天与订单强绑定协同
+3. 更完整的库存与 BOM 深度联动
+4. 更细致的前端体验抛光和统一视觉体系
 
 ## 测试方法
 
-### Chrome DevTools MCP
+### 快速回归
 
-使用 Chrome DevTools MCP 进行前端页面测试：
+后端：
 
 ```bash
-# 启动管理后台后，在 Claude Code 中使用以下工具测试
-mcp__chrome-devtools__navigate_page   # 打开页面
-mcp__chrome-devtools__take_snapshot   # 获取页面快照
-mcp__chrome-devtools__take_screenshot # 截图
-mcp__chrome-devtools__click          # 点击元素
-mcp__chrome-devtools__fill_form       # 填写表单
-mcp__chrome-devtools__evaluate_script # 执行 JS 检查状态
-mcp__chrome-devtools__list_network_requests  # 查看网络请求
-mcp__chrome-devtools__list_console_messages # 查看控制台错误
+cd Code
+mvn -q -DskipTests compile
 ```
 
-测试步骤：
-1. 先启动后端 `cd Code && ./mvnw spring-boot:run`
-2. 再启动管理后台 `cd web-admin && pnpm run dev`
-3. 用 `mcp__chrome-devtools__navigate_page` 打开 `http://localhost:3100`
-4. 登录后（admin / admin123）可测试各功能页面
-5. 用 `list_network_requests` 验证 API 调用是否正常
-6. 用 `list_console_messages` 检查前端错误
-
-### 小程序 H5 调试
+管理后台：
 
 ```bash
-cd mini-app && npm run dev:h5
-# 打开 http://localhost:5173 用 Chrome DevTools 测试
+cd web-admin
+pnpm run build
+```
+
+优先验证页面：
+
+- 意向池
+- 订单工作台
+- 订单详情
+- 聊天页
+- AI 配置页
+- 客户列表
+- 库存管理
+
+### 项目专用测试 Skill
+
+仓库内已新增全流程测试 skill：
+
+- `/.Codex/skills/girii-full-flow-test/SKILL.md`
+
+用途：
+
+- 后端 + `web-admin` 发版前回归
+- 角色权限隔离检查
+- AI 配置、聊天、通知等高风险链路检查
+
+建议直接使用：
+
+```text
+请使用 $girii-full-flow-test，对当前仓库做一轮完整回归测试，并输出：已验证项、发现的问题、未覆盖风险。
 ```
 
 ## 后端架构
@@ -101,87 +166,92 @@ cd mini-app && npm run dev:h5
 
 | 包 | 说明 |
 | :--- | :--- |
-| `common/` | 安全（JWT/Redis）、异常、OSS上传、统一返回（R）、MyBatis-Plus配置 |
-| `system/` | 后台 RBAC：管理员、角色、菜单、字典、操作日志 |
-| `config/` | 品类（ds_category）、动态字段（ds_custom_field）、工作流（ds_workflow + ds_workflow_step） |
-| `order/` | 意向单（ds_order_request）、订单（ds_order）、进度（ds_order_progress）、BOM、库存扣减 |
-| `customer/` | C 端用户（ds_user）、微信登录、地址管理 |
-| `chat/` | WebSocket 聊天（ChatWebSocketHandler、SessionManager） |
-| `portfolio/` | 作品集（后台+C端） |
-| `supply/` | 物料（ds_material，含库存）、BOM模板（ds_bom_template）、库存管理 |
-| `statistics/` | 经营看板与统计接口 |
-
-### 核心业务服务（集中在 service/impl）
-
-- `OrderServiceImpl` — 订单状态机、进度推进、BOM生成
-- `WorkflowServiceImpl` — 工作流解析、节点流转
-- `RequestServiceImpl` — 意向单管理
-- `StatisticsServiceImpl` — 看板统计
+| `common/` | JWT、Redis、统一返回、异常处理、静态资源映射、WebSocket、MyBatis-Plus 配置 |
+| `system/` | 后台 RBAC：管理员、角色、菜单、字典、日志 |
+| `config/` | 品类、动态字段、工作流、轮播图、AI 配置 |
+| `order/` | 意向单、订单、进度、工作台、BOM |
+| `customer/` | C 端用户、地址、后台客户管理 |
+| `chat/` | WebSocket 聊天、消息记录 |
+| `portfolio/` | 作品集 |
+| `supply/` | 物料、BOM 模板、库存 |
+| `statistics/` | 看板与统计接口 |
 
 ### 核心机制
 
-- **JWT 鉴权**：Token 存 Redis，7天过期，支持黑名单；Header：`Authorization: Bearer {token}`
-- **统一返回**：`R<T>` 封装，错误码 5位数字格式（XXYYY）
-- **乐观锁**：`ds_order` 和 `ds_material` 使用 `@Version` 字段
-- **逻辑删除**：MyBatis-Plus 全局配置 `del_flag` 字段
-- **动态表单引擎**：EAV 模式，品类 -> `ds_custom_field` 生成表单 Schema
-- **工作流状态机**：`ds_workflow_step` 按 `step_order` 排序，节点流转不可跳跃
-- **API 文档**：SpringDoc OpenAPI，访问 `/swagger-ui.html`
+- JWT 鉴权：Token 存 Redis，支持黑名单
+- 统一返回：`R<T>`
+- 乐观锁：`ds_order`、`ds_material`
+- 逻辑删除：`del_flag`
+- 动态表单：品类 -> `ds_custom_field`
+- 工作流状态机：`ds_workflow_step`
+- OpenAPI：`/swagger-ui.html`
 
-### 数据库
+## 数据库
 
-- 数据库名：`design_studio`（MySQL 8.0+）
-- 初始化脚本：`Code/sql/init_schema.sql`（29 张表）
+- 数据库名：`design_studio`
+- 初始化脚本：`Code/sql/init_schema.sql`
 - 测试数据：`Code/sql/test_data.sql`
-- **测试账号**：admin / admin123（BCrypt）
-- **默认角色**：admin（全权限）、designer（订单/意向/作品集权限）
-- **库存相关**：ds_material（物料表，含库存数量）、ds_bom_template（BOM模板）、ds_order_bom（订单BOM明细）
-- **轮播图**：需新建 `ds_banner` 表存储小程序首页轮播图
+- 默认测试账号：
+  - `admin / admin123`
+  - `designer1 / admin123`
+  - `designer2 / admin123`
+
+### 当前已确认存在的关键表
+
+- `ds_banner`
+- `ds_notification`
+- `ds_ai_config`
+- `ds_order`
+- `ds_chat_message`
+- `sys_role`
+- `sys_menu`
+- `sys_role_menu`
+
+### 当前已确认存在的关键菜单
+
+- `/config/banner`
+- `/config/ai`
+- `/chat/index`
+- `/customer/list`
+- `/customer/address`
+- `/supply/inventory`
+- `/supply/inventory/record`
 
 ## 前端架构
 
-### 管理后台（web-admin/）
+### 管理后台（`web-admin/`）
 
-基于 `naive-ui-admin` 二次开发。
+- 基于 `naive-ui-admin` 二次开发
+- 路径别名：`@/` -> `src/`，`#/` -> `types/`
+- 请求层：使用 `alova`
+- 动态路由：由后端菜单驱动，入口在 `src/router/generator.ts`
 
-- 路径别名：`@/` -> `src/`、`#/` -> `types/`
-- 请求层：使用 **alova**（非 axios），封装在 `src/utils/http/alova/`
-- 路由模式：后端动态菜单驱动（`GET /v1/admin/menus` -> `router/generator.ts`）
+当前重点页面：
 
-关键目录：
+- `src/views/request/list/index.vue`
+- `src/views/order/workbench/index.vue`
+- `src/views/order/detail/index.vue`
+- `src/views/chat/index.vue`
+- `src/views/config/ai/index.vue`
+- `src/views/config/banner/index.vue`
+- `src/views/customer/list/index.vue`
+- `src/views/supply/inventory/index.vue`
 
-| 目录 | 说明 |
-| :--- | :--- |
-| `src/api/` | 按业务域拆分的 API 定义 |
-| `src/views/` | 页面视图：config/（品类/字段/工作流）、order/（看板/列表/详情/工作台）、request/、statistics/、supply/、system/ |
-| `src/store/` | Pinia：asyncRoute（动态路由）、user、tabsView |
-| `src/router/` | 动态路由生成（`generator.ts`） |
-| `src/components/` | 通用组件：Form（动态表单）、Table、Modal、Upload |
+### 微信小程序（`mini-app/`）
 
-核心页面：
+当前重点页面：
 
-- `src/views/order/workbench/index.vue` — 节点工作台（save/advance/rollback/block/unblock）
-- `src/views/order/kanban/index.vue` — 看板视图
-- `src/views/config/workflow/index.vue` — 工作流节点配置
-
-### 微信小程序（mini-app/）
-
-关键页面：
-
-| 页面 | 路径 | 说明 |
-| :--- | :--- | :--- |
-| 登录 | `pages/login/` | 微信登录 + mock 登录 |
-| 首页 | `pages/index/` | Banner + 作品集瀑布流 |
-| 定制表单 | `pages/custom/` | 动态字段表单提交 |
-| 订单列表/详情 | `pages/order/` | 状态、时间线、支付 |
-| 聊天 | `pages/chat/` | WebSocket 沟通 |
-| 用户中心 | `pages/user/` | 个人资料、地址 |
+- `pages/index/`
+- `pages/order/`
+- `pages/chat/`
+- `pages/user/notification/`
+- `pages/user/`
 
 ## API 路由规范
 
-- 所有接口统一前缀：`/api/v1/`
-- 后台管理接口：`/api/v1/admin/...`
-- C 端接口：`/api/v1/app/...`（如 `/api/v1/app/orders/my`）
+- 统一前缀：`/api/v1/`
+- 后台接口：`/api/v1/admin/...`
+- C 端接口：`/api/v1/app/...`
 - 开放接口：`/api/v1/auth/**`、`/api/v1/app/auth/**`、`/api/v1/portfolios/**`、`/ws/**`、`/uploads/**`
 
 ## 订单状态与工作流
@@ -190,7 +260,7 @@ cd mini-app && npm run dev:h5
 
 | 值 | 含义 |
 | :--- | :--- |
-| 0 | 待支付（预付款） |
+| 0 | 待支付预付款 |
 | 1 | 生产中 |
 | 2 | 待发货 |
 | 3 | 待收货 |
@@ -198,74 +268,107 @@ cd mini-app && npm run dev:h5
 | 5 | 已取消 |
 | 6 | 待付尾款 |
 
-### 工作流节点动作
+### 工作流动作
 
 | 动作 | 说明 |
 | :--- | :--- |
-| `save` | 保存进度记录（不推进） |
+| `save` | 保存进度，不推进 |
 | `advance` | 推进到下一节点 |
-| `rollback` | 退回任意前序节点 |
-| `block` | 阻塞（需填写原因） |
+| `rollback` | 回退到前序节点 |
+| `block` | 阻塞并记录原因 |
 | `unblock` | 解除阻塞 |
-
-### ds_workflow_step 关键字段
-
-- `node_description` — 节点描述
-- `allowed_actions` — 允许的动作（JSON 数组）
-- `need_image_upload` — 是否必须上传图片
-- `visible_to_client` — 客户是否可见
-- `expected_duration_days` — 预计天数
-- `node_form_fields` — 该节点需要填写的字段（JSON 数组）
 
 ## 角色体系
 
-系统面向**大型工作室**，需要支持多角色：
+当前系统已支持以下角色：
 
-| 角色 | 权限范围 |
+| 角色 | 说明 |
 | :--- | :--- |
-| admin | 全权限 |
-| designer | 订单/意向/作品集 |
-| 库管 | 物料管理、库存查看 |
-| 采购 | 物料采购、库存管理 |
-| 财务 | 订单收款、统计报表 |
-| 客服 | 客户沟通、聊天管理 |
-| ... | 可扩展 |
+| `admin` | 全权限 |
+| `designer` | 订单、意向、作品、工作台、聊天；仅能查看自己负责订单的核心看板与详情 |
+| `storekeeper` | 物料与库存相关 |
+| `purchaser` | 采购与库存相关 |
+| `finance` | 订单查看、统计、财务相关 |
+| `customer_service` | 客户管理、聊天、沟通相关 |
 
-### 库存与 BOM 联动
+注意：
 
-- BOM 物料消耗与库存联动
-- 订单完成生产时自动扣减对应物料库存
-- 库存不足时提示采购
+- 当前数据库里角色和菜单关系已存在，但不保证每种角色都已有实际后台账号。
+- 做权限验证时，不能只看菜单，还要验证接口写操作是否被正确拦截。
 
-## 功能优先级
+## AI 客服与通知
 
-### P0 — 核心流程（优先完成）
+### AI 客服
 
-1. **管理功能分页** — 所有列表页面（订单/物料/用户等）加上分页
-2. **用户端流程精简** — 仅展示当前及后续步骤，避免信息过载
-3. **预付款模拟页面完善** — 已有 pay/confirm 接口，流程页面打磨
-4. **图片防盗链修复** — `/uploads/**` 无法直接访问，需修复
+- 默认支持 OpenAI 兼容接口风格
+- 不绑定单一厂商
+- 当前通过后台 AI 配置页管理
+- 配置项包括：
+  - `enabled`
+  - `provider`
+  - `apiUrl`
+  - `apiKey`
+  - `model`
+  - `systemPrompt`
 
-### P1 — 体验优化（次优先）
+### 通知系统
 
-5. **小程序首页轮播图数据库化** — 从数据库读取，支持后台配置
-6. **WebSocket 断线重连** — 聊天页面断线重连机制未实现
-7. **完整履约状态机** — 完成确认流程、延期原因、状态流转约束
-8. **多角色权限体系** — 完善角色配置、权限分配菜单
+- 当前通知系统主要服务小程序端
+- 不额外拆 web-admin 通知中心
+- 触发点集中在订单支付、进度推进、阻塞/解除阻塞、生产完成等节点
 
-### P2 — 架构扩展（后续规划）
+## 小程序双源码结构
 
-9. **BOM 与库存联动** — 完成生产扣减库存
-10. **SaaS 多租户数据隔离** — 工作室维度数据隔离
-11. **智能客服接入** — 接入第三方 API 应对客服人力不足
-12. **工作提醒与通知功能**
-13. **聊天与订单强绑定协同**
+`mini-app/` 有两套页面源码，编译时 `pages.json` 引用的是 `pages/` 目录：
+
+| 目录 | 用途 |
+| :--- | :--- |
+| `src/pages/` | 开发源码（我们在哪里改代码） |
+| `pages/` | 编译输出（`pages.json` 实际引用） |
+
+**每次修改小程序页面后，必须同步到 `pages/` 并重新编译：**
+```bash
+# 手动同步后重新编译
+cp src/pages/user/index.vue pages/user/index.vue
+npm run dev:mp-weixin
+# 编译后需重新导入 dist/build/mp-weixin 到微信开发者工具
+```
 
 ## 开发注意事项
 
-1. 仓库里存在部分历史中文乱码，修改文档和页面时优先直接修正，不要继续复制乱码文本。
-2. 涉及数据库结构判断时，优先读真实 MySQL，不要只信 SQL 文件。
-3. 小程序构建可用，但验证页面变化时要重新编译并重新导入 `dist/build/mp-weixin`。
-4. `/uploads/**` 当前是否能直接访问，取决于后端静态资源映射是否已接通；上传成功不等于可直接访问（防盗链问题待解决）。
-5. 工作台和小程序时间线是当前项目最重要的展示亮点，后续增强尽量围绕这条主线继续做深。
-6. WebSocket 聊天页面的断线重连机制尚未实现。
+1. 仓库里历史上存在乱码文档；修改文档时优先直接修正为正常中文，不要继续复制乱码。
+2. 需要判断数据库真实结构时，优先读真实 MySQL，不要只依赖 SQL 文件。
+3. 涉及小程序页面变更时，要重新编译并重新导入 `dist/build/mp-weixin`。
+4. 权限相关改动必须同时检查：`sys_menu`、`sys_role_menu`、后端接口拦截、前端菜单/按钮显隐。
+5. 设计师视角的工作台和看板应始终是”自己负责的内容”，不是全局数据。
+6. AI 功能是否真正生效，取决于后台配置是否已填入真实可用的模型参数。
+7. 当前通知默认只验证小程序端，不要在未明确需求时扩展成 web-admin 通知中心。
+
+## 关键链路
+
+### AI 客服自动回复
+```
+客户端发消息 → ChatWebSocketHandler.handleTextMessage()
+  → 持久化客户消息 → broadcastToAdmins()
+  → 判断 aiCustomerService.isEnabled() && “client”.equals(userType)
+  → 异步 CompletableFuture.runAsync() → getRecentMessages(10)
+  → aiCustomerService.getResponse(userId, messages)
+  → 持久化 AI 消息 (senderType=2) → sessionManager.sendTo(clientKey, pushJson)
+```
+- 开启：后台 AI 配置页填入真实 `apiUrl / apiKey / model`，`enabled=true`
+- 配置读取：数据库 `ds_ai_config` 优先，`application.yml` 兜底
+
+### 通知触发点
+```
+OrderServiceImpl:
+  payOrder() → 支付成功后 → notificationService.sendToUser(..., “payment”)
+  advance() → 节点推进后 → notificationService.sendToUser(..., “workbench”)
+  block() / unblock() → 阻塞/解除后 → notificationService.sendToUser(..., “order_status”)
+  finishOrder() → 生产完毕后 → notificationService.sendToUser(..., “order_status”)
+```
+
+### 小程序通知中心
+- API: `GET /api/v1/app/notifications`、`GET /api/v1/app/notifications/unread-count`
+- `PUT /api/v1/app/notifications/{id}/read`、`PUT /api/v1/app/notifications/read-all`
+- 页面：`src/pages/user/notification/index.vue`
+- 入口：用户中心显示未读红色 badge（超过99显示”99+”）

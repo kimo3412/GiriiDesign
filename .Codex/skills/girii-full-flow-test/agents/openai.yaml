@@ -1,0 +1,4 @@
+interface:
+  display_name: "Girii Full Flow Test"
+  short_description: "Verify GiriiDesign backend and web-admin flows."
+  default_prompt: "Use $girii-full-flow-test to verify the GiriiDesign backend and web-admin flows before release."
