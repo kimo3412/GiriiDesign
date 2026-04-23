@@ -1,77 +1,104 @@
 <template>
   <div class="chat-page">
     <div class="chat-layout">
-      <!-- 左侧：会话列表 -->
-      <div class="panel-left">
-        <div class="panel-header">
-          <span class="panel-title">消息</span>
-          <n-badge :value="totalUnread" :max="99" v-if="totalUnread > 0" />
+      <aside class="panel-left">
+        <div class="panel-left__head">
+          <div>
+            <div class="panel-eyebrow">在线沟通</div>
+            <div class="panel-title">会话列表</div>
+          </div>
+          <n-badge v-if="totalUnread > 0" :value="totalUnread" :max="99" />
         </div>
-        <n-input
-          v-model:value="searchText"
-          placeholder="搜索订单号..."
-          clearable
-          size="small"
-          style="margin: 0 12px 12px"
-        />
+
+        <div class="panel-left__stats">
+          <div class="summary-pill">
+            <span class="summary-pill__label">会话</span>
+            <strong>{{ conversations.length }}</strong>
+          </div>
+          <div class="summary-pill">
+            <span class="summary-pill__label">未读</span>
+            <strong>{{ totalUnread }}</strong>
+          </div>
+        </div>
+
+        <div class="panel-left__search">
+          <n-input
+            v-model:value="searchText"
+            placeholder="搜索订单号 / 客户"
+            clearable
+            size="small"
+          >
+            <template #prefix>🔍</template>
+          </n-input>
+        </div>
+
         <div class="conv-scroll">
-          <div
+          <button
             v-for="conv in filteredConversations"
-            :key="(conv.userId) + '_' + (conv.orderId || 'general')"
+            :key="`${conv.userId}_${conv.orderId || 'general'}`"
             class="conv-item"
             :class="{ active: activeUserId === conv.userId && activeOrderId == conv.orderId }"
+            type="button"
             @click="selectConversation(conv)"
           >
             <div class="conv-avatar">
-              <n-avatar round size="medium" :src="conv.avatar" v-if="conv.avatar" />
-              <div v-else class="text-avatar">{{ String(conv.nickname || conv.username || conv.userId).slice(0, 1) }}</div>
+              <n-avatar v-if="conv.avatar" round size="medium" :src="conv.avatar" />
+              <div v-else class="text-avatar">
+                {{ String(conv.nickname || conv.username || conv.userId).slice(0, 1) }}
+              </div>
             </div>
+
             <div class="conv-info">
               <div class="conv-top">
-                <span class="conv-name">
-                  {{ conv.nickname || conv.username || `用户#${conv.userId}` }}
-                  <span v-if="conv.orderSn" class="conv-order-tag">{{ conv.orderSn }}</span>
-                  <span v-else class="conv-order-tag conv-order-general">一般咨询</span>
-                </span>
-                <span class="conv-time-text">{{ formatTime(conv.lastTime) }}</span>
+                <span class="conv-name">{{
+                  conv.nickname || conv.username || `用户#${conv.userId}`
+                }}</span>
+                <span class="conv-time">{{ formatTime(conv.lastTime) }}</span>
               </div>
-              <div class="conv-bottom">
-                <span class="conv-last">{{ conv.lastContent || '暂无消息' }}</span>
-                <n-badge :value="conv.unreadCount" :max="99" v-if="conv.unreadCount > 0" />
+              <div class="conv-middle">
+                <span v-if="conv.orderSn" class="conv-tag">{{ conv.orderSn }}</span>
+                <span v-else class="conv-tag conv-tag--general">普通咨询</span>
+                <n-badge v-if="conv.unreadCount > 0" :value="conv.unreadCount" :max="99" />
               </div>
+              <div class="conv-last">{{ conv.lastContent || '暂无消息' }}</div>
+            </div>
+          </button>
+
+          <div v-if="filteredConversations.length === 0" class="conv-empty">暂无会话</div>
+        </div>
+      </aside>
+
+      <main class="panel-center" v-if="activeUserId">
+        <div class="chat-header">
+          <div class="chat-header__main">
+            <div class="chat-header__title">
+              <strong>{{ activeUserName }}</strong>
+              <span class="chat-header__status" :class="{ online: wsConnected }">
+                {{ wsConnected ? '在线' : '离线' }}
+              </span>
+            </div>
+            <div class="chat-header__meta">
+              <span v-if="activeOrderSn" class="header-pill">{{ activeOrderSn }}</span>
+              <span v-else class="header-pill header-pill--muted">普通咨询</span>
             </div>
           </div>
-          <div v-if="filteredConversations.length === 0" class="conv-empty">
-            暂无会话
-          </div>
-        </div>
-      </div>
 
-      <!-- 中间：聊天区 -->
-      <div class="panel-center" v-if="activeUserId">
-        <div class="chat-header">
-          <div class="chat-header-left">
-            <span class="chat-title">{{ activeUserName }}</span>
-            <n-tag v-if="activeOrderSn" size="small" type="info" round>{{ activeOrderSn }}</n-tag>
-            <n-tag v-else size="small" round>一般咨询</n-tag>
-            <n-tag size="tiny" :type="wsConnected ? 'success' : 'default'" round>
-              {{ wsConnected ? '在线' : '离线' }}
-            </n-tag>
-          </div>
-          <n-button size="small" text @click="showOrderPanel = !showOrderPanel">
-            {{ showOrderPanel ? '收起档案' : '客户档案 →' }}
+          <n-button size="small" quaternary @click="showOrderPanel = !showOrderPanel">
+            {{ showOrderPanel ? '收起档案' : '展开档案' }}
           </n-button>
         </div>
 
         <div class="chat-messages" ref="messagesRef">
           <div v-if="messages.length === 0" class="msg-empty">
-            <span>📨</span>
-            <span>暂无消息，开始沟通吧</span>
+            <div class="msg-empty__icon">💬</div>
+            <div class="msg-empty__text">暂无消息，开始沟通吧</div>
           </div>
+
           <div
             v-for="(msg, idx) in messages"
             :key="msg.messageId || idx"
-            :class="['msg-row', isAdminMsg(msg) ? 'is-admin' : 'is-client']"
+            class="msg-row"
+            :class="isAdminMsg(msg) ? 'is-admin' : 'is-client'"
           >
             <div class="msg-avatar">
               {{ isAdminMsg(msg) ? '管' : '客' }}
@@ -82,7 +109,7 @@
                   v-if="isImageMsg(msg)"
                   :src="msg.content"
                   width="200"
-                  style="border-radius: 6px"
+                  style="border-radius: 10px"
                   preview-disabled
                 />
                 <span v-else class="msg-content">{{ msg.content }}</span>
@@ -97,637 +124,904 @@
             v-model:value="inputText"
             type="textarea"
             :autosize="{ minRows: 1, maxRows: 4 }"
-            placeholder="输入消息，Enter 发送..."
+            placeholder="输入消息，Enter 发送"
             @keydown.enter.exact.prevent="sendText"
           />
-          <n-button type="primary" @click="sendText" :disabled="!inputText.trim()">
-            发送
-          </n-button>
+          <n-button type="primary" @click="sendText" :disabled="!inputText.trim()">发送</n-button>
         </div>
-      </div>
+      </main>
 
-      <!-- 未选择 -->
-      <div class="panel-center panel-placeholder" v-else>
+      <main v-else class="panel-center panel-placeholder">
         <div class="placeholder-content">
-          <span class="placeholder-icon">💬</span>
-          <span class="placeholder-text">选择一个会话开始沟通</span>
+          <div class="placeholder-icon">💬</div>
+          <div class="placeholder-title">选择一个会话开始沟通</div>
+          <div class="placeholder-desc">左侧会话支持按订单号和客户名搜索</div>
         </div>
-      </div>
+      </main>
 
-      <!-- 右侧：客户档案面板 -->
       <transition name="slide-right">
-        <div class="panel-right" v-if="activeUserId && showOrderPanel">
-          <div class="panel-header">
-            <span class="panel-title">客户档案</span>
+        <aside class="panel-right" v-if="activeUserId && showOrderPanel">
+          <div class="panel-right__head">
+            <div>
+              <div class="panel-eyebrow">客户档案</div>
+              <div class="panel-title">业务摘要</div>
+            </div>
             <n-button size="tiny" text @click="showOrderPanel = false">✕</n-button>
           </div>
-          <div class="order-detail-scroll" v-if="userSummary">
-            
-            <div class="summary-block" v-if="userSummary.requests?.length > 0">
-              <div class="summary-title">近期意向</div>
-              <div class="summary-card" v-for="req in userSummary.requests" :key="req.requestId">
+
+          <div v-if="userSummary" class="order-detail-scroll">
+            <div class="summary-overview">
+              <div class="summary-pill">
+                <span class="summary-pill__label">历史订单</span>
+                <strong>{{ orderCount }}</strong>
+              </div>
+              <div class="summary-pill">
+                <span class="summary-pill__label">近期意向</span>
+                <strong>{{ requestCount }}</strong>
+              </div>
+            </div>
+
+            <div v-if="requestCount || orderCount" class="summary-tabs">
+              <button
+                type="button"
+                class="summary-tab"
+                :class="{ active: archiveTab === 'orders' }"
+                @click="archiveTab = 'orders'"
+              >
+                历史订单
+              </button>
+              <button
+                type="button"
+                class="summary-tab"
+                :class="{ active: archiveTab === 'requests' }"
+                @click="archiveTab = 'requests'"
+              >
+                近期意向
+              </button>
+            </div>
+
+            <div v-if="archiveTab === 'requests' && requestCount" class="summary-section">
+              <div class="summary-section__title">
+                <span>近期意向</span>
+                <button
+                  v-if="requestCount > summaryPreviewCount"
+                  type="button"
+                  class="summary-link"
+                  @click="showAllRequests = !showAllRequests"
+                >
+                  {{ showAllRequests ? '收起' : '展开全部' }}
+                </button>
+              </div>
+              <div v-for="req in visibleRequests" :key="req.requestId" class="summary-card">
                 <div class="summary-row">
-                  <n-tag type="info" size="small">{{ req.status === 0 ? '待处理' : (req.status === 1 ? '已转单' : '已关闭') }}</n-tag>
+                  <n-tag type="info" size="small">
+                    {{ req.status === 0 ? '待处理' : req.status === 1 ? '已转单' : '已关闭' }}
+                  </n-tag>
                   <span class="summary-date">{{ formatMsgTime(req.createTime) }}</span>
                 </div>
-                <div class="summary-row">
-                  品类: {{ getCategoryName(req.categoryId) }}
-                </div>
+                <div class="summary-line">品类：{{ getCategoryName(req.categoryId) }}</div>
               </div>
+              <button
+                v-if="hiddenRequestCount > 0 && !showAllRequests"
+                type="button"
+                class="summary-more"
+                @click="showAllRequests = true"
+              >
+                <span>还有 {{ hiddenRequestCount }} 条意向未展开</span>
+                <span class="summary-more__action">展开全部</span>
+              </button>
             </div>
+            <div v-else-if="archiveTab === 'requests'" class="summary-empty">暂无近期意向</div>
 
-            <div class="summary-block" v-if="userSummary.orders?.length > 0">
-              <div class="summary-title">历史订单</div>
-              <div class="summary-card" v-for="ord in userSummary.orders" :key="ord.orderId" @click="router.push(`/order/detail/${ord.orderId}`)" style="cursor: pointer;">
+            <div v-if="archiveTab === 'orders' && orderCount" class="summary-section">
+              <div class="summary-section__title">
+                <span>历史订单</span>
+                <button
+                  v-if="orderCount > summaryPreviewCount"
+                  type="button"
+                  class="summary-link"
+                  @click="showAllOrders = !showAllOrders"
+                >
+                  {{ showAllOrders ? '收起' : '展开全部' }}
+                </button>
+              </div>
+              <div
+                v-for="ord in visibleOrders"
+                :key="ord.orderId"
+                class="summary-card summary-card--clickable"
+                @click="router.push(`/order/detail/${ord.orderId}`)"
+              >
                 <div class="summary-row">
-                  <n-tag :type="statusMap[ord.status]?.type" size="small">{{ statusMap[ord.status]?.label }}</n-tag>
+                  <n-tag :type="statusMap[ord.status]?.type" size="small">{{
+                    statusMap[ord.status]?.label
+                  }}</n-tag>
                   <span class="summary-sn">{{ ord.orderSn }}</span>
                 </div>
-                <div class="summary-row">
-                  金额: ¥{{ ord.totalAmount || '0.00' }}
-                </div>
+                <div class="summary-line">金额：¥{{ ord.totalAmount || '0.00' }}</div>
               </div>
+              <button
+                v-if="hiddenOrderCount > 0 && !showAllOrders"
+                type="button"
+                class="summary-more"
+                @click="showAllOrders = true"
+              >
+                <span>还有 {{ hiddenOrderCount }} 条订单未展开</span>
+                <span class="summary-more__action">展开全部</span>
+              </button>
             </div>
-
-            <div v-if="!userSummary.requests?.length && !userSummary.orders?.length" class="order-loading">
-              该客户暂无业务记录
-            </div>
+            <div v-else-if="archiveTab === 'orders'" class="summary-empty">暂无历史订单</div>
           </div>
-          <div v-else class="order-loading">加载中...</div>
-        </div>
+
+          <div v-else class="summary-loading">加载中...</div>
+        </aside>
       </transition>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { useUser } from '@/store/modules/user';
-import { getConversations as fetchConvApi, getChatMessages, markChatRead, getUserSummary as fetchUserSummaryApi } from '@/api/chat/index';
-import { getCategoryList } from '@/api/config/category';
+  import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
+  import { useRouter } from 'vue-router';
+  import { useUser } from '@/store/modules/user';
+  import {
+    getConversations as fetchConvApi,
+    getChatMessages,
+    getUserSummary as fetchUserSummaryApi,
+    markChatRead,
+  } from '@/api/chat/index';
+  import { getCategoryList } from '@/api/config/category';
 
-const router = useRouter();
-const userStore = useUser();
+  const router = useRouter();
+  const userStore = useUser();
 
-const searchText = ref('');
-const conversations = ref<any[]>([]);
-const activeUserId = ref<number | null>(null);
-const activeOrderId = ref<number | null>(null);
-const activeUserName = ref('');
-const activeOrderSn = ref('');
-const messages = ref<any[]>([]);
-const inputText = ref('');
-const messagesRef = ref<HTMLElement | null>(null);
-const wsConnected = ref(false);
-const showOrderPanel = ref(true);
-const userSummary = ref<any>(null);
-const categoryMap = ref<Record<number, string>>({});
+  const searchText = ref('');
+  const conversations = ref<any[]>([]);
+  const activeUserId = ref<number | null>(null);
+  const activeOrderId = ref<number | null>(null);
+  const activeUserName = ref('');
+  const activeOrderSn = ref('');
+  const messages = ref<any[]>([]);
+  const inputText = ref('');
+  const messagesRef = ref<HTMLElement | null>(null);
+  const wsConnected = ref(false);
+  const showOrderPanel = ref(true);
+  const userSummary = ref<any>(null);
+  const categoryMap = ref<Record<number, string>>({});
+  const archiveTab = ref<'orders' | 'requests'>('orders');
+  const showAllOrders = ref(false);
+  const showAllRequests = ref(false);
+  const summaryPreviewCount = 3;
 
-let ws: WebSocket | null = null;
+  let ws: WebSocket | null = null;
 
-const statusMap: any = {
-  0: { label: '待支付', type: 'default' },
-  1: { label: '生产中', type: 'info' },
-  2: { label: '待发货', type: 'warning' },
-  3: { label: '待收货', type: 'success' },
-  4: { label: '已完成', type: 'success' },
-  5: { label: '已取消', type: 'error' },
-  6: { label: '待付尾款', type: 'warning' },
-};
+  const statusMap: any = {
+    0: { label: '待支付', type: 'default' },
+    1: { label: '生产中', type: 'info' },
+    2: { label: '待发货', type: 'warning' },
+    3: { label: '待收货', type: 'success' },
+    4: { label: '已完成', type: 'success' },
+    5: { label: '已取消', type: 'error' },
+    6: { label: '待付尾款', type: 'warning' },
+  };
 
-const getCategoryName = (id: number) => categoryMap.value[id] || `品类#${id}`;
+  const getCategoryName = (id: number) => categoryMap.value[id] || `品类#${id}`;
 
-const totalUnread = computed(() =>
-  conversations.value.reduce((sum, c) => sum + Number(c.unreadCount || 0), 0)
-);
-
-const filteredConversations = computed(() => {
-  if (!searchText.value) return conversations.value;
-  const kw = searchText.value.toLowerCase();
-  return conversations.value.filter(
-    (c: any) =>
-      (c.orderSn || '').toLowerCase().includes(kw) ||
-      (c.nickname || '').toLowerCase().includes(kw) ||
-      (c.lastContent || '').toLowerCase().includes(kw)
+  const totalUnread = computed(() =>
+    conversations.value.reduce((sum, item) => sum + Number(item.unreadCount || 0), 0)
   );
-});
 
-
-
-onMounted(async () => {
-  fetchConversations();
-  connectWS();
-  try {
-    const cats = await getCategoryList();
-    categoryMap.value = Object.fromEntries(cats.map((c: any) => [c.categoryId, c.name]));
-  } catch (e) { console.error(e); }
-});
-
-onUnmounted(() => {
-  if (ws) { ws.close(); ws = null; }
-});
-
-const fetchConversations = async () => {
-  try {
-    const res = await fetchConvApi();
-    conversations.value = (res || []).map((item: any) => ({
-      ...item,
-      unreadCount: Number(item.unreadCount ?? item.unread_count ?? 0),
-    }));
-  } catch (e) { console.error('获取会话列表失败', e); }
-};
-
-const selectConversation = async (conv: any) => {
-  activeUserId.value = conv.userId;
-  activeOrderId.value = conv.orderId || null;
-  activeUserName.value = conv.nickname || conv.username || `用户#${conv.userId}`;
-  activeOrderSn.value = conv.orderSn || '';
-  userSummary.value = null;
-
-  try {
-    const res = await getChatMessages(conv.userId, activeOrderId.value);
-    messages.value = res || [];
-    scrollToBottom();
-    await markChatRead(conv.userId, activeOrderId.value);
-    conv.unreadCount = 0;
-  } catch (e) { console.error('获取聊天记录失败', e); }
-
-  // 加载客户全纪录档案
-  try {
-    const detail = await fetchUserSummaryApi(conv.userId);
-    userSummary.value = detail || null;
-  } catch (e) { console.error('获取档案详情失败', e); }
-};
-
-const connectWS = () => {
-  const token = userStore.getToken;
-  if (!token) return;
-
-  ws = new WebSocket(`ws://localhost:8081/ws/chat?token=${token}`);
-
-  ws.onopen = () => { wsConnected.value = true; };
-
-  ws.onmessage = (event) => {
-    try {
-      const msg = JSON.parse(event.data);
-      if (msg.type === 'NEW_MSG') {
-        if (msg.userId === activeUserId.value && (msg.orderId == activeOrderId.value)) {
-          messages.value.push(msg);
-          scrollToBottom();
-        }
-        fetchConversations();
-      }
-    } catch (e) { console.error('解析消息失败', e); }
-  };
-
-  ws.onclose = () => {
-    wsConnected.value = false;
-    setTimeout(connectWS, 5000);
-  };
-
-  ws.onerror = () => {};
-};
-
-const sendText = () => {
-  const text = inputText.value.trim();
-  if (!text || !activeUserId.value || !ws) return;
-
-  ws.send(JSON.stringify({
-    type: 'SEND',
-    userId: activeUserId.value,
-    orderId: activeOrderId.value,
-    content: text,
-    msgType: 'text',
-  }));
-
-  messages.value.push({
-    userId: activeUserId.value,
-    orderId: activeOrderId.value,
-    senderType: 'admin',
-    content: text,
-    msgType: 'text',
-    createTime: new Date().toISOString().replace('T', ' ').substring(0, 19),
+  const filteredConversations = computed(() => {
+    if (!searchText.value) return conversations.value;
+    const kw = searchText.value.toLowerCase();
+    return conversations.value.filter(
+      (item: any) =>
+        (item.orderSn || '').toLowerCase().includes(kw) ||
+        (item.nickname || item.username || '').toLowerCase().includes(kw) ||
+        (item.lastContent || '').toLowerCase().includes(kw)
+    );
   });
 
-  inputText.value = '';
-  scrollToBottom();
-};
+  const orderCount = computed(() => userSummary.value?.orders?.length || 0);
 
-const scrollToBottom = () => {
-  nextTick(() => {
-    if (messagesRef.value) {
-      messagesRef.value.scrollTop = messagesRef.value.scrollHeight;
+  const requestCount = computed(() => userSummary.value?.requests?.length || 0);
+
+  const visibleOrders = computed(() => {
+    const list = userSummary.value?.orders || [];
+    return showAllOrders.value ? list : list.slice(0, summaryPreviewCount);
+  });
+
+  const visibleRequests = computed(() => {
+    const list = userSummary.value?.requests || [];
+    return showAllRequests.value ? list : list.slice(0, summaryPreviewCount);
+  });
+
+  const hiddenOrderCount = computed(() =>
+    Math.max(orderCount.value - visibleOrders.value.length, 0)
+  );
+
+  const hiddenRequestCount = computed(() =>
+    Math.max(requestCount.value - visibleRequests.value.length, 0)
+  );
+
+  onMounted(async () => {
+    fetchConversations();
+    connectWS();
+    try {
+      const categories = await getCategoryList();
+      categoryMap.value = Object.fromEntries(
+        categories.map((item: any) => [item.categoryId, item.name])
+      );
+    } catch (error) {
+      console.error(error);
     }
   });
-};
 
+  onUnmounted(() => {
+    if (ws) {
+      ws.close();
+      ws = null;
+    }
+  });
 
+  const fetchConversations = async () => {
+    try {
+      const result = await fetchConvApi();
+      conversations.value = (result || []).map((item: any) => ({
+        ...item,
+        unreadCount: Number(item.unreadCount ?? item.unread_count ?? 0),
+      }));
+    } catch (error) {
+      console.error('获取会话列表失败', error);
+    }
+  };
 
-const formatTime = (timeStr: string) => {
-  if (!timeStr) return '';
-  return String(timeStr).substring(5, 16);
-};
+  const selectConversation = async (conv: any) => {
+    activeUserId.value = conv.userId;
+    activeOrderId.value = conv.orderId || null;
+    activeUserName.value = conv.nickname || conv.username || `用户#${conv.userId}`;
+    activeOrderSn.value = conv.orderSn || '';
+    userSummary.value = null;
+    archiveTab.value = conv.orderSn ? 'orders' : 'requests';
+    showAllOrders.value = false;
+    showAllRequests.value = false;
 
-const formatMsgTime = (timeStr: string) => {
-  if (!timeStr) return '';
-  return String(timeStr).substring(11, 16);
-};
+    try {
+      const result = await getChatMessages(conv.userId, activeOrderId.value);
+      messages.value = result || [];
+      scrollToBottom();
+      await markChatRead(conv.userId, activeOrderId.value);
+      conv.unreadCount = 0;
+    } catch (error) {
+      console.error('获取聊天记录失败', error);
+    }
 
-const isAdminMsg = (msg: any) => {
-  return msg.senderType === 'admin' || msg.senderType === 1;
-};
+    try {
+      const summary = await fetchUserSummaryApi(conv.userId);
+      userSummary.value = summary || null;
+    } catch (error) {
+      console.error('获取客户档案失败', error);
+    }
+  };
 
-const isImageMsg = (msg: any) => {
-  return msg.msgType === 'image' || msg.contentType === 1;
-};
+  const connectWS = () => {
+    const token = userStore.getToken;
+    if (!token) return;
+
+    ws = new WebSocket(`ws://localhost:8081/ws/chat?token=${token}`);
+
+    ws.onopen = () => {
+      wsConnected.value = true;
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const msg = JSON.parse(event.data);
+        if (msg.type === 'NEW_MSG') {
+          if (msg.userId === activeUserId.value && msg.orderId == activeOrderId.value) {
+            messages.value.push(msg);
+            scrollToBottom();
+          }
+          fetchConversations();
+        }
+      } catch (error) {
+        console.error('解析消息失败', error);
+      }
+    };
+
+    ws.onclose = () => {
+      wsConnected.value = false;
+      setTimeout(connectWS, 5000);
+    };
+
+    ws.onerror = () => {};
+  };
+
+  const sendText = () => {
+    const text = inputText.value.trim();
+    if (!text || !activeUserId.value || !ws) return;
+
+    ws.send(
+      JSON.stringify({
+        type: 'SEND',
+        userId: activeUserId.value,
+        orderId: activeOrderId.value,
+        content: text,
+        msgType: 'text',
+      })
+    );
+
+    messages.value.push({
+      userId: activeUserId.value,
+      orderId: activeOrderId.value,
+      senderType: 'admin',
+      content: text,
+      msgType: 'text',
+      createTime: new Date().toISOString().replace('T', ' ').substring(0, 19),
+    });
+
+    inputText.value = '';
+    scrollToBottom();
+  };
+
+  const scrollToBottom = () => {
+    nextTick(() => {
+      if (messagesRef.value) {
+        messagesRef.value.scrollTop = messagesRef.value.scrollHeight;
+      }
+    });
+  };
+
+  const formatTime = (timeStr: string) => {
+    if (!timeStr) return '';
+    return String(timeStr).substring(5, 16);
+  };
+
+  const formatMsgTime = (timeStr: string) => {
+    if (!timeStr) return '';
+    return String(timeStr).substring(11, 16);
+  };
+
+  const isAdminMsg = (msg: any) => msg.senderType === 'admin' || msg.senderType === 1;
+
+  const isImageMsg = (msg: any) => msg.msgType === 'image' || msg.contentType === 1;
 </script>
 
 <style scoped>
-.chat-page {
-  height: calc(100vh - 100px);
-  background: #f5f5f5;
-  border-radius: 8px;
-  overflow: hidden;
-}
+  .chat-page {
+    height: calc(100vh - 100px);
+    border-radius: 18px;
+    overflow: hidden;
+  }
 
-.chat-layout {
-  display: flex;
-  height: 100%;
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
-}
+  .chat-layout {
+    display: flex;
+    height: 100%;
+    border: 1px solid var(--border-light);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.92);
+    overflow: hidden;
+  }
 
-/* ========== 左侧会话面板 ========== */
-.panel-left {
-  width: 280px;
-  flex-shrink: 0;
-  border-right: 1px solid #f0f0f0;
-  display: flex;
-  flex-direction: column;
-  background: #fafafa;
-}
+  .panel-left {
+    width: 308px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid var(--border-light);
+    background: rgba(248, 250, 252, 0.92);
+  }
 
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px;
-  font-weight: 600;
-}
+  .panel-left__head,
+  .panel-right__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 16px 12px;
+  }
 
-.panel-title {
-  font-size: 15px;
-  color: #1a1a2e;
-}
+  .panel-eyebrow {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
 
-.conv-scroll {
-  flex: 1;
-  overflow-y: auto;
-}
+  .panel-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
 
-.conv-item {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  gap: 12px;
-  cursor: pointer;
-  transition: background 0.15s;
-  border-left: 3px solid transparent;
-}
+  .panel-left__stats {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 12px;
+  }
 
-.conv-item:hover { background: #f0f0f0; }
+  .summary-pill {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 10px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--border-light);
+  }
 
-.conv-item.active {
-  background: #EDF5EE;
-  border-left-color: #5B8C5A;
-}
+  .summary-pill__label {
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
 
-.conv-avatar {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: #5B8C5A;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 600;
-  flex-shrink: 0;
-}
+  .panel-left__search {
+    padding: 0 16px 12px;
+  }
 
-.conv-info {
-  flex: 1;
-  min-width: 0;
-}
+  .conv-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 10px 10px;
+  }
 
-.conv-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 4px;
-}
+  .conv-item {
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px;
+    border: 0;
+    border-radius: 16px;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.18s ease, box-shadow 0.18s ease;
+  }
 
-.conv-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: #333;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
+  .conv-item:hover {
+    background: rgba(255, 255, 255, 0.78);
+  }
 
-.conv-order-tag {
-  font-size: 10px;
-  padding: 1px 6px;
-  border-radius: 3px;
-  background: #e8f4fd;
-  color: #1890ff;
-  font-weight: normal;
-}
+  .conv-item.active {
+    background: rgba(255, 255, 255, 0.98);
+    box-shadow: inset 0 0 0 1px rgba(75, 123, 236, 0.18);
+  }
 
-.conv-order-general {
-  background: #f0f0f0;
-  color: #999;
-}
+  .conv-avatar {
+    flex-shrink: 0;
+  }
 
-.conv-time-text {
-  font-size: 11px;
-  color: #bbb;
-}
+  .text-avatar {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: #4b7bec;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+  }
 
-.conv-bottom {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+  .conv-info {
+    flex: 1;
+    min-width: 0;
+  }
 
-.conv-last {
-  font-size: 12px;
-  color: #999;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-  margin-right: 8px;
-}
+  .conv-top,
+  .conv-middle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
 
-.conv-empty {
-  text-align: center;
-  padding: 40px 0;
-  color: #ccc;
-  font-size: 13px;
-}
+  .conv-top {
+    margin-bottom: 6px;
+  }
 
-/* ========== 中间聊天区 ========== */
-.panel-center {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
+  .conv-name {
+    font-size: 13px;
+    font-weight: 700;
+    color: #16213e;
+  }
 
-.panel-placeholder {
-  align-items: center;
-  justify-content: center;
-}
+  .conv-time {
+    font-size: 11px;
+    color: #98a2b3;
+    flex-shrink: 0;
+  }
 
-.placeholder-content {
-  text-align: center;
-}
+  .conv-middle {
+    margin-bottom: 6px;
+  }
 
-.placeholder-icon {
-  display: block;
-  font-size: 48px;
-  margin-bottom: 12px;
-}
+  .conv-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(75, 123, 236, 0.12);
+    color: #4b7bec;
+    font-size: 11px;
+    font-weight: 600;
+  }
 
-.placeholder-text {
-  font-size: 14px;
-  color: #999;
-}
+  .conv-tag--general {
+    background: rgba(148, 163, 184, 0.14);
+    color: #64748b;
+  }
 
-.chat-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 20px;
-  border-bottom: 1px solid #f0f0f0;
-  background: #fff;
-}
+  .conv-last {
+    font-size: 12px;
+    color: #667085;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 
-.chat-header-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+  .conv-empty,
+  .summary-empty,
+  .summary-loading {
+    padding: 40px 20px;
+    text-align: center;
+    color: #98a2b3;
+    font-size: 13px;
+  }
 
-.chat-title {
-  font-weight: 600;
-  font-size: 14px;
-  color: #1a1a2e;
-}
+  .panel-center {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
 
-.chat-messages {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px 20px;
-  background: #f9f9f9;
-}
+  .panel-placeholder {
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.72), rgba(255, 255, 255, 0.96));
+  }
 
-.msg-empty {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  height: 100%;
-  gap: 8px;
-  color: #ccc;
-  font-size: 14px;
-}
+  .placeholder-content {
+    text-align: center;
+  }
 
-.msg-empty span:first-child { font-size: 32px; }
+  .placeholder-icon {
+    font-size: 52px;
+    margin-bottom: 14px;
+  }
 
-.msg-row {
-  display: flex;
-  margin-bottom: 20px;
-  align-items: flex-start;
-  gap: 10px;
-}
+  .placeholder-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+  }
 
-.msg-row.is-admin {
-  flex-direction: row-reverse;
-}
+  .placeholder-desc {
+    font-size: 13px;
+    color: var(--text-tertiary);
+  }
 
-.msg-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  font-weight: 600;
-  color: #fff;
-  flex-shrink: 0;
-}
+  .chat-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border-light);
+    background: rgba(255, 255, 255, 0.96);
+  }
 
-.is-client .msg-avatar { background: #E5A84B; }
-.is-admin .msg-avatar { background: #5B8C5A; }
+  .chat-header__title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
 
-.msg-body {
-  max-width: 55%;
-  display: flex;
-  flex-direction: column;
-}
+  .chat-header__status {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: rgba(148, 163, 184, 0.16);
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 600;
+  }
 
-.is-admin .msg-body { align-items: flex-end; }
-.is-client .msg-body { align-items: flex-start; }
+  .chat-header__status.online {
+    background: rgba(34, 197, 94, 0.12);
+    color: #15803d;
+  }
 
-.msg-bubble {
-  padding: 10px 16px;
-  border-radius: 12px;
-  font-size: 14px;
-  line-height: 1.6;
-  word-break: break-all;
-}
+  .chat-header__meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
 
-.is-client .msg-bubble {
-  background: #fff;
-  color: #333;
-  border-top-left-radius: 4px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-}
+  .header-pill {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: rgba(75, 123, 236, 0.12);
+    color: #4b7bec;
+    font-size: 11px;
+    font-weight: 600;
+  }
 
-.is-admin .msg-bubble {
-  background: #5B8C5A;
-  color: #fff;
-  border-top-right-radius: 4px;
-}
+  .header-pill--muted {
+    background: rgba(148, 163, 184, 0.14);
+    color: #64748b;
+  }
 
-.msg-content {
-  white-space: pre-wrap;
-}
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px;
+    background: linear-gradient(180deg, rgba(248, 250, 252, 0.9), rgba(255, 255, 255, 0.98));
+  }
 
-.msg-time {
-  font-size: 11px;
-  color: #bbb;
-  margin-top: 4px;
-}
+  .msg-empty {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: #98a2b3;
+  }
 
-.chat-input {
-  display: flex;
-  gap: 8px;
-  padding: 12px 20px;
-  border-top: 1px solid #f0f0f0;
-  background: #fff;
-  align-items: flex-end;
-}
+  .msg-empty__icon {
+    font-size: 36px;
+  }
 
-/* ========== 右侧订单面板 ========== */
-.panel-right {
-  width: 300px;
-  flex-shrink: 0;
-  border-left: 1px solid #f0f0f0;
-  display: flex;
-  flex-direction: column;
-  background: #fafafa;
-}
+  .msg-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 18px;
+  }
 
-.order-detail-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px;
-}
+  .msg-row.is-admin {
+    flex-direction: row-reverse;
+  }
 
-.order-loading {
-  padding: 40px;
-  text-align: center;
-  color: #ccc;
-}
+  .msg-avatar {
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
 
-.order-status-card {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-  padding: 12px;
-  background: #fff;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,0.04);
-}
+  .is-client .msg-avatar {
+    background: #e5a84b;
+  }
 
-.order-sn {
-  font-size: 12px;
-  color: #888;
-  font-family: 'Monaco', 'Consolas', monospace;
-}
+  .is-admin .msg-avatar {
+    background: #4b7bec;
+  }
 
-.detail-section {
-  display: flex;
-  justify-content: space-between;
-  padding: 8px 0;
-  border-bottom: 1px solid #f5f5f5;
-}
+  .msg-body {
+    max-width: 58%;
+    display: flex;
+    flex-direction: column;
+  }
 
-.detail-label {
-  font-size: 12px;
-  color: #999;
-}
+  .is-admin .msg-body {
+    align-items: flex-end;
+  }
 
-.detail-value {
-  font-size: 13px;
-  color: #333;
-  font-weight: 500;
-  text-align: right;
-}
+  .msg-bubble {
+    padding: 11px 14px;
+    border-radius: 16px;
+    font-size: 14px;
+    line-height: 1.6;
+    word-break: break-word;
+  }
 
-.detail-value.amount {
-  color: #e74c3c;
-  font-weight: 600;
-}
+  .is-client .msg-bubble {
+    background: #fff;
+    color: #1f2937;
+    border-top-left-radius: 6px;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+  }
 
-.custom-section {
-  margin-top: 16px;
-  padding: 12px;
-  background: #fff;
-  border-radius: 8px;
-}
+  .is-admin .msg-bubble {
+    background: #4b7bec;
+    color: #fff;
+    border-top-right-radius: 6px;
+  }
 
-.custom-title {
-  font-size: 12px;
-  color: #999;
-  margin-bottom: 8px;
-  font-weight: 600;
-}
+  .msg-content {
+    white-space: pre-wrap;
+  }
 
-.custom-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 0;
-  font-size: 12px;
-}
+  .msg-time {
+    margin-top: 5px;
+    font-size: 11px;
+    color: #98a2b3;
+  }
 
-.custom-key { color: #888; }
-.custom-val { color: #333; font-weight: 500; }
+  .chat-input {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    padding: 14px 18px;
+    border-top: 1px solid var(--border-light);
+    background: rgba(255, 255, 255, 0.96);
+  }
 
-.detail-actions {
-  margin-top: 16px;
-}
+  .panel-right {
+    width: 300px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid var(--border-light);
+    background: rgba(248, 250, 252, 0.92);
+  }
 
-/* 动画 */
-.slide-right-enter-active,
-.slide-right-leave-active {
-  transition: all 0.25s ease;
-}
+  .order-detail-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 14px 14px;
+  }
 
-.slide-right-enter-from,
-.slide-right-leave-to {
-  width: 0;
-  opacity: 0;
-  overflow: hidden;
-}
+  .summary-overview {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .summary-tabs {
+    display: inline-flex;
+    padding: 4px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--border-light);
+  }
+
+  .summary-tab {
+    border: 0;
+    background: transparent;
+    color: var(--text-secondary);
+    padding: 7px 12px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+
+  .summary-tab.active {
+    background: rgba(75, 123, 236, 0.12);
+    color: #4b7bec;
+  }
+
+  .summary-section {
+    margin-bottom: 16px;
+  }
+
+  .summary-section__title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-weight: 700;
+  }
+
+  .summary-link {
+    border: 0;
+    background: transparent;
+    color: #4b7bec;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .summary-more {
+    width: 100%;
+    margin-top: 8px;
+    border: 1px dashed rgba(75, 123, 236, 0.28);
+    background: rgba(75, 123, 236, 0.05);
+    color: #4b7bec;
+    border-radius: 14px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+
+  .summary-more:hover {
+    background: rgba(75, 123, 236, 0.08);
+    border-color: rgba(75, 123, 236, 0.4);
+  }
+
+  .summary-more__action {
+    flex-shrink: 0;
+  }
+
+  .summary-card {
+    padding: 12px;
+    border: 1px solid var(--border-light);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.94);
+  }
+
+  .summary-card + .summary-card {
+    margin-top: 8px;
+  }
+
+  .summary-card--clickable {
+    cursor: pointer;
+    transition: border-color 0.18s ease, transform 0.18s ease;
+  }
+
+  .summary-card--clickable:hover {
+    border-color: rgba(75, 123, 236, 0.18);
+    transform: translateY(-1px);
+  }
+
+  .summary-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+
+  .summary-line {
+    font-size: 12px;
+    color: #475467;
+  }
+
+  .summary-date,
+  .summary-sn {
+    font-size: 11px;
+    color: #98a2b3;
+  }
+
+  .slide-right-enter-active,
+  .slide-right-leave-active {
+    transition: all 0.24s ease;
+  }
+
+  .slide-right-enter-from,
+  .slide-right-leave-to {
+    width: 0;
+    opacity: 0;
+    overflow: hidden;
+  }
+
+  @media (max-width: 1360px) {
+    .panel-right {
+      width: 268px;
+    }
+  }
+
+  @media (max-width: 1100px) {
+    .panel-left {
+      width: 280px;
+    }
+
+    .msg-body {
+      max-width: 72%;
+    }
+  }
 </style>
