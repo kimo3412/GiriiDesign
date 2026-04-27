@@ -1,69 +1,98 @@
 <template>
   <view class="chat-page">
-    <!-- 连接状态栏 -->
     <view v-if="!isConnected" class="connection-bar">
-      <text class="connection-bar__text">{{ reconnecting ? '正在重连...' : '连接已断开' }}</text>
+      <text class="connection-bar__text">{{ reconnecting ? '正在重连沟通通道...' : '当前连接已断开，请稍候重试' }}</text>
     </view>
 
-    <!-- 消息列表 -->
+    <view class="context-bar">
+      <view class="context-main">
+        <view class="context-cover">
+          <image v-if="contextCover" :src="contextCover" mode="aspectFill" class="context-cover__image" />
+          <view v-else class="context-cover__fallback">{{ contextInitial }}</view>
+        </view>
+        <view class="context-copy">
+          <text class="context-title">{{ contextTitle }}</text>
+          <text class="context-subtitle">{{ contextSubtitle }}</text>
+        </view>
+      </view>
+      <view class="context-side">
+        <text class="context-side__badge">{{ isOrderChat ? '订单沟通' : '专属客服' }}</text>
+      </view>
+    </view>
+
     <scroll-view
       class="message-area"
       scroll-y
       :scroll-into-view="scrollToId"
       scroll-with-animation
     >
-      <view class="msg-list">
+      <view class="message-canvas">
         <view
           v-for="(msg, index) in messages"
           :key="msg.messageId || index"
           :id="'msg-' + index"
-          :class="['msg-row', isMyMsg(msg) ? 'is-mine' : 'is-other']"
+          class="message-block"
         >
-          <!-- 头像 -->
-          <view class="msg-avatar">
-            <text class="avatar-text">{{ isMyMsg(msg) ? '我' : '师' }}</text>
+          <view v-if="shouldShowTimeDivider(index)" class="time-divider">
+            <text class="time-divider__text">{{ formatDivider(msg.createTime) }}</text>
           </view>
 
-          <!-- 消息体 -->
-          <view class="msg-body">
-            <view class="msg-bubble" :class="isMyMsg(msg) ? 'bubble--mine' : 'bubble--other'">
+          <view :class="['msg-row', isMyMsg(msg) ? 'is-mine' : 'is-other']">
+            <view class="msg-avatar" :class="avatarClass(msg)">
               <image
-                v-if="isImageMsg(msg)"
-                class="msg-image"
-                :src="msg.content"
-                mode="widthFix"
-                @click="previewImage(msg.content)"
+                v-if="avatarImage(msg)"
+                :src="avatarImage(msg)"
+                mode="aspectFill"
+                class="msg-avatar__image"
               />
-              <text v-else class="msg-text">{{ msg.content }}</text>
+              <text v-else class="msg-avatar__text">{{ avatarText(msg) }}</text>
             </view>
-            <text class="msg-time">{{ formatTime(msg.createTime) }}</text>
+
+            <view class="msg-content">
+              <view v-if="isAssistantMsg(msg)" class="assistant-tag">
+                <text class="assistant-tag__icon">✦</text>
+                <text class="assistant-tag__text">工作室助手</text>
+              </view>
+
+              <view class="msg-bubble" :class="bubbleClass(msg)">
+                <image
+                  v-if="isImageMsg(msg)"
+                  class="msg-image"
+                  :src="msg.content"
+                  mode="widthFix"
+                  @click="previewImage(msg.content)"
+                />
+                <text v-else class="msg-text">{{ msg.content }}</text>
+              </view>
+
+              <text class="msg-time">{{ formatTime(msg.createTime) }}</text>
+            </view>
           </view>
         </view>
+        <view class="message-bottom-space"></view>
       </view>
-      <view style="height: 20rpx;"></view>
     </scroll-view>
 
-    <!-- 输入区 -->
     <view class="input-area">
-      <view class="input-row">
-        <input
+      <view class="input-shell">
+        <view class="media-btn" @click="chooseImage">
+          <text class="media-btn__icon">＋</text>
+        </view>
+        <textarea
           v-model="inputText"
           class="chat-input"
           placeholder="输入消息..."
+          auto-height
+          maxlength="1000"
           confirm-type="send"
           @confirm="sendTextMsg"
         />
-        <view class="btn-group">
-          <view class="icon-btn" @click="chooseImage">
-            <text>📷</text>
-          </view>
-          <view
-            class="send-btn"
-            :class="{ 'send-btn--disabled': !canSend }"
-            @click="sendTextMsg"
-          >
-            <text class="send-text">发送</text>
-          </view>
+        <view
+          class="send-btn"
+          :class="{ 'send-btn--disabled': !canSend }"
+          @click="sendTextMsg"
+        >
+          <text class="send-btn__icon">➤</text>
         </view>
       </view>
     </view>
@@ -71,8 +100,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onUnmounted, nextTick } from 'vue'
+import { computed, nextTick, onUnmounted, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
+import { getOrderDetail } from '@/api/order'
 import request from '@/utils/request'
 import storage from '@/utils/storage'
 
@@ -82,6 +112,7 @@ const scrollToId = ref('')
 const chatOrderId = ref(null)
 const isConnected = ref(false)
 const reconnecting = ref(false)
+const orderInfo = ref({})
 
 let socketTask = null
 let reconnectTimer = null
@@ -89,16 +120,40 @@ let reconnectAttempts = 0
 const MAX_RECONNECT = 5
 const RECONNECT_DELAY = 3000
 
-const canSend = computed(() => {
-  return isConnected.value && inputText.value.trim().length > 0
+const isOrderChat = computed(() => !!chatOrderId.value)
+
+const canSend = computed(() => isConnected.value && inputText.value.trim().length > 0)
+
+const contextTitle = computed(() => {
+  if (isOrderChat.value) {
+    return orderInfo.value.orderSn ? `订单 #${orderInfo.value.orderSn}` : `订单咨询 #${chatOrderId.value}`
+  }
+  return '专属沟通空间'
 })
+
+const contextSubtitle = computed(() => {
+  if (isOrderChat.value) {
+    const category = orderInfo.value.categoryName || '专属定制'
+    const status = getStatusText(orderInfo.value.status)
+    return `${category} · ${status || '沟通中'}`
+  }
+  return '与设计师、客服和智能助手保持单线程沟通'
+})
+
+const contextInitial = computed(() => {
+  if (isOrderChat.value) return '单'
+  return 'Z'
+})
+
+const contextCover = computed(() => orderInfo.value.coverUrl || orderInfo.value.coverImage || '')
 
 onLoad((options) => {
   if (options && options.orderId) {
     chatOrderId.value = Number(options.orderId)
     uni.setNavigationBarTitle({ title: '订单咨询' })
+    fetchOrderContext()
   } else {
-    uni.setNavigationBarTitle({ title: '专属客服' })
+    uni.setNavigationBarTitle({ title: '在线沟通' })
   }
   fetchHistory()
   connectWS()
@@ -126,9 +181,19 @@ const scheduleReconnect = () => {
   }
   reconnecting.value = true
   reconnectTimer = setTimeout(() => {
-    reconnectAttempts++
+    reconnectAttempts += 1
     connectWS()
   }, RECONNECT_DELAY)
+}
+
+const fetchOrderContext = async () => {
+  if (!chatOrderId.value) return
+  try {
+    const data = await getOrderDetail(chatOrderId.value)
+    orderInfo.value = data || {}
+  } catch (err) {
+    console.error('获取订单上下文失败', err)
+  }
 }
 
 const fetchHistory = async () => {
@@ -151,7 +216,7 @@ const connectWS = () => {
   const token = storage.getToken()
   if (!token) return
 
-  const wsUrl = 'ws://localhost:8081/ws/chat?token=' + token
+  const wsUrl = `ws://localhost:8081/ws/chat?token=${token}`
 
   socketTask = uni.connectSocket({
     url: wsUrl,
@@ -171,7 +236,7 @@ const connectWS = () => {
     try {
       const msg = JSON.parse(res.data)
       if (msg.type === 'NEW_MSG') {
-        if (msg.orderId == chatOrderId.value) {
+        if (!chatOrderId.value || msg.orderId == chatOrderId.value) {
           messages.value.push(msg)
           scrollToBottom()
         }
@@ -223,16 +288,16 @@ const sendMessage = (content, msgType) => {
   socketTask.send({
     data: JSON.stringify({
       type: 'SEND',
-      content: content,
-      msgType: msgType,
+      content,
+      msgType,
       orderId: chatOrderId.value
     })
   })
 
   messages.value.push({
     senderType: 'client',
-    content: content,
-    msgType: msgType,
+    content,
+    msgType,
     orderId: chatOrderId.value,
     createTime: new Date().toISOString().replace('T', ' ').substring(0, 19)
   })
@@ -241,12 +306,11 @@ const sendMessage = (content, msgType) => {
 
 const scrollToBottom = () => {
   nextTick(() => {
-    if (messages.value.length > 0) {
-      scrollToId.value = ''
-      setTimeout(() => {
-        scrollToId.value = 'msg-' + (messages.value.length - 1)
-      }, 50)
-    }
+    if (!messages.value.length) return
+    scrollToId.value = ''
+    setTimeout(() => {
+      scrollToId.value = `msg-${messages.value.length - 1}`
+    }, 50)
   })
 }
 
@@ -254,58 +318,191 @@ const previewImage = (url) => {
   uni.previewImage({ urls: [url], current: url })
 }
 
+const isMyMsg = (msg) => msg.senderType === 'client' || msg.senderType === 0
+const isAssistantMsg = (msg) => msg.senderType === 2 || msg.senderType === 'ai'
+const isImageMsg = (msg) => msg.msgType === 'image' || msg.contentType === 1
+
+const avatarText = (msg) => {
+  if (isMyMsg(msg)) return '我'
+  if (isAssistantMsg(msg)) return 'AI'
+  return '师'
+}
+
+const avatarImage = () => ''
+
+const avatarClass = (msg) => {
+  if (isMyMsg(msg)) return 'msg-avatar--mine'
+  if (isAssistantMsg(msg)) return 'msg-avatar--assistant'
+  return 'msg-avatar--other'
+}
+
+const bubbleClass = (msg) => {
+  if (isMyMsg(msg)) return 'msg-bubble--mine'
+  if (isAssistantMsg(msg)) return 'msg-bubble--assistant'
+  return 'msg-bubble--other'
+}
+
 const formatTime = (timeStr) => {
   if (!timeStr) return ''
   return String(timeStr).substring(11, 16)
 }
 
-const isMyMsg = (msg) => {
-  return msg.senderType === 'client' || msg.senderType === 0
+const formatDivider = (timeStr) => {
+  if (!timeStr) return ''
+  const date = new Date(timeStr.replace(/-/g, '/'))
+  if (Number.isNaN(date.getTime())) return String(timeStr).slice(0, 16)
+  const now = new Date()
+  const sameDay = date.toDateString() === now.toDateString()
+  const time = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`
+  if (sameDay) return `今天 ${time}`
+  return `${date.getMonth() + 1}月${date.getDate()}日 ${time}`
 }
 
-const isImageMsg = (msg) => {
-  return msg.msgType === 'image' || msg.contentType === 1
+const shouldShowTimeDivider = (index) => {
+  if (index === 0) return true
+  const prev = messages.value[index - 1]
+  const current = messages.value[index]
+  if (!prev?.createTime || !current?.createTime) return false
+  const prevTime = new Date(String(prev.createTime).replace(/-/g, '/')).getTime()
+  const currentTime = new Date(String(current.createTime).replace(/-/g, '/')).getTime()
+  return currentTime - prevTime > 10 * 60 * 1000
+}
+
+const getStatusText = (status) => {
+  const map = {
+    0: '待支付',
+    1: '生产中',
+    2: '待发货',
+    3: '待收货',
+    4: '已完成',
+    5: '已取消',
+    6: '待付尾款'
+  }
+  return map[status] || ''
 }
 </script>
 
 <style lang="scss" scoped>
 .chat-page {
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  background: #F5F2EE;
+  background:
+    radial-gradient(circle at top right, rgba(146, 170, 218, 0.14), transparent 28%),
+    linear-gradient(180deg, #faf8f5 0%, #f5f1eb 100%);
 }
 
 .connection-bar {
-  background: rgba(211, 60, 60, 0.1);
-  padding: 10rpx 24rpx;
+  padding: 12rpx 24rpx;
+  background: rgba(230, 89, 89, 0.1);
   text-align: center;
 }
 
 .connection-bar__text {
   font-size: 22rpx;
-  color: #d35d6e;
+  color: #cb5454;
+}
+
+.context-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20rpx;
+  padding: 22rpx 24rpx;
+  background: rgba(255, 255, 255, 0.88);
+  border-bottom: 1rpx solid rgba(201, 198, 192, 0.6);
+  box-shadow: 0 6rpx 18rpx rgba(26, 43, 60, 0.04);
+}
+
+.context-main {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.context-cover {
+  width: 76rpx;
+  height: 76rpx;
+  border-radius: 18rpx;
+  overflow: hidden;
+  background: #eef1f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.context-cover__image {
+  width: 100%;
+  height: 100%;
+}
+
+.context-cover__fallback {
+  color: #1a2b3c;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.context-copy {
+  min-width: 0;
+}
+
+.context-title {
+  display: block;
+  font-size: 28rpx;
+  color: #1a2b3c;
+  font-weight: 700;
+}
+
+.context-subtitle {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #6d7385;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.context-side__badge {
+  display: inline-flex;
+  padding: 10rpx 16rpx;
+  border-radius: 999rpx;
+  background: #edf2fb;
+  color: #42557b;
+  font-size: 20rpx;
+  font-weight: 600;
 }
 
 .message-area {
   flex: 1;
-  overflow: hidden;
 }
 
-.msg-list {
-  padding: 20rpx 24rpx;
+.message-canvas {
+  padding: 28rpx 24rpx 12rpx;
+}
+
+.time-divider {
+  display: flex;
+  justify-content: center;
+  margin: 12rpx 0 18rpx;
+}
+
+.time-divider__text {
+  padding: 8rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.66);
+  color: #888d9b;
+  font-size: 20rpx;
 }
 
 .msg-row {
   display: flex;
-  margin-bottom: 28rpx;
-  align-items: flex-start;
-  animation: fadeInUp 0.2s ease;
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(10rpx); }
-  to { opacity: 1; transform: translateY(0); }
+  align-items: flex-end;
+  gap: 14rpx;
+  margin-bottom: 22rpx;
 }
 
 .msg-row.is-mine {
@@ -313,134 +510,176 @@ const isImageMsg = (msg) => {
 }
 
 .msg-avatar {
-  width: 68rpx;
-  height: 68rpx;
+  width: 64rpx;
+  height: 64rpx;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   flex-shrink: 0;
 }
 
-.is-other .msg-avatar {
-  background: #4A5D4E;
-  margin-right: 16rpx;
+.msg-avatar--other {
+  background: #dce4ec;
+  color: #1a2b3c;
 }
 
-.is-mine .msg-avatar {
-  background: #2C2C2C;
-  margin-left: 16rpx;
+.msg-avatar--assistant {
+  background: #ebe7ee;
+  color: #5f4f73;
 }
 
-.avatar-text {
+.msg-avatar--mine {
+  background: #24364d;
   color: #fff;
-  font-size: 22rpx;
-  font-weight: 500;
 }
 
-.msg-body {
-  max-width: 70%;
+.msg-avatar__text {
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.msg-content {
+  max-width: 78%;
   display: flex;
   flex-direction: column;
 }
 
-.is-mine .msg-body { align-items: flex-end; }
-.is-other .msg-body { align-items: flex-start; }
+.is-mine .msg-content {
+  align-items: flex-end;
+}
+
+.assistant-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 8rpx;
+  padding: 6rpx 12rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.assistant-tag__icon,
+.assistant-tag__text {
+  color: #41557d;
+}
+
+.assistant-tag__text {
+  font-size: 18rpx;
+  font-weight: 600;
+  letter-spacing: 1rpx;
+}
 
 .msg-bubble {
-  padding: 20rpx 28rpx;
-  word-break: break-all;
-  line-height: 1.6;
+  padding: 22rpx 24rpx;
+  border-radius: 26rpx;
+  border: 1rpx solid rgba(209, 206, 200, 0.66);
+  word-break: break-word;
+  box-shadow: 0 8rpx 20rpx rgba(26, 43, 60, 0.04);
 }
 
-.bubble--other {
-  background: #fff;
-  border-radius: 4rpx 20rpx 20rpx 20rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.06);
+.msg-bubble--other {
+  background: #ffffff;
+  border-bottom-left-radius: 10rpx;
 }
 
-.bubble--mine {
-  background: #4A5D4E;
-  border-radius: 20rpx 4rpx 20rpx 20rpx;
+.msg-bubble--assistant {
+  background: #f5f4f7;
+  border-bottom-left-radius: 10rpx;
+}
+
+.msg-bubble--mine {
+  background: #1a2b3c;
+  border-color: transparent;
+  border-bottom-right-radius: 10rpx;
 }
 
 .msg-text {
   font-size: 28rpx;
-  letter-spacing: 0.5px;
+  line-height: 1.72;
+  color: #1f222c;
 }
 
-.bubble--mine .msg-text { color: #fff; }
-.bubble--other .msg-text { color: #2c2c2c; }
+.msg-bubble--mine .msg-text {
+  color: #fff;
+}
 
 .msg-image {
-  max-width: 100%;
-  border-radius: 14rpx;
+  width: 100%;
+  max-width: 360rpx;
+  border-radius: 18rpx;
 }
 
 .msg-time {
+  margin-top: 10rpx;
   font-size: 20rpx;
-  color: #bbb;
-  margin-top: 8rpx;
+  color: #9a9eaa;
+}
+
+.message-bottom-space {
+  height: 24rpx;
 }
 
 .input-area {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(8rpx);
-  -webkit-backdrop-filter: blur(8rpx);
-  border-top: 1rpx solid #e8e4e0;
-  padding: 16rpx 24rpx;
-  padding-bottom: calc(16rpx + env(safe-area-inset-bottom));
+  padding: 16rpx 24rpx calc(16rpx + env(safe-area-inset-bottom));
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10rpx);
+  border-top: 1rpx solid rgba(206, 202, 195, 0.5);
+  box-shadow: 0 -6rpx 24rpx rgba(26, 43, 60, 0.03);
 }
 
-.input-row {
+.input-shell {
+  display: flex;
+  align-items: flex-end;
+  gap: 14rpx;
+  padding: 10rpx;
+  border-radius: 24rpx;
+  background: #f3f1ed;
+  border: 1rpx solid rgba(206, 202, 195, 0.72);
+}
+
+.media-btn,
+.send-btn {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
   display: flex;
   align-items: center;
-  gap: 16rpx;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.media-btn {
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.media-btn__icon {
+  font-size: 34rpx;
+  color: #6f7587;
 }
 
 .chat-input {
   flex: 1;
-  height: 72rpx;
-  background: #F5F2EE;
-  padding: 0 24rpx;
+  min-height: 40rpx;
+  max-height: 160rpx;
+  padding: 12rpx 0;
   font-size: 28rpx;
-  border-radius: 36rpx;
-  border: none;
-}
-
-.btn-group {
-  display: flex;
-  align-items: center;
-  gap: 12rpx;
-  flex-shrink: 0;
-}
-
-.icon-btn {
-  width: 72rpx;
-  height: 72rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 36rpx;
+  line-height: 1.6;
+  color: #1f222c;
+  background: transparent;
 }
 
 .send-btn {
-  height: 72rpx;
-  padding: 0 32rpx;
-  background: #4A5D4E;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 36rpx;
-  transition: opacity 0.15s;
-
-  &:active { opacity: 0.8; }
-  &--disabled { background: #bbb; opacity: 0.6; }
+  background: #1a2b3c;
 }
 
-.send-text {
-  color: #fff;
+.send-btn--disabled {
+  background: #a3a8b5;
+}
+
+.send-btn__icon {
   font-size: 26rpx;
-  letter-spacing: 2rpx;
+  color: #fff;
 }
 </style>

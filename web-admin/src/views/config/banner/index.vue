@@ -127,7 +127,7 @@
 
 <script lang="ts" setup>
 import { ref, computed, onMounted, h } from 'vue';
-import { NButton, NTag, NSpace, NIcon, NDivider, NImage } from 'naive-ui';
+import { NButton, NSpace, NIcon, NDivider, NImage, NSwitch } from 'naive-ui';
 import { Search } from '@vicons/ionicons5';
 import { useMessage, useDialog } from 'naive-ui';
 import type { UploadCustomRequestOptions, UploadFileInfo } from 'naive-ui';
@@ -149,6 +149,7 @@ const pageSize = ref(10);
 
 const keyword = ref('');
 const selectedStatus = ref<number | null>(null);
+const statusUpdatingIds = ref<number[]>([]);
 const showModal = ref(false);
 const isEdit = ref(false);
 const formRef = ref();
@@ -229,10 +230,18 @@ const columns = [
   {
     title: '状态',
     key: 'status',
-    width: 80,
+    width: 110,
     render(row: any) {
-      return h(NTag, { type: row.status === 1 ? 'success' : 'default', size: 'small', round: true }, {
-        default: () => row.status === 1 ? '启用' : '禁用',
+      return h(NSwitch, {
+        value: row.status,
+        checkedValue: 1,
+        uncheckedValue: 0,
+        size: 'small',
+        loading: statusUpdatingIds.value.includes(row.bannerId),
+        onUpdateValue: (value: number) => handleToggleStatus(row, value),
+      }, {
+        checked: () => '启用',
+        unchecked: () => '禁用',
       });
     },
   },
@@ -312,6 +321,23 @@ const handleDelete = (row: any) => {
       loadData();
     },
   });
+};
+
+const handleToggleStatus = async (row: any, status: number) => {
+  const oldStatus = row.status;
+  row.status = status;
+  statusUpdatingIds.value = [...statusUpdatingIds.value, row.bannerId];
+
+  try {
+    await updateBanner(row.bannerId, { ...row, status });
+    message.success(status === 1 ? '已启用' : '已禁用');
+  } catch (e) {
+    row.status = oldStatus;
+    console.error(e);
+    message.error('状态更新失败');
+  } finally {
+    statusUpdatingIds.value = statusUpdatingIds.value.filter((id) => id !== row.bannerId);
+  }
 };
 
 const handleSubmit = async () => {

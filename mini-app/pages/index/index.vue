@@ -1,398 +1,463 @@
 <template>
-  <view class="index-container">
-    <!-- 顶部品牌介绍 -->
-    <view class="brand-header">
-      <text class="brand-title">ZeHana</text>
-      <text class="brand-subtitle">独立设计师工作室</text>
-    </view>
-
-    <!-- 极简轮播 Banner -->
-    <view class="banner">
-      <swiper class="banner-swiper" circular autoplay interval="4000" duration="800">
-        <swiper-item v-for="(item, index) in banners" :key="index">
-          <view class="banner-image-wrapper">
-            <image :src="item.image" mode="aspectFill" class="banner-img" />
-            <view class="banner-mask"></view>
-            <view class="banner-text-box">
-              <text class="banner-label">{{ item.label }}</text>
-              <text class="banner-headline">{{ item.headline }}</text>
-            </view>
-          </view>
-        </swiper-item>
-      </swiper>
-    </view>
-
-    <!-- 典雅入口 -->
-    <view class="entry-list">
-      <view class="entry-card" @click="goTo('/pages/custom/category/index')">
-        <text class="entry-en">专属定制</text>
-        <text class="entry-cn">发起私人定制</text>
-        <text class="entry-arrow">→</text>
+  <view class="studio-page">
+    <view class="top-bar">
+      <view class="top-icon" @click="goTo('/pages/user/index')">
+        <text class="top-icon__text">☰</text>
       </view>
-      <view class="entry-card" @click="goTo('/pages/order/list/index')">
-        <text class="entry-en">我的订单</text>
-        <text class="entry-cn">订单进度查询</text>
-        <text class="entry-arrow">→</text>
+      <text class="brand-word">ATELIER</text>
+      <view class="top-icon" @click="goTo('/pages/user/notification/index')">
+        <text class="top-icon__text">◔</text>
       </view>
     </view>
 
-    <!-- 经典作品集瀑布流 (模拟) -->
-    <view class="portfolio-section">
-      <view class="section-title-wrap">
-        <text class="section-title">往期作品大赏</text>
-        <text class="section-desc">ZeHana 过往经典设计精粹</text>
-      </view>
-      
-      <view class="waterfall">
-        <view class="waterfall-col" v-for="(col, colIndex) in splitPortfolios" :key="colIndex">
-          <view 
-            class="portfolio-card" 
-            v-for="item in col" 
-            :key="item.portfolioId"
-            @click="goToDetail(item.portfolioId)"
-          >
-            <!-- 若无图则用模拟的高定灰绿色块占位 -->
-            <view class="img-placeholder" v-if="!item.coverUrl">
-              <text class="placeholder-text">ZeHana</text>
-            </view>
-            <image v-else :src="item.coverUrl" mode="widthFix" class="portfolio-img"></image>
-            
-            <view class="portfolio-info">
-              <text class="p-title">{{ item.title }}</text>
-              <view class="p-bottom">
-                <text class="p-category">高级定制</text>
-                <text class="p-views">{{ item.viewCount || 0 }} 次浏览</text>
+    <scroll-view scroll-y class="page-scroll" refresher-enabled :refresher-triggered="refreshing" @refresherrefresh="onRefresh">
+      <view class="hero-section">
+        <swiper class="hero-swiper" circular autoplay interval="4200" duration="700" indicator-dots indicator-color="rgba(255,255,255,0.42)" indicator-active-color="#ffffff">
+          <swiper-item v-for="(item, index) in banners" :key="index">
+            <view class="hero-frame">
+              <image :src="item.image" mode="aspectFill" class="hero-image" />
+              <view class="hero-shade"></view>
+              <view class="hero-copy">
+                <text class="hero-kicker">{{ item.label || 'ZeHana 工作室' }}</text>
+                <text class="hero-title">{{ item.headline || '专属定制，优雅抵达' }}</text>
+                <text class="hero-desc">从灵感沟通到生产交付，每一个节点都由工作室陪你推进。</text>
+                <view class="hero-action" @click="goTo('/pages/custom/category/index')">
+                  <text class="hero-action__text">开始定制</text>
+                </view>
               </view>
             </view>
+          </swiper-item>
+        </swiper>
+      </view>
+
+      <view class="highlight-section">
+        <view class="highlight-card">
+          <text class="highlight-icon">✓</text>
+          <text class="highlight-title">流程透明</text>
+          <text class="highlight-desc">从需求确认到交付，每个生产节点都能清楚追踪。</text>
+        </view>
+        <view class="highlight-card">
+          <text class="highlight-icon">✉</text>
+          <text class="highlight-title">专属沟通</text>
+          <text class="highlight-desc">设计师与客服持续在线，围绕订单保持沟通。</text>
+          <view class="highlight-link" @click="goTo('/pages/chat/index')">
+            <text>联系管家</text>
+            <text class="highlight-link__arrow">→</text>
+          </view>
+        </view>
+        <view class="highlight-card">
+          <text class="highlight-icon">□</text>
+          <text class="highlight-title">订单管理</text>
+          <text class="highlight-desc">定金、尾款、收货确认和进度详情集中查看。</text>
+          <view class="highlight-link" @click="goTo('/pages/order/list/index')">
+            <text>查看订单</text>
+            <text class="highlight-link__arrow">→</text>
           </view>
         </view>
       </view>
-    </view>
-    <!-- 全局私人管家悬浮按钮 -->
-    <view class="floating-chat" @click="goTo('/pages/chat/index')">
-      <text class="chat-icon">✉</text>
-    </view>
+
+      <view class="masterpiece-section">
+        <view class="section-head">
+          <text class="section-title">近期作品</text>
+          <view class="section-action" @click="goTo('/pages/portfolio/list/index')">
+            <text>全部</text>
+            <text class="section-action__arrow">→</text>
+          </view>
+        </view>
+
+        <view class="masterpiece-grid">
+          <view
+            v-for="(item, index) in featuredPortfolios"
+            :key="item.portfolioId || index"
+            class="masterpiece-item"
+            :class="{ 'masterpiece-item--offset': index % 2 === 1 }"
+            @click="goToDetail(item.portfolioId)"
+          >
+            <image v-if="item.coverUrl" :src="item.coverUrl" mode="aspectFill" class="masterpiece-image" />
+            <view v-else class="masterpiece-fallback">
+              <text class="masterpiece-fallback__text">ZeHana</text>
+            </view>
+          </view>
+        </view>
+
+        <view v-if="featuredPortfolios.length === 0" class="empty-work">
+          <text class="empty-work__title">作品正在整理中</text>
+          <text class="empty-work__desc">你可以先发起定制，设计师会基于需求给出方案。</text>
+        </view>
+      </view>
+    </scroll-view>
   </view>
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
-import { getPortfolioList } from '@/api/portfolio'
 import { getBannerList } from '@/api/banner'
+import { getPortfolioList } from '@/api/portfolio'
 
-// 默认轮播图（数据库无数据时兜底）
-const banners = ref([
-  { image: '/static/images/zehana_couture_1774340712019.png', label: '2026 高定系列', headline: '静谧奢华' },
-  { image: '/static/images/zehana_leather_1774340726407.png', label: '手工皮具', headline: '永恒优雅' }
-])
+const defaultBanners = [
+  {
+    image: '/static/images/home-banner-couture.png',
+    label: '高级定制',
+    headline: '把灵感缝进每一处细节'
+  },
+  {
+    image: '/static/images/home-banner-leather.png',
+    label: '手作皮具',
+    headline: '材质、线迹与日常使用感'
+  },
+  {
+    image: '/static/images/home-banner-suit.png',
+    label: '量体西装',
+    headline: '从版型到面料都可追踪'
+  }
+]
 
+const banners = ref([...defaultBanners])
 const portfolios = ref([])
+const refreshing = ref(false)
 
-// 把数据平分为两列，做简单的瀑布流
-const splitPortfolios = computed(() => {
-  const col1 = []
-  const col2 = []
-  portfolios.value.forEach((item, index) => {
-    if (index % 2 === 0) col1.push(item)
-    else col2.push(item)
-  })
-  return [col1, col2]
-})
+const featuredPortfolios = computed(() => portfolios.value.slice(0, 4))
 
 const tabBarPages = ['/pages/index/index', '/pages/order/list/index', '/pages/user/index']
 
 const goTo = (url) => {
   if (tabBarPages.includes(url)) {
     uni.switchTab({ url })
-  } else {
-    uni.navigateTo({ url })
+    return
   }
+  uni.navigateTo({ url })
 }
 
 const goToDetail = (id) => {
+  if (!id) return
   uni.navigateTo({ url: `/pages/portfolio/detail/index?id=${id}` })
-}
-
-const fetchPortfolios = async () => {
-  try {
-    const data = await getPortfolioList()
-    portfolios.value = (data && data.list) ? data.list : (Array.isArray(data) ? data : [])
-  } catch (err) {
-    console.error('获取作品列表失败', err)
-  }
 }
 
 const fetchBanners = async () => {
   try {
     const data = await getBannerList()
-    const list = Array.isArray(data) ? data : (data?.list || [])
-    if (list.length > 0) {
-      banners.value = list.map(item => ({
-        image: item.imageUrl || item.image,
-        label: item.title || '',
-        headline: item.linkUrl || ''
-      }))
+    const list = Array.isArray(data) ? data : (data?.records || data?.list || [])
+    if (!list.length) {
+      banners.value = [...defaultBanners]
+      return
     }
+    banners.value = list.map(item => ({
+      image: item.imageUrl || item.image,
+      label: item.title || 'ZeHana 工作室',
+      headline: item.description || item.linkUrl || '专属定制，优雅抵达'
+    }))
   } catch (err) {
     console.error('获取轮播图失败', err)
+    banners.value = [...defaultBanners]
   }
 }
 
+const fetchPortfolios = async () => {
+  try {
+    const data = await getPortfolioList()
+    const list = data?.records || data?.list || data || []
+    portfolios.value = Array.isArray(list) ? list : []
+  } catch (err) {
+    console.error('获取作品列表失败', err)
+    portfolios.value = []
+  }
+}
+
+const loadPageData = async () => {
+  await Promise.all([fetchBanners(), fetchPortfolios()])
+}
+
+const onRefresh = async () => {
+  refreshing.value = true
+  await loadPageData()
+  refreshing.value = false
+}
+
 onLoad(() => {
-  fetchBanners()
-  fetchPortfolios()
+  loadPageData()
 })
 </script>
 
 <style lang="scss" scoped>
-.index-container {
-  background: #F5F2EE;
-  min-height: 100vh;
-  padding-bottom: 60rpx;
-}
-
-.brand-header {
-  padding: 60rpx 40rpx 30rpx;
+.studio-page {
+  height: 100vh;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  background-color: #fff;
-  letter-spacing: 4rpx;
-
-  .brand-title {
-    font-size: 56rpx;
-    font-weight: 300;
-    color: $primary-color;
-    font-family: 'Times New Roman', serif;
-  }
-  .brand-subtitle {
-    margin-top: 12rpx;
-    font-size: 20rpx;
-    color: $text-color-light;
-    letter-spacing: 4rpx;
-  }
+  background: #fbf9fa;
+  color: #1c1c1c;
 }
 
-.banner {
-  height: 760rpx;
-  width: 100%;
-
-  .banner-swiper {
-    height: 100%;
-  }
-
-  .banner-image-wrapper {
-    position: relative;
-    width: 100%;
-    height: 100%;
-
-    .banner-img {
-      width: 100%;
-      height: 100%;
-    }
-
-    .banner-mask {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: linear-gradient(to bottom, rgba(0,0,0,0.08), rgba(0,0,0,0.55));
-    }
-
-    .banner-text-box {
-      position: absolute;
-      bottom: 80rpx;
-      left: 40rpx;
-      display: flex;
-      flex-direction: column;
-
-      .banner-label {
-        font-size: 20rpx;
-        color: rgba(255,255,255,0.75);
-        letter-spacing: 6rpx;
-        margin-bottom: 12rpx;
-      }
-      .banner-headline {
-        font-size: 48rpx;
-        color: #fff;
-        font-weight: 300;
-        letter-spacing: 4rpx;
-      }
-    }
-  }
-}
-
-.entry-list {
-  padding: 40rpx 40rpx;
+.top-bar {
+  height: 116rpx;
+  padding: 34rpx 36rpx 20rpx;
   display: flex;
-  gap: 30rpx;
-  background-color: #fff;
-
-  .entry-card {
-    flex: 1;
-    background: #F5F2EE;
-    border: 1rpx solid #e8e4e0;
-    padding: 40rpx 30rpx;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-    box-shadow: 0 2rpx 16rpx rgba(74, 93, 78, 0.05);
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
-
-    &:active {
-      transform: translateY(-4rpx);
-      box-shadow: 0 8rpx 28rpx rgba(74, 93, 78, 0.12);
-    }
-
-    .entry-en {
-      font-size: 20rpx;
-      color: #bbb;
-      letter-spacing: 2rpx;
-      margin-bottom: 8rpx;
-    }
-    .entry-cn {
-      font-size: 32rpx;
-      color: #2c2c2c;
-      font-weight: 400;
-    }
-    .entry-arrow {
-      position: absolute;
-      bottom: 40rpx;
-      right: 30rpx;
-      color: #4A5D4E;
-      font-size: 36rpx;
-      font-weight: 300;
-      transition: transform 0.2s ease;
-    }
-
-    &:active .entry-arrow { transform: translateX(6rpx); }
-  }
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(249, 248, 246, 0.96);
+  border-bottom: 1rpx solid rgba(229, 226, 218, 0.72);
+  flex-shrink: 0;
 }
 
-.portfolio-section {
-  padding: 60rpx 30rpx;
-
-  .section-title-wrap {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 40rpx;
-
-    .section-title {
-      font-size: 32rpx;
-      font-weight: 400;
-      color: $text-color;
-      letter-spacing: 4rpx;
-    }
-    .section-desc {
-      font-size: 22rpx;
-      color: $text-color-light;
-      margin-top: 10rpx;
-      letter-spacing: 2rpx;
-    }
-  }
-
-  .waterfall {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-
-    .waterfall-col {
-      width: 48%;
-      display: flex;
-      flex-direction: column;
-      gap: 30rpx;
-    }
-  }
+.brand-word {
+  font-family: 'Times New Roman', serif;
+  font-size: 34rpx;
+  line-height: 1;
+  color: #1a2b3c;
+  letter-spacing: 12rpx;
+  font-weight: 600;
 }
 
-.portfolio-card {
-  background: #fff;
-  border-radius: 14rpx;
-  overflow: hidden;
-  box-shadow: 0 4rpx 20rpx rgba(74, 93, 78, 0.07);
-
-  .img-placeholder {
-    width: 100%;
-    height: 480rpx;
-    background: linear-gradient(135deg, #7F9E8B, #4A5D4E);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    .placeholder-text {
-      color: rgba(255,255,255,0.6);
-      font-family: 'Times New Roman', serif;
-      letter-spacing: 4rpx;
-      font-size: 24rpx;
-    }
-  }
-
-  .portfolio-img {
-    width: 100%;
-    display: block;
-    animation: imgFadeIn 0.4s ease;
-  }
-
-  .portfolio-info {
-    padding: 24rpx 20rpx;
-
-    .p-title {
-      font-size: 26rpx;
-      color: #2c2c2c;
-      font-weight: 500;
-      line-height: 1.4;
-      display: block;
-      margin-bottom: 16rpx;
-    }
-
-    .p-bottom {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-
-      .p-category {
-        font-size: 20rpx;
-        color: #4A5D4E;
-        border: 1rpx solid rgba(74, 93, 78, 0.25);
-        padding: 2rpx 12rpx;
-        border-radius: 4rpx;
-      }
-      .p-views {
-        font-size: 20rpx;
-        color: #bbb;
-      }
-    }
-  }
-}
-
-@keyframes imgFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.floating-chat {
-  position: fixed;
-  right: 40rpx;
-  bottom: 160rpx;
-  width: 100rpx;
-  height: 100rpx;
-  background: #2c2c2c;
-  border-radius: 50%;
+.top-icon {
+  width: 56rpx;
+  height: 56rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 8rpx 30rpx rgba(44, 44, 44, 0.2);
-  z-index: 999;
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
 
-  &:active {
-    transform: scale(0.9);
-    box-shadow: 0 4rpx 16rpx rgba(44, 44, 44, 0.15);
-  }
+.top-icon__text {
+  font-size: 34rpx;
+  color: #74777d;
+}
 
-  .chat-icon {
-    color: #fff;
-    font-size: 44rpx;
-  }
+.page-scroll {
+  flex: 1;
+}
+
+.hero-section {
+  padding: 32rpx 24rpx 0;
+}
+
+.hero-swiper,
+.hero-frame {
+  height: 780rpx;
+}
+
+.hero-frame {
+  position: relative;
+  overflow: hidden;
+  border-radius: 24rpx;
+  background: #e9e7e9;
+  box-shadow: 0 10rpx 26rpx rgba(26, 43, 60, 0.06);
+}
+
+.hero-image,
+.hero-shade {
+  width: 100%;
+  height: 100%;
+}
+
+.hero-image {
+  display: block;
+}
+
+.hero-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(251, 249, 250, 0.02) 0%, rgba(251, 249, 250, 0.36) 45%, rgba(251, 249, 250, 0.94) 100%);
+}
+
+.hero-copy {
+  position: absolute;
+  left: 36rpx;
+  right: 36rpx;
+  bottom: 42rpx;
+}
+
+.hero-kicker {
+  display: block;
+  margin-bottom: 14rpx;
+  font-size: 22rpx;
+  color: #4f6073;
+  letter-spacing: 4rpx;
+  text-transform: uppercase;
+}
+
+.hero-title {
+  display: block;
+  max-width: 560rpx;
+  font-family: 'Times New Roman', serif;
+  font-size: 54rpx;
+  line-height: 1.18;
+  color: #1a2b3c;
+  font-weight: 600;
+}
+
+.hero-desc {
+  display: block;
+  max-width: 540rpx;
+  margin-top: 18rpx;
+  font-size: 26rpx;
+  line-height: 1.62;
+  color: #44474c;
+}
+
+.hero-action {
+  display: inline-flex;
+  margin-top: 34rpx;
+  padding: 20rpx 34rpx;
+  border-radius: 8rpx;
+  background: #1a2b3c;
+}
+
+.hero-action__text {
+  color: #ffffff;
+  font-size: 22rpx;
+  font-weight: 700;
+  letter-spacing: 3rpx;
+}
+
+.highlight-section {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16rpx;
+  padding: 30rpx 24rpx 0;
+}
+
+.highlight-card {
+  min-height: 228rpx;
+  padding: 24rpx 20rpx;
+  border-radius: 16rpx;
+  border: 1rpx solid #e5e2da;
+  background: #ffffff;
+  box-shadow: 0 6rpx 24rpx rgba(26, 43, 60, 0.03);
+}
+
+.highlight-icon {
+  display: block;
+  height: 34rpx;
+  margin-bottom: 14rpx;
+  color: #1a2b3c;
+  font-size: 34rpx;
+  line-height: 1;
+}
+
+.highlight-title {
+  display: block;
+  font-size: 26rpx;
+  line-height: 1.35;
+  color: #1a2b3c;
+  font-weight: 700;
+}
+
+.highlight-desc {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 22rpx;
+  line-height: 1.55;
+  color: #6b6b6b;
+}
+
+.highlight-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6rpx;
+  margin-top: 18rpx;
+  color: #1a2b3c;
+  font-size: 20rpx;
+  font-weight: 700;
+  letter-spacing: 2rpx;
+}
+
+.highlight-link__arrow {
+  font-size: 20rpx;
+}
+
+.masterpiece-section {
+  padding: 42rpx 24rpx 120rpx;
+}
+
+.section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24rpx;
+  padding-bottom: 18rpx;
+  border-bottom: 1rpx solid #e5e2da;
+}
+
+.section-title {
+  font-family: 'Times New Roman', serif;
+  font-size: 38rpx;
+  line-height: 1.2;
+  color: #1a2b3c;
+  font-weight: 600;
+}
+
+.section-action {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  color: #1a2b3c;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.section-action__arrow {
+  font-size: 24rpx;
+}
+
+.masterpiece-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18rpx;
+  margin-top: 24rpx;
+}
+
+.masterpiece-item {
+  position: relative;
+  height: 410rpx;
+  overflow: hidden;
+  border-radius: 16rpx;
+  background: #e4e2e3;
+}
+
+.masterpiece-item--offset {
+  margin-top: 46rpx;
+}
+
+.masterpiece-image,
+.masterpiece-fallback {
+  width: 100%;
+  height: 100%;
+}
+
+.masterpiece-image {
+  display: block;
+}
+
+.masterpiece-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #b7c8de, #4f6073);
+}
+
+.masterpiece-fallback__text {
+  color: rgba(255, 255, 255, 0.76);
+  font-family: 'Times New Roman', serif;
+  font-size: 28rpx;
+  letter-spacing: 4rpx;
+}
+
+.empty-work {
+  padding: 80rpx 20rpx 40rpx;
+  text-align: center;
+}
+
+.empty-work__title {
+  display: block;
+  font-size: 30rpx;
+  color: #1a2b3c;
+  font-weight: 700;
+}
+
+.empty-work__desc {
+  display: block;
+  margin-top: 14rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
+  color: #74777d;
 }
 </style>

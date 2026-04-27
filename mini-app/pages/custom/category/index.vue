@@ -69,9 +69,9 @@ const descMap = {
 }
 
 const defaultDescs = [
-  'ZeHana Exclusive Craftsmanship',
-  'Tailored to Perfection',
-  'Artisan Bespoke Service'
+  '独立设计师一对一沟通，完整跟进定制细节',
+  '从版型到材料都围绕你的需求打磨',
+  '小批量手作流程，让作品更有个人印记'
 ]
 
 const getDesc = (item, index) => {

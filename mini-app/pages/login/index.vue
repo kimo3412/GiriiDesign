@@ -133,7 +133,7 @@ const handleAccountLogin = async () => {
 const showAgreement = (type) => {
   uni.showModal({
     title: type === 'user' ? '用户协议' : '隐私政策',
-    content: 'ZeHana Studio Terms & Conditions...',
+    content: 'ZeHana 工作室用户协议与隐私说明...',
     showCancel: false,
     confirmColor: '#4A5D4E'
   })
