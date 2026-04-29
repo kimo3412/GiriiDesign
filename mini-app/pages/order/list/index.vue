@@ -125,14 +125,11 @@ const progressSteps = ['沟通确认', '生产制作', '试穿验收', '交付�
 
 const currentTab = ref('1')
 const orders = ref([])
-const page = ref(1)
 const loading = ref(false)
-const hasMore = ref(true)
+const hasMore = ref(false)
 
 const switchTab = (value) => {
   currentTab.value = value
-  page.value = 1
-  hasMore.value = true
   fetchOrders(true)
 }
 
@@ -142,13 +139,12 @@ const fetchOrders = async (refresh = false) => {
 
   try {
     const data = await getOrderList({
-      page: page.value,
-      size: 10,
       status: currentTab.value
     })
     const list = Array.isArray(data) ? data : (data.records || data.list || [])
-    orders.value = refresh ? list : [...orders.value, ...list]
-    hasMore.value = list.length >= 10
+    orders.value = list
+    // 后端当前返回完整订单列表，不做分页；避免滚动到底部时重复追加同一批数据。
+    hasMore.value = false
   } catch (err) {
     uni.showToast({ title: '获取订单失败', icon: 'none' })
   } finally {
@@ -157,9 +153,7 @@ const fetchOrders = async (refresh = false) => {
 }
 
 const loadMore = () => {
-  if (!hasMore.value) return
-  page.value += 1
-  fetchOrders()
+  // 预留分页入口；等后端支持 page/size 后再启用追加加载。
 }
 
 const goToStudio = () => {
@@ -275,8 +269,6 @@ const getMetaValue = (order) => {
 const formatAmount = (value) => Number(value || 0).toFixed(2)
 
 onShow(() => {
-  page.value = 1
-  hasMore.value = true
   fetchOrders(true)
 })
 </script>

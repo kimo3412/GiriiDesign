@@ -60,17 +60,14 @@ const categories = ref([
 
 const currentCategory = ref('')
 const list = ref([])
-const page = ref(1)
 const loading = ref(false)
-const hasMore = ref(true)
+const hasMore = ref(false)
 
 /**
  * 切换分类
  */
 const switchCategory = (id) => {
   currentCategory.value = id
-  page.value = 1
-  hasMore.value = true
   fetchList(true)
 }
 
@@ -84,20 +81,15 @@ const fetchList = async (refresh = false) => {
 
   try {
     const params = {
-      page: page.value,
-      size: 10,
       categoryId: currentCategory.value
     }
 
     const data = await getPortfolioList(params)
+    const nextList = Array.isArray(data) ? data : (data.list || [])
 
-    if (refresh) {
-      list.value = data.list || []
-    } else {
-      list.value = [...list.value, ...(data.list || [])]
-    }
-
-    hasMore.value = (data.list || []).length >= 10
+    list.value = nextList
+    // 后端作品集接口返回完整列表，不做分页；避免滚动到底部重复追加。
+    hasMore.value = false
   } catch (err) {
     uni.showToast({ title: '获取作品失败', icon: 'none' })
   }
@@ -109,9 +101,7 @@ const fetchList = async (refresh = false) => {
  * 加载更多
  */
 const loadMore = () => {
-  if (!hasMore.value) return
-  page.value++
-  fetchList()
+  // 预留分页入口；等后端支持 page/size 后再启用追加加载。
 }
 
 /**
