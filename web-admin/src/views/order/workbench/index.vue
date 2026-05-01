@@ -558,9 +558,18 @@ function syncNodeFieldValues() {
   const latestProgressValues = getLatestProgressFormData();
   const merged = { ...baseValues, ...latestProgressValues };
   nodeFieldValues.value = currentStepFields.value.reduce((result, field) => {
-    result[field.fieldKey] = merged[field.fieldKey] ?? null;
+    result[field.fieldKey] = normalizeNodeFieldValue(field, merged[field.fieldKey]);
     return result;
   }, {} as Record<string, any>);
+}
+
+function normalizeNodeFieldValue(field: CustomField, value: any) {
+  if (value === null || value === undefined || value === '') return null;
+  if (field.fieldType === 'number') {
+    const numericValue = Number(value);
+    return Number.isFinite(numericValue) ? numericValue : null;
+  }
+  return value;
 }
 
 function getLatestProgressFormData() {
