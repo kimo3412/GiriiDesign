@@ -1,0 +1,77 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: girii-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-Girii_2026_mysql!}
+      MYSQL_DATABASE: design_studio
+      TZ: Asia/Shanghai
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+08:00
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./Code/sql/design_studio.sql:/docker-entrypoint-initdb.d/01_design_studio.sql:ro
+    ports:
+      - "127.0.0.1:3306:3306"
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$${MYSQL_ROOT_PASSWORD} --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    container_name: girii-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    ports:
+      - "127.0.0.1:6379:6379"
+
+  backend:
+    build:
+      context: .
+      dockerfile: deploy/backend.Dockerfile
+    container_name: girii-backend
+    restart: unless-stopped
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/design_studio?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-Girii_2026_mysql!}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      JWT_SECRET: ${JWT_SECRET:-ChangeThisDesignStudioJwtSecretKeyMustBeLongEnoughForHS2562026}
+      UPLOAD_PATH: /data/uploads/
+      UPLOAD_URL_PREFIX: /uploads/
+      TZ: Asia/Shanghai
+    volumes:
+      - uploads:/data/uploads
+    ports:
+      - "127.0.0.1:8081:8081"
+
+  web:
+    build:
+      context: .
+      dockerfile: deploy/web-admin.Dockerfile
+    container_name: girii-web
+    restart: unless-stopped
+    depends_on:
+      - backend
+    volumes:
+      - uploads:/data/uploads:ro
+    ports:
+      - "80:80"
+
+volumes:
+  mysql_data:
+  redis_data:
+  uploads:
