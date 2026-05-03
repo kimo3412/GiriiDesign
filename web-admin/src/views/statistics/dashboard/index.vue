@@ -4,7 +4,9 @@
       <div class="dashboard-hero__content">
         <div class="dashboard-eyebrow">经营看板</div>
         <h2 class="dashboard-title">工作室经营概览</h2>
-        <p class="dashboard-desc">从订单、营收、转化和流程效率四个维度快速判断当前经营状态。</p>
+        <p class="dashboard-desc">
+          首屏只保留关键经营信号，详细图表按主题展开，避免所有分析内容一次性堆在页面里。
+        </p>
         <div class="dashboard-ribbon">
           <span class="dashboard-ribbon__chip">订单节奏</span>
           <span class="dashboard-ribbon__chip">营收质量</span>
@@ -12,14 +14,16 @@
         </div>
       </div>
       <div class="dashboard-hero__aside">
-        <div class="hero-pill">
-          <span>本月新增订单</span>
-          <strong>{{ Number(data.monthOrders || 0) }}</strong>
-        </div>
-        <div class="hero-pill">
-          <span>本月营收</span>
-          <strong>¥{{ Number(data.monthRevenue || 0).toFixed(2) }}</strong>
-        </div>
+        <button
+          v-for="hero in heroCards"
+          :key="hero.label"
+          class="hero-pill"
+          type="button"
+          @click="openDetail(hero.detail)"
+        >
+          <span>{{ hero.label }}</span>
+          <strong>{{ hero.value }}</strong>
+        </button>
       </div>
     </section>
 
@@ -50,138 +54,164 @@
       </n-card>
     </section>
 
-    <section class="kpi-strip">
-      <n-card size="small" :bordered="false" class="kpi-card">
-        <div class="kpi-card__main">
-          <div class="kpi-card__icon kpi-card__icon--warning">
-            <n-icon size="18"><TagsOutlined /></n-icon>
-          </div>
-          <div>
-            <div class="kpi-card__label">待处理意向</div>
-            <div class="kpi-card__value">{{ Number(data.pendingRequests || 0) }}</div>
-          </div>
-        </div>
-        <n-tag type="warning" size="small" round>需要跟进</n-tag>
-      </n-card>
-      <n-card size="small" :bordered="false" class="kpi-card">
-        <div class="kpi-card__main">
-          <div class="kpi-card__icon kpi-card__icon--error">
-            <n-icon size="18"><BarChartOutlined /></n-icon>
-          </div>
-          <div>
-            <div class="kpi-card__label">低库存物料</div>
-            <div class="kpi-card__value">{{ Number(data.lowStockMaterials || 0) }}</div>
-          </div>
-        </div>
-        <n-tag type="error" size="small" round>需要补货</n-tag>
-      </n-card>
-      <n-card size="small" :bordered="false" class="kpi-card">
-        <div class="kpi-card__main">
-          <div class="kpi-card__icon kpi-card__icon--info">
-            <n-icon size="18"><AccountBookOutlined /></n-icon>
-          </div>
-          <div>
-            <div class="kpi-card__label">平均客单价</div>
-            <div class="kpi-card__value"
-              >¥{{ Number(data.averageOrderAmount || 0).toFixed(2) }}</div
-            >
-          </div>
-        </div>
-        <n-tag type="info" size="small" round>质量指标</n-tag>
-      </n-card>
-      <n-card size="small" :bordered="false" class="kpi-card">
-        <div class="kpi-card__main">
-          <div class="kpi-card__icon kpi-card__icon--success">
-            <n-icon size="18"><ProfileOutlined /></n-icon>
-          </div>
-          <div>
-            <div class="kpi-card__label">复购客户</div>
-            <div class="kpi-card__value">{{ Number(data.repeatCustomers || 0) }}</div>
-          </div>
-        </div>
-        <n-tag type="success" size="small" round
-          >{{ Number(data.repeatCustomerRate || 0).toFixed(2) }}%</n-tag
-        >
-      </n-card>
+    <section class="risk-strip">
+      <button
+        v-for="risk in riskCards"
+        :key="risk.label"
+        class="risk-card"
+        type="button"
+        @click="openDetail(risk.detail)"
+      >
+        <span class="risk-card__icon" :class="risk.iconClass">
+          <n-icon size="18">
+            <component :is="risk.icon" />
+          </n-icon>
+        </span>
+        <span class="risk-card__body">
+          <span class="risk-card__label">{{ risk.label }}</span>
+          <strong>{{ risk.value }}</strong>
+          <n-tag :type="risk.tagType" size="small" round>{{ risk.tag }}</n-tag>
+        </span>
+      </button>
     </section>
 
-    <section class="chart-section">
-      <div class="section-head">
-        <div class="section-head__main">
-          <div class="section-head__badge">
+    <n-card :bordered="false" class="analysis-shell">
+      <div class="analysis-header">
+        <div>
+          <div class="analysis-kicker">
             <n-icon size="16"><RiseOutlined /></n-icon>
-            <span>趋势分析</span>
+            <span>主题分析</span>
           </div>
-          <div class="section-eyebrow">趋势分析</div>
-          <h3>订单与营收走势</h3>
+          <h3>{{ activeTabMeta.title }}</h3>
+          <p>{{ activeTabMeta.desc }}</p>
         </div>
+        <n-button text type="primary" @click="openDetail(activeTab)">查看完整明细</n-button>
       </div>
-      <div class="chart-grid chart-grid--dual">
-        <n-card title="近 7 天订单趋势" size="small" :bordered="false" class="panel-card">
-          <div ref="trendChartRef" class="chart-box chart-box--wide"></div>
-        </n-card>
-        <n-card title="订单状态分布" size="small" :bordered="false" class="panel-card">
-          <div ref="pieChartRef" class="chart-box"></div>
-        </n-card>
-        <n-card title="品类订单排名" size="small" :bordered="false" class="panel-card">
-          <div ref="barChartRef" class="chart-box"></div>
-        </n-card>
-        <n-card title="月度营收趋势" size="small" :bordered="false" class="panel-card">
-          <div ref="areaChartRef" class="chart-box"></div>
-        </n-card>
-      </div>
-    </section>
 
-    <section class="chart-section">
-      <div class="section-head">
-        <div class="section-head__main">
-          <div class="section-head__badge section-head__badge--amber">
-            <n-icon size="16"><BarChartOutlined /></n-icon>
-            <span>转化与流程</span>
+      <n-tabs v-model:value="activeTab" type="segment" animated class="analysis-tabs">
+        <n-tab-pane name="orders" tab="订单趋势">
+          <div class="chart-grid">
+            <n-card title="近 7 天订单与营收" size="small" :bordered="false" class="panel-card">
+              <div ref="trendChartRef" class="chart-box chart-box--wide"></div>
+            </n-card>
+            <n-card title="订单状态分布" size="small" :bordered="false" class="panel-card">
+              <div ref="pieChartRef" class="chart-box"></div>
+            </n-card>
           </div>
-          <div class="section-eyebrow">转化与流程</div>
-          <h3>转化质量与流程瓶颈</h3>
-        </div>
-      </div>
-      <div class="chart-grid chart-grid--dual">
-        <n-card title="品类转化率" size="small" :bordered="false" class="panel-card">
-          <div ref="conversionChartRef" class="chart-box"></div>
-        </n-card>
-        <n-card title="流程瓶颈节点" size="small" :bordered="false" class="panel-card">
-          <div ref="bottleneckChartRef" class="chart-box"></div>
-        </n-card>
-      </div>
-    </section>
+        </n-tab-pane>
 
-    <section class="chart-section">
-      <div class="section-head">
-        <div class="section-head__main">
-          <div class="section-head__badge section-head__badge--emerald">
-            <n-icon size="16"><AccountBookOutlined /></n-icon>
-            <span>效率明细</span>
+        <n-tab-pane name="revenue" tab="营收结构">
+          <div class="chart-grid">
+            <n-card title="月度营收趋势" size="small" :bordered="false" class="panel-card">
+              <div ref="areaChartRef" class="chart-box chart-box--wide"></div>
+            </n-card>
+            <n-card title="品类订单排名" size="small" :bordered="false" class="panel-card">
+              <div ref="barChartRef" class="chart-box"></div>
+            </n-card>
           </div>
-          <div class="section-eyebrow">效率明细</div>
-          <h3>设计师效率与品类转化明细</h3>
+        </n-tab-pane>
+
+        <n-tab-pane name="conversion" tab="转化流程">
+          <div class="chart-grid">
+            <n-card title="品类转化率" size="small" :bordered="false" class="panel-card">
+              <div ref="conversionChartRef" class="chart-box"></div>
+            </n-card>
+            <n-card title="流程瓶颈节点" size="small" :bordered="false" class="panel-card">
+              <div ref="bottleneckChartRef" class="chart-box"></div>
+            </n-card>
+          </div>
+        </n-tab-pane>
+
+        <n-tab-pane name="efficiency" tab="团队效率">
+          <div class="table-grid">
+            <n-card title="设计师效率" size="small" :bordered="false" class="panel-card">
+              <n-data-table
+                :columns="designerColumns"
+                :data="designerTableData"
+                :pagination="false"
+              />
+            </n-card>
+            <n-card title="品类转化明细" size="small" :bordered="false" class="panel-card">
+              <n-data-table
+                :columns="conversionColumns"
+                :data="conversionTableData"
+                :pagination="false"
+              />
+            </n-card>
+          </div>
+        </n-tab-pane>
+      </n-tabs>
+    </n-card>
+
+    <n-drawer v-model:show="showDetailDrawer" :width="520" placement="right">
+      <n-drawer-content :title="drawerMeta.title" closable>
+        <p class="drawer-desc">{{ drawerMeta.desc }}</p>
+
+        <div v-if="drawerMode === 'orders'" class="drawer-section">
+          <h4>订单状态</h4>
+          <div v-if="statusList.length" class="drawer-list">
+            <div v-for="item in statusList" :key="item.name" class="drawer-row">
+              <span>{{ item.name }}</span>
+              <strong>{{ item.value }} 单</strong>
+            </div>
+          </div>
+          <n-empty v-else description="暂无订单状态数据" />
         </div>
-      </div>
-      <div class="table-grid">
-        <n-card title="设计师效率" size="small" :bordered="false" class="panel-card">
-          <n-data-table :columns="designerColumns" :data="designerTableData" :pagination="false" />
-        </n-card>
-        <n-card title="品类转化明细" size="small" :bordered="false" class="panel-card">
-          <n-data-table
-            :columns="conversionColumns"
-            :data="conversionTableData"
-            :pagination="false"
-          />
-        </n-card>
-      </div>
-    </section>
+
+        <div v-if="drawerMode === 'revenue'" class="drawer-section">
+          <h4>营收趋势</h4>
+          <div v-if="monthlyRevenueList.length" class="drawer-list">
+            <div v-for="item in monthlyRevenueList" :key="item.month" class="drawer-row">
+              <span>{{ item.month }}</span>
+              <strong>{{ formatCurrency(item.revenue) }}</strong>
+            </div>
+          </div>
+          <n-empty v-else description="暂无营收数据" />
+        </div>
+
+        <div v-if="drawerMode === 'conversion'" class="drawer-section">
+          <h4>品类转化</h4>
+          <div v-if="conversionTableData.length" class="drawer-list">
+            <div v-for="item in conversionTableData" :key="item.category_name" class="drawer-row">
+              <span>{{ item.category_name || '未命名品类' }}</span>
+              <strong>{{ Number(item.conversionRate || 0).toFixed(2) }}%</strong>
+            </div>
+          </div>
+          <n-empty v-else description="暂无转化数据" />
+        </div>
+
+        <div v-if="drawerMode === 'efficiency'" class="drawer-section">
+          <h4>流程瓶颈</h4>
+          <div v-if="workflowBottleneckList.length" class="drawer-list">
+            <div v-for="item in workflowBottleneckList" :key="item.step_name" class="drawer-row">
+              <span>{{ item.step_name || '未知节点' }}</span>
+              <strong>{{ Number(item.avg_stay_days || 0).toFixed(2) }} 天</strong>
+            </div>
+          </div>
+          <n-empty v-else description="暂无流程瓶颈数据" />
+        </div>
+
+        <div v-if="drawerMode === 'risk'" class="drawer-section drawer-risk">
+          <div class="drawer-risk__card">
+            <span>待处理意向</span>
+            <strong>{{ Number(data.pendingRequests || 0) }}</strong>
+          </div>
+          <div class="drawer-risk__card">
+            <span>低库存物料</span>
+            <strong>{{ Number(data.lowStockMaterials || 0) }}</strong>
+          </div>
+          <div class="drawer-risk__card">
+            <span>复购客户</span>
+            <strong>{{ Number(data.repeatCustomers || 0) }}</strong>
+          </div>
+        </div>
+      </n-drawer-content>
+    </n-drawer>
   </div>
 </template>
 
 <script lang="ts" setup>
-  import { computed, onMounted, ref, type Ref } from 'vue';
+  import { computed, nextTick, onMounted, ref, watch, type Ref } from 'vue';
   import { getDashboardData, type DashboardData } from '@/api/dashboard/console';
   import { CountTo } from '@/components/CountTo/index';
   import { useECharts } from '@/hooks/web/useECharts';
@@ -194,7 +224,13 @@
     TagsOutlined,
   } from '@vicons/antd';
 
+  type AnalysisTab = 'orders' | 'revenue' | 'conversion' | 'efficiency';
+  type DrawerMode = AnalysisTab | 'risk';
+
   const data = ref<Partial<DashboardData>>({});
+  const activeTab = ref<AnalysisTab>('orders');
+  const showDetailDrawer = ref(false);
+  const drawerMode = ref<DrawerMode>('orders');
 
   const trendChartRef = ref<HTMLDivElement | null>(null);
   const pieChartRef = ref<HTMLDivElement | null>(null);
@@ -224,6 +260,64 @@
     6: '待付尾款',
   };
 
+  const tabMeta: Record<AnalysisTab, { title: string; desc: string }> = {
+    orders: {
+      title: '订单趋势',
+      desc: '关注最近 7 天订单与营收节奏，判断工作室当前接单状态。',
+    },
+    revenue: {
+      title: '营收结构',
+      desc: '查看月度营收与品类贡献，快速定位最值得投入的业务方向。',
+    },
+    conversion: {
+      title: '转化流程',
+      desc: '追踪意向到订单、订单到完成的链路质量，发现转化断点。',
+    },
+    efficiency: {
+      title: '团队效率',
+      desc: '对比设计师处理效率与节点停留时长，及时发现流程瓶颈。',
+    },
+  };
+
+  const drawerConfig: Record<DrawerMode, { title: string; desc: string }> = {
+    orders: {
+      title: '订单明细',
+      desc: '这里保留订单状态分布，适合查看当前订单池是否健康。',
+    },
+    revenue: {
+      title: '营收明细',
+      desc: '按月查看营收走势，辅助判断近期订单质量。',
+    },
+    conversion: {
+      title: '转化明细',
+      desc: '按品类查看意向转单效率，适合排查哪个品类需要重点跟进。',
+    },
+    efficiency: {
+      title: '效率明细',
+      desc: '查看流程中平均停留较久的节点，辅助优化排期。',
+    },
+    risk: {
+      title: '经营提醒',
+      desc: '把需要马上处理的经营信号聚合到一起，避免被图表淹没。',
+    },
+  };
+
+  const activeTabMeta = computed(() => tabMeta[activeTab.value]);
+  const drawerMeta = computed(() => drawerConfig[drawerMode.value]);
+
+  const heroCards = computed(() => [
+    {
+      label: '本月新增订单',
+      value: Number(data.value.monthOrders || 0).toString(),
+      detail: 'orders' as DrawerMode,
+    },
+    {
+      label: '本月营收',
+      value: formatCurrency(data.value.monthRevenue || 0),
+      detail: 'revenue' as DrawerMode,
+    },
+  ]);
+
   const topCards = computed(() => [
     {
       label: '总订单数',
@@ -236,7 +330,7 @@
       value: Number(data.value.totalRevenue || 0),
       icon: AccountBookOutlined,
       bg: 'linear-gradient(135deg, #4facfe, #00f2fe)',
-      prefix: '¥',
+      prefix: '￥',
       decimals: 2,
     },
     {
@@ -254,6 +348,55 @@
       decimals: 2,
     },
   ]);
+
+  const riskCards = computed(() => [
+    {
+      label: '待处理意向',
+      value: Number(data.value.pendingRequests || 0),
+      icon: TagsOutlined,
+      iconClass: 'risk-card__icon--warning',
+      tag: '需要跟进',
+      tagType: 'warning' as const,
+      detail: 'risk' as DrawerMode,
+    },
+    {
+      label: '低库存物料',
+      value: Number(data.value.lowStockMaterials || 0),
+      icon: BarChartOutlined,
+      iconClass: 'risk-card__icon--error',
+      tag: '需要补货',
+      tagType: 'error' as const,
+      detail: 'risk' as DrawerMode,
+    },
+    {
+      label: '平均客单价',
+      value: formatCurrency(data.value.averageOrderAmount || 0),
+      icon: AccountBookOutlined,
+      iconClass: 'risk-card__icon--info',
+      tag: '质量指标',
+      tagType: 'info' as const,
+      detail: 'revenue' as DrawerMode,
+    },
+    {
+      label: '复购客户',
+      value: Number(data.value.repeatCustomers || 0),
+      icon: ProfileOutlined,
+      iconClass: 'risk-card__icon--success',
+      tag: `${Number(data.value.repeatCustomerRate || 0).toFixed(2)}%`,
+      tagType: 'success' as const,
+      detail: 'risk' as DrawerMode,
+    },
+  ]);
+
+  const statusList = computed(() =>
+    (data.value.orderStatusDistribution || []).map((item) => ({
+      name: STATUS_MAP[item.status] || `状态 ${item.status}`,
+      value: Number(item.count || 0),
+    }))
+  );
+
+  const monthlyRevenueList = computed(() => data.value.monthlyRevenueTrend || []);
+  const workflowBottleneckList = computed(() => data.value.workflowBottlenecks || []);
 
   const conversionTableData = computed(() =>
     (data.value.conversionMetrics || []).map((item) => {
@@ -309,15 +452,44 @@
   onMounted(async () => {
     const res = await getDashboardData();
     data.value = res;
-    renderCharts(res);
+    await renderActiveCharts();
   });
 
-  function renderCharts(d: Partial<DashboardData>) {
+  watch(activeTab, () => {
+    renderActiveCharts();
+  });
+
+  function openDetail(mode: DrawerMode) {
+    drawerMode.value = mode;
+    showDetailDrawer.value = true;
+  }
+
+  async function renderActiveCharts() {
+    await nextTick();
+    if (!data.value) return;
+
+    if (activeTab.value === 'orders') {
+      renderOrderCharts(data.value);
+      return;
+    }
+
+    if (activeTab.value === 'revenue') {
+      renderRevenueCharts(data.value);
+      return;
+    }
+
+    if (activeTab.value === 'conversion') {
+      renderConversionCharts(data.value);
+    }
+  }
+
+  function renderOrderCharts(d: Partial<DashboardData>) {
     const trendDates = (d.dailyOrderTrend || []).map((item) => item.date?.substring(5) || '');
     const trendCounts = (d.dailyOrderTrend || []).map((item) => Number(item.order_count || 0));
     const trendRevenue = (d.dailyOrderTrend || []).map((item) => Number(item.revenue || 0));
 
     setTrendOptions({
+      color: ['#1f2f82', '#24a3c7'],
       tooltip: { trigger: 'axis' },
       legend: { data: ['订单数', '营收'], bottom: 0 },
       grid: { left: '3%', right: '4%', bottom: '15%', containLabel: true },
@@ -333,39 +505,26 @@
     });
 
     setPieOptions({
+      color: ['#1f2f82', '#4f6ef7', '#28b6a5', '#f5a524', '#ef5b72', '#94a3b8'],
       tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
       legend: { bottom: 0 },
       series: [
         {
           type: 'pie',
-          radius: ['40%', '66%'],
+          radius: ['42%', '66%'],
           center: ['50%', '42%'],
-          data: (d.orderStatusDistribution || []).map((item) => ({
-            name: STATUS_MAP[item.status] || `状态${item.status}`,
-            value: item.count,
+          data: statusList.value.map((item) => ({
+            name: item.name,
+            value: item.value,
           })),
         },
       ],
     });
+  }
 
-    setBarOptions({
-      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
-      grid: { left: '3%', right: '8%', bottom: '3%', containLabel: true },
-      xAxis: { type: 'value' },
-      yAxis: {
-        type: 'category',
-        data: (d.categoryRank || []).map((item) => item.category_name || '未命名').reverse(),
-      },
-      series: [
-        {
-          type: 'bar',
-          data: (d.categoryRank || []).map((item) => Number(item.order_count || 0)).reverse(),
-          barWidth: '50%',
-        },
-      ],
-    });
-
+  function renderRevenueCharts(d: Partial<DashboardData>) {
     setAreaOptions({
+      color: ['#1f2f82', '#f59e0b'],
       tooltip: { trigger: 'axis' },
       legend: { data: ['营收', '订单数'], bottom: 0 },
       grid: { left: '3%', right: '4%', bottom: '15%', containLabel: true },
@@ -383,7 +542,7 @@
           type: 'line',
           smooth: true,
           data: (d.monthlyRevenueTrend || []).map((item) => Number(item.revenue || 0)),
-          areaStyle: {},
+          areaStyle: { opacity: 0.12 },
         },
         {
           name: '订单数',
@@ -394,14 +553,36 @@
       ],
     });
 
+    setBarOptions({
+      color: ['#1f2f82'],
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+      grid: { left: '3%', right: '8%', bottom: '3%', containLabel: true },
+      xAxis: { type: 'value' },
+      yAxis: {
+        type: 'category',
+        data: (d.categoryRank || []).map((item) => item.category_name || '未命名品类').reverse(),
+      },
+      series: [
+        {
+          type: 'bar',
+          data: (d.categoryRank || []).map((item) => Number(item.order_count || 0)).reverse(),
+          barWidth: '48%',
+          itemStyle: { borderRadius: [0, 8, 8, 0] },
+        },
+      ],
+    });
+  }
+
+  function renderConversionCharts(d: Partial<DashboardData>) {
     const conversionData = conversionTableData.value;
     setConversionOptions({
+      color: ['#1f2f82', '#28b6a5'],
       tooltip: { trigger: 'axis' },
       legend: { data: ['转化率', '完成率'], bottom: 0 },
       grid: { left: '3%', right: '4%', bottom: '15%', containLabel: true },
       xAxis: {
         type: 'category',
-        data: conversionData.map((item) => item.category_name || '未命名'),
+        data: conversionData.map((item) => item.category_name || '未命名品类'),
       },
       yAxis: { type: 'value', axisLabel: { formatter: '{value}%' } },
       series: [
@@ -409,6 +590,7 @@
           name: '转化率',
           type: 'bar',
           data: conversionData.map((item) => Number(item.conversionRate || 0)),
+          itemStyle: { borderRadius: [8, 8, 0, 0] },
         },
         {
           name: '完成率',
@@ -420,6 +602,7 @@
     });
 
     setBottleneckOptions({
+      color: ['#f59e0b'],
       tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
       grid: { left: '3%', right: '8%', bottom: '3%', containLabel: true },
       xAxis: { type: 'value', name: '天' },
@@ -433,10 +616,15 @@
           data: (d.workflowBottlenecks || [])
             .map((item) => Number(item.avg_stay_days || 0))
             .reverse(),
-          barWidth: '50%',
+          barWidth: '48%',
+          itemStyle: { borderRadius: [0, 8, 8, 0] },
         },
       ],
     });
+  }
+
+  function formatCurrency(value: unknown) {
+    return `￥${Number(value || 0).toFixed(2)}`;
   }
 </script>
 
@@ -486,14 +674,17 @@
     background: radial-gradient(circle, rgba(56, 189, 248, 0.12), transparent 70%);
   }
 
-  .dashboard-hero__content {
+  .dashboard-hero__content,
+  .dashboard-hero__aside {
     position: relative;
     z-index: 1;
-    max-width: 680px;
   }
 
-  .dashboard-eyebrow,
-  .section-eyebrow {
+  .dashboard-hero__content {
+    max-width: 720px;
+  }
+
+  .dashboard-eyebrow {
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -537,8 +728,6 @@
   }
 
   .dashboard-hero__aside {
-    position: relative;
-    z-index: 1;
     display: grid;
     grid-template-columns: repeat(2, minmax(150px, 1fr));
     gap: 12px;
@@ -551,9 +740,17 @@
     justify-content: space-between;
     gap: 10px;
     padding: 16px 18px;
+    border: 1px solid rgba(99, 102, 241, 0.12);
     border-radius: 18px;
     background: rgba(255, 255, 255, 0.92);
-    border: 1px solid rgba(99, 102, 241, 0.12);
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .hero-pill:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 26px rgba(31, 47, 130, 0.08);
   }
 
   .hero-pill span {
@@ -567,15 +764,24 @@
     color: #1d2a57;
   }
 
-  .stat-grid {
+  .stat-grid,
+  .risk-strip {
     display: grid;
+    gap: 14px;
+  }
+
+  .stat-grid {
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 16px;
+  }
+
+  .risk-strip {
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   }
 
   .stat-card,
   .panel-card,
-  .kpi-card {
+  .analysis-shell,
+  .risk-card {
     position: relative;
     border-radius: 20px;
     background: rgba(255, 255, 255, 0.96);
@@ -586,7 +792,8 @@
 
   .stat-card::before,
   .panel-card::before,
-  .kpi-card::before {
+  .analysis-shell::before,
+  .risk-card::before {
     content: '';
     position: absolute;
     inset: 0 auto auto 0;
@@ -597,7 +804,7 @@
 
   .stat-card:hover,
   .panel-card:hover,
-  .kpi-card:hover {
+  .risk-card:hover {
     transform: translateY(-1px);
     box-shadow: 0 14px 30px rgba(15, 23, 42, 0.06);
   }
@@ -607,87 +814,6 @@
     align-items: center;
     gap: 16px;
     padding: 18px 20px !important;
-  }
-
-  .panel-card :deep(.n-card-header) {
-    padding: 18px 20px 0 !important;
-  }
-
-  .panel-card :deep(.n-card__content),
-  .kpi-card :deep(.n-card__content) {
-    padding: 18px 20px !important;
-  }
-
-  .panel-card :deep(.n-card-header__main) {
-    font-size: 15px;
-    font-weight: 700;
-    color: #18243d;
-  }
-
-  .kpi-strip {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 14px;
-  }
-
-  .kpi-card {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: flex-start;
-    gap: 12px;
-  }
-
-  .kpi-card__main {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    min-width: 0;
-    width: 100%;
-  }
-
-  .kpi-card__icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 14px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    color: #fff;
-  }
-
-  .kpi-card__icon--warning {
-    background: linear-gradient(135deg, #fbbf24, #f59e0b);
-  }
-
-  .kpi-card__icon--error {
-    background: linear-gradient(135deg, #fb7185, #ef4444);
-  }
-
-  .kpi-card__icon--info {
-    background: linear-gradient(135deg, #60a5fa, #2563eb);
-  }
-
-  .kpi-card__icon--success {
-    background: linear-gradient(135deg, #34d399, #10b981);
-  }
-
-  .kpi-card__label {
-    font-size: 12px;
-    color: #718096;
-    margin-bottom: 6px;
-  }
-
-  .kpi-card__value {
-    font-size: 22px;
-    font-weight: 800;
-    color: #18243d;
-    line-height: 1.1;
-  }
-
-  .kpi-card :deep(.n-tag) {
-    align-self: flex-start;
   }
 
   .stat-icon {
@@ -707,9 +833,13 @@
     min-width: 0;
   }
 
-  .stat-label {
+  .stat-label,
+  .risk-card__label {
     font-size: 12px;
     color: #718096;
+  }
+
+  .stat-label {
     margin-bottom: 6px;
   }
 
@@ -720,20 +850,70 @@
     line-height: 1.1;
   }
 
-  .section-head {
+  .risk-card {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    margin-bottom: 12px;
+    gap: 12px;
+    padding: 16px;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.2s ease;
   }
 
-  .section-head__main {
+  .risk-card__icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: #fff;
+  }
+
+  .risk-card__icon--warning {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  }
+
+  .risk-card__icon--error {
+    background: linear-gradient(135deg, #fb7185, #ef4444);
+  }
+
+  .risk-card__icon--info {
+    background: linear-gradient(135deg, #60a5fa, #2563eb);
+  }
+
+  .risk-card__icon--success {
+    background: linear-gradient(135deg, #34d399, #10b981);
+  }
+
+  .risk-card__body {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    align-items: flex-start;
+    gap: 6px;
+    min-width: 0;
   }
 
-  .section-head__badge {
+  .risk-card__body strong {
+    font-size: 22px;
+    font-weight: 800;
+    color: #18243d;
+    line-height: 1;
+  }
+
+  .analysis-shell :deep(.n-card__content) {
+    padding: 20px !important;
+  }
+
+  .analysis-header {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .analysis-kicker {
     display: inline-flex;
     align-items: center;
     gap: 8px;
@@ -743,40 +923,49 @@
     color: #4f46e5;
     font-size: 12px;
     font-weight: 700;
-    width: fit-content;
   }
 
-  .section-head__badge--amber {
-    background: rgba(245, 158, 11, 0.12);
-    color: #b45309;
-  }
-
-  .section-head__badge--emerald {
-    background: rgba(16, 185, 129, 0.12);
-    color: #047857;
-  }
-
-  .section-head h3 {
-    margin: 6px 0 0;
+  .analysis-header h3 {
+    margin: 10px 0 4px;
     font-size: 20px;
     font-weight: 800;
     color: #18243d;
   }
 
-  .chart-section {
-    display: flex;
-    flex-direction: column;
+  .analysis-header p {
+    margin: 0;
+    color: #667085;
+    font-size: 13px;
+    line-height: 1.6;
+  }
+
+  .analysis-tabs :deep(.n-tabs-nav) {
+    margin-bottom: 16px;
   }
 
   .chart-grid,
   .table-grid {
     display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
   }
 
-  .chart-grid--dual,
-  .table-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .panel-card :deep(.n-card-header) {
+    padding: 18px 20px 0 !important;
+  }
+
+  .panel-card :deep(.n-card__content) {
+    padding: 18px 20px !important;
+  }
+
+  .panel-card :deep(.n-card-header__main) {
+    font-size: 15px;
+    font-weight: 700;
+    color: #18243d;
+  }
+
+  .panel-card :deep(.n-data-table) {
+    font-size: 13px;
   }
 
   .chart-box {
@@ -788,8 +977,66 @@
     height: clamp(280px, 34vh, 360px);
   }
 
-  .panel-card :deep(.n-data-table) {
-    font-size: 13px;
+  .drawer-desc {
+    margin: 0 0 18px;
+    color: #667085;
+    line-height: 1.7;
+  }
+
+  .drawer-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .drawer-section h4 {
+    margin: 0;
+    font-size: 15px;
+    color: #18243d;
+  }
+
+  .drawer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .drawer-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #f8fafc;
+    color: #475467;
+  }
+
+  .drawer-row strong {
+    color: #18243d;
+    white-space: nowrap;
+  }
+
+  .drawer-risk {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .drawer-risk__card {
+    padding: 14px;
+    border-radius: 16px;
+    background: #f8fafc;
+  }
+
+  .drawer-risk__card span {
+    display: block;
+    color: #718096;
+    font-size: 12px;
+    margin-bottom: 8px;
+  }
+
+  .drawer-risk__card strong {
+    font-size: 22px;
+    color: #18243d;
   }
 
   @media (max-width: 1280px) {
@@ -804,7 +1051,7 @@
   }
 
   @media (max-width: 1024px) {
-    .chart-grid--dual,
+    .chart-grid,
     .table-grid {
       grid-template-columns: 1fr;
     }
@@ -822,23 +1069,24 @@
     }
 
     .dashboard-hero__aside,
-    .kpi-strip,
-    .stat-grid {
+    .stat-grid,
+    .risk-strip {
       grid-template-columns: 1fr;
     }
 
-    .dashboard-ribbon {
-      gap: 8px;
+    .analysis-header {
+      flex-direction: column;
+      align-items: flex-start;
     }
 
+    .analysis-shell :deep(.n-card__content),
     .panel-card :deep(.n-card__content),
-    .kpi-card :deep(.n-card__content),
     .stat-card :deep(.n-card__content) {
       padding: 16px !important;
     }
 
-    .section-head h3 {
-      font-size: 18px;
+    .drawer-risk {
+      grid-template-columns: 1fr;
     }
   }
 </style>
