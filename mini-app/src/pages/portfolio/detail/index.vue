@@ -1,11 +1,21 @@
 <template>
   <view class="portfolio-detail-container">
     <!-- 图片画廊 -->
-    <swiper class="gallery" circular indicator-dots indicator-color="rgba(255,255,255,0.5)" indicator-active-color="#fff">
+    <swiper
+      v-if="portfolio.images.length"
+      class="gallery"
+      circular
+      indicator-dots
+      indicator-color="rgba(255,255,255,0.5)"
+      indicator-active-color="#fff"
+    >
       <swiper-item v-for="(img, index) in portfolio.images" :key="index">
         <image :src="img" mode="aspectFill" @click="previewImage(index)" />
       </swiper-item>
     </swiper>
+    <view v-else class="gallery gallery--empty">
+      <text>ZeHana</text>
+    </view>
 
     <!-- 内容区 -->
     <view class="content">
@@ -37,6 +47,7 @@ import { getPortfolioDetail } from '@/api/portfolio'
 import { getCategoryList } from '@/api/custom'
 
 const portfolioId = ref(0)
+const fileBaseUrl = 'http://localhost:8081'
 const portfolio = ref({
   images: [],
   title: '',
@@ -59,10 +70,13 @@ const fetchDetail = async () => {
     } else if (typeof data.imageUrls === 'string') {
       try { images = JSON.parse(data.imageUrls) } catch { images = [] }
     }
+    if (!images.length && data.coverUrl) {
+      images = [data.coverUrl]
+    }
 
     portfolio.value = {
       ...data,
-      images
+      images: images.map(toFileUrl)
     }
   } catch (err) {
     uni.showToast({ title: '获取详情失败', icon: 'none' })
@@ -90,10 +104,19 @@ const goToCustom = async () => {
  * 预览图片
  */
 const previewImage = (current) => {
+  const currentUrl = portfolio.value.images[current]
   uni.previewImage({
     urls: portfolio.value.images,
-    current
+    current: currentUrl
   })
+}
+
+const toFileUrl = (url) => {
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url)) return url
+  if (url.startsWith('/uploads/')) return fileBaseUrl + url
+  const normalized = url.startsWith('/') ? url : `/${url}`
+  return fileBaseUrl + '/uploads' + normalized
 }
 
 onLoad((options) => {
@@ -117,6 +140,17 @@ onLoad((options) => {
     width: 100%;
     height: 100%;
   }
+}
+
+.gallery--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #7F9E8B, #4A5D4E);
+  color: rgba(255, 255, 255, 0.7);
+  font-family: 'Times New Roman', serif;
+  letter-spacing: 8rpx;
+  font-size: 32rpx;
 }
 
 .content {

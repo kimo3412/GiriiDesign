@@ -60,7 +60,7 @@ wechat:
 
 # ==================== 文件上传路径 ====================
 upload:
-  path: /data/uploads/
+  path: ${user.dir}/uploads/
   url-prefix: /uploads/
 
 # ==================== SpringDoc API 文档 ====================

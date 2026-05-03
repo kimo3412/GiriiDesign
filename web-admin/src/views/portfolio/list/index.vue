@@ -173,7 +173,7 @@ import { ACCESS_TOKEN } from '@/store/mutation-types';
 import { storage } from '@/utils/Storage';
 import { BusinessMetricCard, StatusBadge } from '@/components/Business';
 
-const { uploadUrl } = useGlobSetting();
+const { uploadUrl, fileUrl } = useGlobSetting();
 const message = useMessage();
 const dialog = useDialog();
 const loading = ref(false);
@@ -194,6 +194,11 @@ const formRef = ref();
 const coverFileList = ref<UploadFileInfo[]>([]);
 const galleryFileList = ref<UploadFileInfo[]>([]);
 const formData = ref<any>({ title: '', categoryId: null, coverUrl: '', imageUrls: [], description: '', status: 0, sortOrder: 0 });
+const portfolioFallbackSrc =
+  'data:image/svg+xml;utf8,' +
+  encodeURIComponent(
+    '<svg xmlns="http://www.w3.org/2000/svg" width="88" height="88" viewBox="0 0 88 88"><rect width="88" height="88" rx="10" fill="#f3f4f6"/><text x="44" y="40" text-anchor="middle" font-size="12" font-family="Arial" fill="#9ca3af">No Image</text><text x="44" y="56" text-anchor="middle" font-size="10" font-family="Arial" fill="#c0c4cc">ZeHana</text></svg>'
+  );
 
 const rules = { title: { required: true, message: '请输入作品标题', trigger: 'blur' } };
 
@@ -241,7 +246,34 @@ const selectCategory = (id: number | null) => {
 function toFileUrl(url?: string | null) {
   if (!url) return '';
   if (/^https?:\/\//i.test(url)) return url;
-  return `/api/v1/oss/files${url}`;
+  if (url.startsWith('/api/')) return url;
+  if (url.startsWith('/uploads/')) return fileUrl ? `${fileUrl}${url}` : url;
+  const normalized = url.startsWith('/') ? url : `/${url}`;
+  return fileUrl ? `${fileUrl}/uploads${normalized}` : `/uploads${normalized}`;
+}
+
+function parseImageUrls(value: any): string[] {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.filter((url) => typeof url === 'string' && !!url);
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed.filter((url) => typeof url === 'string' && !!url) : [value];
+    } catch {
+      return [value];
+    }
+  }
+  return [];
+}
+
+function createUploadFile(id: string, name: string, url: string): UploadFileInfo {
+  return {
+    id,
+    name,
+    status: 'finished',
+    url: toFileUrl(url),
+    sourceUrl: url,
+  } as UploadFileInfo & { sourceUrl: string };
 }
 
 const columns = [
@@ -259,6 +291,7 @@ const columns = [
         objectFit: 'cover',
         style: 'border-radius: 4px',
         previewSrc: toFileUrl(row.coverUrl),
+        fallbackSrc: portfolioFallbackSrc,
       });
     },
   },
@@ -337,7 +370,8 @@ async function handleUpload(options: UploadCustomRequestOptions) {
     if (!response.ok || result.code !== 200 || !result.data) {
       message.error(result.msg || '图片上传失败'); options.onError(); return;
     }
-    options.file.url = result.data;
+    (options.file as UploadFileInfo & { sourceUrl?: string }).sourceUrl = result.data;
+    options.file.url = toFileUrl(result.data);
     options.onFinish();
   } catch (error) {
     message.error('图片上传失败'); options.onError();
@@ -345,7 +379,9 @@ async function handleUpload(options: UploadCustomRequestOptions) {
 }
 
 function getUrlsFromFileList(fileList: UploadFileInfo[]) {
-  return fileList.map((f) => f.url || (f.status === 'finished' && f.url)).filter((url): url is string => typeof url === 'string' && !!url);
+  return fileList
+    .map((f) => (f as UploadFileInfo & { sourceUrl?: string }).sourceUrl || f.url)
+    .filter((url): url is string => typeof url === 'string' && !!url);
 }
 
 const handleAdd = () => {
@@ -359,8 +395,8 @@ const handleAdd = () => {
 const handleEdit = (row: any) => {
   isEdit.value = true;
   formData.value = { ...row };
-  coverFileList.value = row.coverUrl ? [{ id: 'cover-existing', name: 'cover.jpg', status: 'finished', url: row.coverUrl }] : [];
-  galleryFileList.value = (row.imageUrls || []).map((url: string, idx: number) => ({ id: `gallery-${idx}`, name: `image-${idx}.jpg`, status: 'finished', url }));
+  coverFileList.value = row.coverUrl ? [createUploadFile('cover-existing', 'cover.jpg', row.coverUrl)] : [];
+  galleryFileList.value = parseImageUrls(row.imageUrls).map((url: string, idx: number) => createUploadFile(`gallery-${idx}`, `image-${idx}.jpg`, url));
   showModal.value = true;
 };
 

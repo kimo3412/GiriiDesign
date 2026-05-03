@@ -36,6 +36,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/**",
                                 "/api/v1/app/auth/**",
                                 "/api/v1/app/public/**",
+                                "/api/v1/oss/files/**",
                                 "/api/v1/portfolios",
                                 "/api/v1/portfolios/**",
                                 "/api/v1/categories"

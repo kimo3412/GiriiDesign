@@ -13,6 +13,7 @@ import java.nio.file.Paths;
  * 静态资源映射：/uploads/** -> 本地文件目录
  */
 @Configuration
+@lombok.extern.slf4j.Slf4j
 public class StaticResourceConfig implements WebMvcConfigurer {
 
     @Value("${upload.path:/data/uploads/}")
@@ -33,8 +34,9 @@ public class StaticResourceConfig implements WebMvcConfigurer {
             // 目录创建失败时使用原路径，容器环境可能已有挂载
         }
 
-        String finalPath = absolutePath;
+        String finalPath = Paths.get(absolutePath).toUri().toString();
+        log.info("上传文件静态资源映射: /uploads/** -> {}", finalPath);
         registry.addResourceHandler("/uploads/**")
-                .addResourceLocations("file:" + finalPath);
+                .addResourceLocations(finalPath);
     }
 }

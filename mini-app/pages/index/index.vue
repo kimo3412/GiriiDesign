@@ -116,6 +116,7 @@ const defaultBanners = [
 const banners = ref([...defaultBanners])
 const portfolios = ref([])
 const refreshing = ref(false)
+const fileBaseUrl = 'http://localhost:8081'
 
 const featuredPortfolios = computed(() => portfolios.value.slice(0, 4))
 
@@ -143,7 +144,7 @@ const fetchBanners = async () => {
       return
     }
     banners.value = list.map(item => ({
-      image: item.imageUrl || item.image,
+      image: toFileUrl(item.imageUrl || item.image),
       label: item.title || 'ZeHana 工作室',
       headline: item.description || item.linkUrl || '专属定制，优雅抵达'
     }))
@@ -157,7 +158,9 @@ const fetchPortfolios = async () => {
   try {
     const data = await getPortfolioList()
     const list = data?.records || data?.list || data || []
-    portfolios.value = Array.isArray(list) ? list : []
+    portfolios.value = Array.isArray(list)
+      ? list.map((item) => ({ ...item, coverUrl: toFileUrl(item.coverUrl) }))
+      : []
   } catch (err) {
     console.error('获取作品列表失败', err)
     portfolios.value = []
@@ -172,6 +175,14 @@ const onRefresh = async () => {
   refreshing.value = true
   await loadPageData()
   refreshing.value = false
+}
+
+const toFileUrl = (url) => {
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url) || url.startsWith('/static/')) return url
+  if (url.startsWith('/uploads/')) return fileBaseUrl + url
+  const normalized = url.startsWith('/') ? url : `/${url}`
+  return fileBaseUrl + '/uploads' + normalized
 }
 
 onLoad(() => {

@@ -4,11 +4,13 @@ import com.designstudio.common.result.ErrorCode;
 import com.designstudio.common.result.R;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.stream.Collectors;
 
@@ -49,6 +51,11 @@ public class GlobalExceptionHandler {
                 .map(FieldError::getDefaultMessage)
                 .collect(Collectors.joining("; "));
         return R.fail(ErrorCode.PARAM_ERROR.getCode(), msg);
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<Void> handleNoResourceFound(NoResourceFoundException e) {
+        return ResponseEntity.notFound().build();
     }
 
     /**

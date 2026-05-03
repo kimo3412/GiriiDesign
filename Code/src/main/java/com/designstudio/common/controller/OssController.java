@@ -24,14 +24,14 @@ import java.util.Set;
 import java.util.UUID;
 
 /**
- * 文件上传接口
+ * 鏂囦欢涓婁紶鎺ュ彛
  * <p>
- * 上传到本地磁盘，通过 Nginx 静态代理提供下载
+ * 涓婁紶鍒版湰鍦扮鐩橈紝閫氳繃 Nginx 闈欐€佷唬鐞嗘彁渚涗笅杞?
  */
 @Slf4j
 @RestController
 @RequestMapping("/api/v1/oss")
-@Tag(name = "文件上传", description = "图片/文件上传接口")
+@Tag(name = "鏂囦欢涓婁紶", description = "鍥剧墖/鏂囦欢涓婁紶鎺ュ彛")
 public class OssController {
 
     @Value("${upload.path}")
@@ -40,33 +40,33 @@ public class OssController {
     @Value("${upload.url-prefix}")
     private String urlPrefix;
 
-    /** 允许的文件类型 */
+    /** 鍏佽鐨勬枃浠剁被鍨?*/
     private static final Set<String> ALLOWED_TYPES = Set.of(
             "image/jpeg", "image/png", "image/webp", "image/gif");
 
-    /** 最大文件大小：2MB */
-    private static final long MAX_SIZE = 2 * 1024 * 1024;
+    /** 鏈€澶ф枃浠跺ぇ灏忥細5MB */
+    private static final long MAX_SIZE = 5 * 1024 * 1024;
 
     @PostMapping("/upload")
-    @Operation(summary = "上传图片", description = "上传图片到本地，返回访问路径")
+    @Operation(summary = "涓婁紶鍥剧墖", description = "涓婁紶鍥剧墖鍒版湰鍦帮紝杩斿洖璁块棶璺緞")
     public R<String> upload(MultipartFile file) {
         if (file == null || file.isEmpty()) {
-            throw new BusinessException("请选择要上传的文件", ErrorCode.PARAM_ERROR.getCode());
+            throw new BusinessException("璇烽€夋嫨瑕佷笂浼犵殑鏂囦欢", ErrorCode.PARAM_ERROR.getCode());
         }
 
-        // 校验文件大小
+        // 鏍￠獙鏂囦欢澶у皬
         if (file.getSize() > MAX_SIZE) {
-            throw new BusinessException("文件大小不能超过2MB", ErrorCode.PARAM_ERROR.getCode());
+            throw new BusinessException("鏂囦欢澶у皬涓嶈兘瓒呰繃5MB", ErrorCode.PARAM_ERROR.getCode());
         }
 
-        // 校验文件类型
+        // 鏍￠獙鏂囦欢绫诲瀷
         String contentType = file.getContentType();
         if (contentType == null || !ALLOWED_TYPES.contains(contentType)) {
-            throw new BusinessException("不支持的文件类型", ErrorCode.PARAM_ERROR.getCode());
+            throw new BusinessException("涓嶆敮鎸佺殑鏂囦欢绫诲瀷", ErrorCode.PARAM_ERROR.getCode());
         }
 
         try {
-            // 生成唯一文件名
+            // 鐢熸垚鍞竴鏂囦欢鍚?
             String originalFilename = file.getOriginalFilename();
             String ext = "";
             if (originalFilename != null && originalFilename.contains(".")) {
@@ -74,34 +74,34 @@ public class OssController {
             }
             String fileName = UUID.randomUUID().toString().replace("-", "") + ext;
 
-            // 确保上传目录存在
+            // 纭繚涓婁紶鐩綍瀛樺湪
             Path dirPath = Paths.get(uploadPath);
             if (!Files.exists(dirPath)) {
                 Files.createDirectories(dirPath);
             }
 
-            // 写入文件
+            // 鍐欏叆鏂囦欢
             Path filePath = dirPath.resolve(fileName);
             Files.copy(file.getInputStream(), filePath);
 
-            log.info("文件上传成功: {}", filePath);
+            log.info("鏂囦欢涓婁紶鎴愬姛: {}", filePath);
 
-            // 返回访问路径（Nginx 代理此路径）
+            // 杩斿洖璁块棶璺緞锛圢ginx 浠ｇ悊姝よ矾寰勶級
             return R.ok(urlPrefix + fileName);
 
         } catch (IOException e) {
-            log.error("文件上传失败", e);
-            throw new BusinessException("文件上传失败", ErrorCode.SYSTEM_ERROR.getCode());
+            log.error("鏂囦欢涓婁紶澶辫触", e);
+            throw new BusinessException("鏂囦欢涓婁紶澶辫触", ErrorCode.SYSTEM_ERROR.getCode());
         }
     }
 
     @GetMapping("/files/**")
-    @Operation(summary = "访问上传文件", description = "通过 API 路径访问上传的文件，避免跨域问题")
+    @Operation(summary = "璁块棶涓婁紶鏂囦欢", description = "閫氳繃 API 璺緞璁块棶涓婁紶鐨勬枃浠讹紝閬垮厤璺ㄥ煙闂")
     public ResponseEntity<Resource> getFile(HttpServletRequest request) {
         String requestUri = request.getRequestURI();
         String filePath = requestUri.substring(requestUri.indexOf("/oss/files") + "/oss/files".length());
 
-        // 安全检查：防止路径遍历
+        // 瀹夊叏妫€鏌ワ細闃叉璺緞閬嶅巻
         if (filePath.contains("..")) {
             return ResponseEntity.notFound().build();
         }
@@ -123,8 +123,9 @@ public class OssController {
                     .header(HttpHeaders.CACHE_CONTROL, "max-age=86400")
                     .body(resource);
         } catch (IOException e) {
-            log.error("文件读取失败: {}", filePath, e);
+            log.error("鏂囦欢璇诲彇澶辫触: {}", filePath, e);
             return ResponseEntity.notFound().build();
         }
     }
 }
+

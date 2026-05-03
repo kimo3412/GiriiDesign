@@ -62,6 +62,7 @@ const currentCategory = ref('')
 const list = ref([])
 const loading = ref(false)
 const hasMore = ref(false)
+const fileBaseUrl = 'http://localhost:8081'
 
 /**
  * 切换分类
@@ -87,7 +88,10 @@ const fetchList = async (refresh = false) => {
     const data = await getPortfolioList(params)
     const nextList = Array.isArray(data) ? data : (data.list || [])
 
-    list.value = nextList
+    list.value = nextList.map((item) => ({
+      ...item,
+      coverUrl: toFileUrl(item.coverUrl)
+    }))
     // 后端作品集接口返回完整列表，不做分页；避免滚动到底部重复追加。
     hasMore.value = false
   } catch (err) {
@@ -109,6 +113,14 @@ const loadMore = () => {
  */
 const goToDetail = (id) => {
   uni.navigateTo({ url: `/pages/portfolio/detail/index?id=${id}` })
+}
+
+const toFileUrl = (url) => {
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url)) return url
+  if (url.startsWith('/uploads/')) return fileBaseUrl + url
+  const normalized = url.startsWith('/') ? url : `/${url}`
+  return fileBaseUrl + '/uploads' + normalized
 }
 
 onLoad(() => {
