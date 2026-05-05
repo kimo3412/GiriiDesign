@@ -45,12 +45,12 @@
               placeholder="搜索客户/收件人/电话/地址..."
               size="small"
               clearable
-              @keyup.enter="loadData"
+              @keyup.enter="handleSearch"
               style="width: 260px"
             >
               <template #prefix><n-icon><Search /></n-icon></template>
             </n-input>
-            <n-button size="small" type="primary" @click="loadData">搜索</n-button>
+            <n-button size="small" type="primary" @click="handleSearch">搜索</n-button>
           </div>
 
           <n-data-table
@@ -65,13 +65,13 @@
           <div class="compact-pagination">
             <n-pagination
               v-model:page="pageNum"
-              :page-size="pageSize"
+              v-model:page-size="pageSize"
               :page-sizes="[10, 20, 50]"
-              :total="total"
+              :item-count="total"
               show-size-picker
               size="small"
-              @update:page="loadData"
-              @update:page-size="loadData"
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
             />
           </div>
         </div>
@@ -99,32 +99,18 @@ const selectedDefault = ref<number | null>(null);
 const stats = computed(() => {
   const all = tableData.value;
   return {
-    total: all.length,
+    total: total.value,
     defaultCount: all.filter((r: any) => r.isDefault === 1).length,
     normalCount: all.filter((r: any) => r.isDefault !== 1).length,
   };
 });
 
-const displayData = computed(() => {
-  let list = [...tableData.value];
-  if (selectedDefault.value !== null) {
-    list = list.filter((r: any) => r.isDefault === selectedDefault.value);
-  }
-  if (keyword.value) {
-    const kw = keyword.value.toLowerCase();
-    list = list.filter((r: any) =>
-      (r.nickname || '').toLowerCase().includes(kw) ||
-      (r.receiverName || '').toLowerCase().includes(kw) ||
-      (r.phone || '').toLowerCase().includes(kw) ||
-      (r.fullAddress || '').toLowerCase().includes(kw)
-    );
-  }
-  return list;
-});
+const displayData = computed(() => tableData.value);
 
 const selectDefault = (val: number | null) => {
   selectedDefault.value = val;
   pageNum.value = 1;
+  loadData();
 };
 
 const columns = [
@@ -186,6 +172,22 @@ const loadData = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+const handleSearch = () => {
+  pageNum.value = 1;
+  loadData();
+};
+
+const handlePageChange = (page: number) => {
+  pageNum.value = page;
+  loadData();
+};
+
+const handlePageSizeChange = (size: number) => {
+  pageSize.value = size;
+  pageNum.value = 1;
+  loadData();
 };
 
 onMounted(loadData);
@@ -266,6 +268,7 @@ onMounted(loadData);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
   padding: 14px 16px;
   gap: 12px;
 }
@@ -276,9 +279,21 @@ onMounted(loadData);
   gap: 8px;
 }
 
+
+.directory-main :deep(.n-data-table) {
+  flex: 1;
+  min-height: 0;
+}
+
+.directory-main :deep(.n-data-table-wrapper),
+.directory-main :deep(.n-data-table-base-table),
+.directory-main :deep(.n-data-table-base-table-body) {
+  min-height: 0;
+}
 .compact-pagination {
   display: flex;
   justify-content: flex-end;
+  flex-shrink: 0;
   padding-top: 8px;
   border-top: 1px solid var(--border-light);
 }

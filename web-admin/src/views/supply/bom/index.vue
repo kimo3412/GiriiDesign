@@ -40,12 +40,12 @@
               placeholder="搜索模板名称..."
               size="small"
               clearable
-              @keyup.enter="loadData"
+              @keyup.enter="handleSearch"
               style="width: 200px"
             >
               <template #prefix><n-icon><Search /></n-icon></template>
             </n-input>
-            <n-button size="small" type="primary" @click="loadData">搜索</n-button>
+            <n-button size="small" type="primary" @click="handleSearch">搜索</n-button>
             <n-divider vertical />
             <n-button :disabled="!checkedKeys.length" size="small" type="error" ghost @click="handleBatchDelete">
               批量删除{{ checkedKeys.length ? `(${checkedKeys.length})` : '' }}
@@ -66,13 +66,13 @@
           <div class="compact-pagination">
             <n-pagination
               v-model:page="pageNum"
-              :page-size="pageSize"
+              v-model:page-size="pageSize"
               :page-sizes="[10, 20, 50]"
-              :total="total"
+              :item-count="total"
               show-size-picker
               size="small"
-              @update:page="loadData"
-              @update:page-size="loadData"
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
             />
           </div>
         </div>
@@ -139,7 +139,7 @@ const checkedKeys = ref<number[]>([]);
 const stats = computed(() => {
   const all = tableData.value;
   return {
-    total: all.length,
+    total: total.value,
     active: all.filter((r: any) => r.categoryId).length,
     categories: new Set(all.map((r: any) => r.categoryId).filter(Boolean)).size,
   };
@@ -159,21 +159,12 @@ const categoryStats = computed(() => {
 });
 
 // 筛选后数据
-const displayData = computed(() => {
-  let list = [...tableData.value];
-  if (selectedCategory.value !== null) {
-    list = list.filter((r: any) => r.categoryId === selectedCategory.value);
-  }
-  if (keyword.value) {
-    const kw = keyword.value.toLowerCase();
-    list = list.filter((r: any) => (r.name || '').toLowerCase().includes(kw));
-  }
-  return list;
-});
+const displayData = computed(() => tableData.value);
 
 const selectCategory = (id: number | null) => {
   selectedCategory.value = id;
   pageNum.value = 1;
+  loadData();
 };
 
 const columns = [
@@ -207,12 +198,29 @@ const loadData = async () => {
   loading.value = true;
   try {
     const params: any = { pageNum: pageNum.value, pageSize: pageSize.value };
+    if (selectedCategory.value !== null) params.categoryId = selectedCategory.value;
     const res: any = await getBomTemplateList(params);
     tableData.value = res.records || [];
     total.value = res.total || 0;
   } catch (e) { console.error(e); }
   finally { loading.value = false; }
 };
+const handleSearch = () => {
+  pageNum.value = 1;
+  loadData();
+};
+
+const handlePageChange = (page: number) => {
+  pageNum.value = page;
+  loadData();
+};
+
+const handlePageSizeChange = (size: number) => {
+  pageSize.value = size;
+  pageNum.value = 1;
+  loadData();
+};
+
 
 onMounted(async () => {
   loadData();
@@ -356,6 +364,7 @@ const handleBatchDelete = () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
   padding: 14px 16px;
   gap: 12px;
 }
@@ -366,9 +375,21 @@ const handleBatchDelete = () => {
   gap: 8px;
 }
 
+
+.directory-main :deep(.n-data-table) {
+  flex: 1;
+  min-height: 0;
+}
+
+.directory-main :deep(.n-data-table-wrapper),
+.directory-main :deep(.n-data-table-base-table),
+.directory-main :deep(.n-data-table-base-table-body) {
+  min-height: 0;
+}
 .compact-pagination {
   display: flex;
   justify-content: flex-end;
+  flex-shrink: 0;
   padding-top: 8px;
   border-top: 1px solid var(--border-light);
 }

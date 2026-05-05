@@ -56,14 +56,14 @@
               placeholder="搜索标题..."
               size="small"
               clearable
-              @keyup.enter="loadData"
+              @keyup.enter="handleSearch"
               style="width: 200px"
             >
               <template #prefix>
                 <n-icon><Search /></n-icon>
               </template>
             </n-input>
-            <n-button size="small" type="primary" @click="loadData">搜索</n-button>
+            <n-button size="small" type="primary" @click="handleSearch">搜索</n-button>
             <n-divider vertical />
             <n-space :size="6">
               <n-button :disabled="!checkedKeys.length" size="small" type="error" ghost @click="handleBatchDelete">
@@ -88,13 +88,13 @@
           <div class="compact-pagination">
             <n-pagination
               v-model:page="pageNum"
-              :page-size="pageSize"
+              v-model:page-size="pageSize"
               :page-sizes="[10, 20, 50]"
-              :total="total"
+              :item-count="total"
               show-size-picker
               size="small"
-              @update:page="loadData"
-              @update:page-size="loadData"
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
             />
           </div>
         </div>
@@ -206,7 +206,7 @@ const rules = { title: { required: true, message: '请输入作品标题', trigg
 const stats = computed(() => {
   const all = tableData.value;
   return {
-    total: all.length,
+    total: total.value,
     published: all.filter((r: any) => r.status === 1).length,
     draft: all.filter((r: any) => r.status === 0).length,
   };
@@ -226,21 +226,12 @@ const categoryStats = computed(() => {
 });
 
 // 筛选后数据
-const displayData = computed(() => {
-  let list = [...tableData.value];
-  if (selectedCategory.value !== null) {
-    list = list.filter((r: any) => r.categoryId === selectedCategory.value);
-  }
-  if (keyword.value) {
-    const kw = keyword.value.toLowerCase();
-    list = list.filter((r: any) => (r.title || '').toLowerCase().includes(kw));
-  }
-  return list;
-});
+const displayData = computed(() => tableData.value);
 
 const selectCategory = (id: number | null) => {
   selectedCategory.value = id;
   pageNum.value = 1;
+  loadData();
 };
 
 function toFileUrl(url?: string | null) {
@@ -337,6 +328,7 @@ const loadData = async () => {
   try {
     const params: any = { pageNum: pageNum.value, pageSize: pageSize.value };
     if (keyword.value) params.keyword = keyword.value;
+    if (selectedCategory.value !== null) params.categoryId = selectedCategory.value;
     const res: any = await getPortfolioList(params);
     tableData.value = res.records || [];
     total.value = res.total || 0;
@@ -351,6 +343,22 @@ const loadCategories = async () => {
     categoryMap.value = Object.fromEntries(cats.map((c: any) => [c.categoryId, c.name]));
   } catch (e) { console.error(e); }
 };
+const handleSearch = () => {
+  pageNum.value = 1;
+  loadData();
+};
+
+const handlePageChange = (page: number) => {
+  pageNum.value = page;
+  loadData();
+};
+
+const handlePageSizeChange = (size: number) => {
+  pageSize.value = size;
+  pageNum.value = 1;
+  loadData();
+};
+
 
 onMounted(() => { loadData(); loadCategories(); });
 
@@ -533,6 +541,7 @@ const handleToggleStatus = (row: any) => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
   padding: 14px 16px;
   gap: 12px;
 }
@@ -544,9 +553,21 @@ const handleToggleStatus = (row: any) => {
   flex-wrap: wrap;
 }
 
+
+.directory-main :deep(.n-data-table) {
+  flex: 1;
+  min-height: 0;
+}
+
+.directory-main :deep(.n-data-table-wrapper),
+.directory-main :deep(.n-data-table-base-table),
+.directory-main :deep(.n-data-table-base-table-body) {
+  min-height: 0;
+}
 .compact-pagination {
   display: flex;
   justify-content: flex-end;
+  flex-shrink: 0;
   padding-top: 8px;
   border-top: 1px solid var(--border-light);
 }

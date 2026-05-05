@@ -45,12 +45,12 @@
               placeholder="搜索品类名称..."
               size="small"
               clearable
-              @keyup.enter="loadData"
+              @keyup.enter="handleSearch"
               style="width: 200px"
             >
               <template #prefix><n-icon><Search /></n-icon></template>
             </n-input>
-            <n-button size="small" type="primary" @click="loadData">搜索</n-button>
+            <n-button size="small" type="primary" @click="handleSearch">搜索</n-button>
             <n-divider vertical />
             <n-button :disabled="!checkedKeys.length" size="small" type="error" ghost @click="handleBatchDelete">
               批量删除{{ checkedKeys.length ? `(${checkedKeys.length})` : '' }}
@@ -61,7 +61,7 @@
           <n-data-table
             v-model:checked-row-keys="checkedKeys"
             :columns="columns"
-            :data="displayData"
+            :data="pagedData"
             :loading="loading"
             :row-key="row => row.categoryId"
             size="small"
@@ -71,13 +71,13 @@
           <div class="compact-pagination">
             <n-pagination
               v-model:page="pageNum"
-              :page-size="pageSize"
+              v-model:page-size="pageSize"
               :page-sizes="[10, 20, 50]"
-              :total="total"
+              :item-count="total"
               show-size-picker
               size="small"
-              @update:page="loadData"
-              @update:page-size="loadData"
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
             />
           </div>
         </div>
@@ -126,7 +126,7 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, computed, onMounted, h } from 'vue';
+import { ref, computed, onMounted, h, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { NButton, NTag, NSpace, NIcon, NDivider } from 'naive-ui';
 import { Search } from '@vicons/ionicons5';
@@ -195,6 +195,18 @@ const displayData = computed(() => {
   return list;
 });
 
+const pagedData = computed(() => {
+  const start = (pageNum.value - 1) * pageSize.value;
+  return displayData.value.slice(start, start + pageSize.value);
+});
+
+watch(displayData, (list) => {
+  total.value = list.length;
+  const maxPage = Math.max(1, Math.ceil(list.length / pageSize.value));
+  if (pageNum.value > maxPage) pageNum.value = maxPage;
+}, { immediate: true });
+
+
 const selectStatus = (val: number | null) => {
   selectedStatus.value = val;
   pageNum.value = 1;
@@ -260,6 +272,20 @@ const loadData = async () => {
   } finally {
     loading.value = false;
   }
+};
+
+const handleSearch = () => {
+  pageNum.value = 1;
+  loadData();
+};
+
+const handlePageChange = (page: number) => {
+  pageNum.value = page;
+};
+
+const handlePageSizeChange = (size: number) => {
+  pageSize.value = size;
+  pageNum.value = 1;
 };
 
 onMounted(() => {
@@ -409,6 +435,7 @@ const handleWorkflow = (row: any) => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
   padding: 14px 16px;
   gap: 12px;
 }
@@ -419,9 +446,21 @@ const handleWorkflow = (row: any) => {
   gap: 8px;
 }
 
+
+.directory-main :deep(.n-data-table) {
+  flex: 1;
+  min-height: 0;
+}
+
+.directory-main :deep(.n-data-table-wrapper),
+.directory-main :deep(.n-data-table-base-table),
+.directory-main :deep(.n-data-table-base-table-body) {
+  min-height: 0;
+}
 .compact-pagination {
   display: flex;
   justify-content: flex-end;
+  flex-shrink: 0;
   padding-top: 8px;
   border-top: 1px solid var(--border-light);
 }

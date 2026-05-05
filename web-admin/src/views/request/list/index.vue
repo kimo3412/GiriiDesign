@@ -73,9 +73,9 @@
           size="small"
           style="width: 160px"
           clearable
-          @keyup.enter="loadData"
+          @keyup.enter="handleSearch"
         />
-        <n-button size="small" type="primary" @click="loadData">搜索</n-button>
+        <n-button size="small" type="primary" @click="handleSearch">搜索</n-button>
       </n-space>
     </n-card>
 
@@ -123,13 +123,13 @@
           <div class="master-pagination">
             <n-pagination
               v-model:page="pageNum"
-              :page-size="pageSize"
+              v-model:page-size="pageSize"
               :page-sizes="[10, 20, 50]"
-              :total="total"
+              :item-count="total"
               show-size-picker
               size="small"
-              @update:page="loadData"
-              @update:page-size="loadData"
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
             />
           </div>
         </div>
@@ -677,6 +677,22 @@
       console.error(e);
     }
   };
+const handleSearch = () => {
+  pageNum.value = 1;
+  loadData();
+};
+
+const handlePageChange = (page: number) => {
+  pageNum.value = page;
+  loadData();
+};
+
+const handlePageSizeChange = (size: number) => {
+  pageSize.value = size;
+  pageNum.value = 1;
+  loadData();
+};
+
 
   onMounted(async () => {
     await loadStats();
@@ -816,6 +832,7 @@
     border-top: 1px solid var(--border-light);
     display: flex;
     justify-content: flex-end;
+  flex-shrink: 0;
   }
 
   .master-loading,

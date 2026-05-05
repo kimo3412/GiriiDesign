@@ -73,13 +73,13 @@ export function useDataSource(
         params = (await beforeRequest(params)) || params;
       }
       const res = await request(params);
-      const resultTotal = res[totalField];
-      const currentPage = res[pageField];
-      const total = res[itemCount];
+      const total = Number(res[itemCount] ?? res[totalField] ?? 0);
+      const currentPage = Number(res[pageField] ?? page);
+      const resultTotal = total ? Math.ceil(total / pageSize) : 0;
       const results = res[listField] ? res[listField] : [];
 
       // 如果数据异常，需获取正确的页码再次执行
-      if (resultTotal) {
+      if (total) {
         const currentTotalPage = Math.ceil(total / pageSize);
         if (page > currentTotalPage) {
           setPagination({

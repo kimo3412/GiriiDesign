@@ -59,14 +59,14 @@
               placeholder="搜索名称/编码..."
               size="small"
               clearable
-              @keyup.enter="loadData"
+              @keyup.enter="handleSearch"
               style="width: 200px"
             >
               <template #prefix>
                 <n-icon><Search /></n-icon>
               </template>
             </n-input>
-            <n-button size="small" type="primary" @click="loadData">搜索</n-button>
+            <n-button size="small" type="primary" @click="handleSearch">搜索</n-button>
             <n-divider vertical />
             <n-tag v-if="showLowStockOnly" closable size="small" type="warning" round @close="showLowStockOnly = false">
               仅预警
@@ -94,13 +94,13 @@
           <div class="compact-pagination">
             <n-pagination
               v-model:page="pageNum"
-              :page-size="pageSize"
+              v-model:page-size="pageSize"
               :page-sizes="[10, 20, 50]"
-              :total="total"
+              :item-count="total"
               show-size-picker
               size="small"
-              @update:page="loadData"
-              @update:page-size="loadData"
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
             />
           </div>
         </div>
@@ -173,7 +173,7 @@ const stats = computed(() => {
   const all = tableData.value;
   const lowStock = all.filter((r: any) => r.warningStock && Number(r.stock) <= Number(r.warningStock)).length;
   const totalValue = all.reduce((sum: number, r: any) => sum + (Number(r.stock) || 0) * (Number(r.unitPrice) || 0), 0);
-  return { total: all.length, lowStock, totalValue: totalValue.toFixed(2) };
+  return { total: total.value, lowStock, totalValue: totalValue.toFixed(2) };
 });
 
 // 分类统计
@@ -188,18 +188,8 @@ const categoryStats = computed(() => {
 // 筛选后数据
 const displayData = computed(() => {
   let list = [...tableData.value];
-  if (selectedCategory.value) {
-    list = list.filter((r: any) => r.category === selectedCategory.value);
-  }
   if (showLowStockOnly.value) {
     list = list.filter((r: any) => r.warningStock && Number(r.stock) <= Number(r.warningStock));
-  }
-  if (keyword.value) {
-    const kw = keyword.value.toLowerCase();
-    list = list.filter((r: any) =>
-      (r.name || '').toLowerCase().includes(kw) ||
-      (r.sku || '').toLowerCase().includes(kw)
-    );
   }
   return list;
 });
@@ -207,6 +197,12 @@ const displayData = computed(() => {
 const selectCategory = (cat: string | null) => {
   selectedCategory.value = cat;
   pageNum.value = 1;
+  loadData();
+};
+
+const handleSearch = () => {
+  pageNum.value = 1;
+  loadData();
 };
 
 const showModal = ref(false);
@@ -273,12 +269,24 @@ const loadData = async () => {
   try {
     const params: any = { pageNum: pageNum.value, pageSize: pageSize.value };
     if (keyword.value) params.keyword = keyword.value;
+    if (selectedCategory.value) params.category = selectedCategory.value;
     const res: any = await getMaterialList(params);
     tableData.value = res.records || [];
-    total.value = res.total || 0;
+    total.value = Number(res.total || 0);
   } catch (e) { console.error(e); }
   finally { loading.value = false; }
 };
+const handlePageChange = (page: number) => {
+  pageNum.value = page;
+  loadData();
+};
+
+const handlePageSizeChange = (size: number) => {
+  pageSize.value = size;
+  pageNum.value = 1;
+  loadData();
+};
+
 
 onMounted(loadData);
 
@@ -443,6 +451,7 @@ const handleStock = async () => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
   padding: 14px 16px;
   gap: 12px;
 }
@@ -454,9 +463,21 @@ const handleStock = async () => {
   flex-wrap: wrap;
 }
 
+
+.directory-main :deep(.n-data-table) {
+  flex: 1;
+  min-height: 0;
+}
+
+.directory-main :deep(.n-data-table-wrapper),
+.directory-main :deep(.n-data-table-base-table),
+.directory-main :deep(.n-data-table-base-table-body) {
+  min-height: 0;
+}
 .compact-pagination {
   display: flex;
   justify-content: flex-end;
+  flex-shrink: 0;
   padding-top: 8px;
   border-top: 1px solid var(--border-light);
 }

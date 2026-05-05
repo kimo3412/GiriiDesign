@@ -40,7 +40,7 @@
               placeholder="搜索昵称或手机号..."
               size="small"
               clearable
-              @keyup.enter="loadData"
+              @keyup.enter="handleSearch"
               style="width: 200px"
             >
               <template #prefix
@@ -62,13 +62,13 @@
           <div class="compact-pagination">
             <n-pagination
               v-model:page="pageNum"
-              :page-size="pageSize"
+              v-modelv-model:page-size="pageSize"
               :page-sizes="[10, 20, 50]"
-              :total="total"
+              :item-count="total"
               show-size-picker
               size="small"
-              @update:page="loadData"
-              @update:page-size="loadData"
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
             />
           </div>
         </div>
@@ -94,7 +94,7 @@
   const selectedStatus = ref<number | null>(null);
 
   const stats = computed(() => ({
-    total: tableData.value.length,
+    total: total.value,
     enabled: tableData.value.filter((r: CustomerItem) => r.status === 1).length,
     disabled: tableData.value.filter((r: CustomerItem) => r.status === 0).length,
   }));
@@ -104,24 +104,12 @@
     { label: '禁用', value: 0, count: stats.value.disabled },
   ]);
 
-  const displayData = computed(() => {
-    let list = [...tableData.value];
-    if (selectedStatus.value !== null) {
-      list = list.filter((r: CustomerItem) => r.status === selectedStatus.value);
-    }
-    if (keyword.value) {
-      const kw = keyword.value.toLowerCase();
-      list = list.filter(
-        (r: CustomerItem) =>
-          (r.nickname || '').toLowerCase().includes(kw) || (r.phone || '').includes(kw)
-      );
-    }
-    return list;
-  });
+  const displayData = computed(() => tableData.value);
 
   const selectStatus = (val: number | null) => {
     selectedStatus.value = val;
     pageNum.value = 1;
+    loadData();
   };
 
   const columns = [
@@ -208,6 +196,22 @@
       loading.value = false;
     }
   };
+  const handleSearch = () => {
+    pageNum.value = 1;
+    loadData();
+  };
+
+  const handlePageChange = (page: number) => {
+    pageNum.value = page;
+    loadData();
+  };
+
+  const handlePageSizeChange = (size: number) => {
+    pageSize.value = size;
+    pageNum.value = 1;
+    loadData();
+  };
+
 
   onMounted(loadData);
 </script>
@@ -301,6 +305,7 @@
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    min-height: 0;
     padding: 14px 16px;
     gap: 12px;
   }
@@ -311,9 +316,21 @@
     gap: 8px;
   }
 
+  .directory-main :deep(.n-data-table) {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .directory-main :deep(.n-data-table-wrapper),
+  .directory-main :deep(.n-data-table-base-table),
+  .directory-main :deep(.n-data-table-base-table-body) {
+    min-height: 0;
+  }
+
   .compact-pagination {
     display: flex;
     justify-content: flex-end;
+    flex-shrink: 0;
     padding-top: 8px;
     border-top: 1px solid var(--border-light);
   }

@@ -72,7 +72,7 @@
               style="width: 120px"
               size="small"
             />
-            <n-button size="small" type="primary" @click="fetchLogs">搜索</n-button>
+            <n-button size="small" type="primary" @click="handleSearch">搜索</n-button>
             <n-button size="small" @click="resetSearch">重置</n-button>
             <n-divider vertical />
             <n-popconfirm @positive-click="handleClean">
@@ -95,13 +95,13 @@
           <div class="compact-pagination">
             <n-pagination
               v-model:page="pageNum"
-              :page-size="pageSize"
+              v-model:page-size="pageSize"
               :page-sizes="[10, 20, 50]"
-              :total="total"
+              :item-count="total"
               show-size-picker
               size="small"
-              @update:page="fetchLogs"
-              @update:page-size="fetchLogs"
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
             />
           </div>
         </div>
@@ -173,23 +173,19 @@ const statusOptions = [
 const stats = computed(() => {
   const all = logList.value;
   return {
-    total: all.length,
+    total: total.value,
     success: all.filter((r: any) => r.status === 0).length,
     error: all.filter((r: any) => r.status === 1).length,
   };
 });
 
-const displayData = computed(() => {
-  let list = [...logList.value];
-  if (selectedStatus.value !== null) {
-    list = list.filter((r: any) => r.status === selectedStatus.value);
-  }
-  return list;
-});
+const displayData = computed(() => logList.value);
 
 const selectStatus = (val: number | null) => {
   selectedStatus.value = val;
+  searchStatus.value = val;
   pageNum.value = 1;
+  fetchLogs();
 };
 
 const columns = [
@@ -226,6 +222,22 @@ const columns = [
       ]),
   },
 ];
+const handleSearch = () => {
+  pageNum.value = 1;
+  fetchLogs();
+};
+
+const handlePageChange = (page: number) => {
+  pageNum.value = page;
+  fetchLogs();
+};
+
+const handlePageSizeChange = (size: number) => {
+  pageSize.value = size;
+  pageNum.value = 1;
+  fetchLogs();
+};
+
 
 onMounted(() => fetchLogs());
 
@@ -236,9 +248,9 @@ const fetchLogs = async () => {
     if (searchTitle.value) params.title = searchTitle.value;
     if (searchOperator.value) params.operatorName = searchOperator.value;
     if (searchStatus.value !== null) params.status = searchStatus.value;
-    const res = await getOperLogList(params) || [];
-    logList.value = res;
-    total.value = res.length;
+    const res = await getOperLogList(params);
+    logList.value = res?.records || [];
+    total.value = Number(res?.total || 0);
   } catch (e) {
     console.error('获取日志失败', e);
   } finally {
@@ -386,6 +398,7 @@ const formatJson = (str: string) => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
   padding: 14px 16px;
   gap: 12px;
 }
@@ -397,9 +410,21 @@ const formatJson = (str: string) => {
   flex-wrap: wrap;
 }
 
+
+.directory-main :deep(.n-data-table) {
+  flex: 1;
+  min-height: 0;
+}
+
+.directory-main :deep(.n-data-table-wrapper),
+.directory-main :deep(.n-data-table-base-table),
+.directory-main :deep(.n-data-table-base-table-body) {
+  min-height: 0;
+}
 .compact-pagination {
   display: flex;
   justify-content: flex-end;
+  flex-shrink: 0;
   padding-top: 8px;
   border-top: 1px solid var(--border-light);
 }

@@ -17,8 +17,17 @@ export interface SysOperLog {
 }
 
 /** 查询操作日志列表 */
-export const getOperLogList = (params?: { title?: string; operatorName?: string; status?: number }) => {
-  return Alova.Get<SysOperLog[]>('/v1/admin/logs', { params });
+export const getOperLogList = (params?: {
+  title?: string;
+  operatorName?: string;
+  status?: number;
+  pageNum?: number;
+  pageSize?: number;
+}) => {
+  return Alova.Get<{ records: SysOperLog[]; total: number; pageNum: number; pageSize: number }>(
+    '/v1/admin/logs',
+    { params }
+  );
 };
 
 /** 删除操作日志 */

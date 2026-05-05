@@ -58,7 +58,7 @@
               clearable
               size="small"
               style="width: 140px"
-              @update:value="loadData"
+              @update:value="handleSearch"
             />
             <n-input
               v-model:value="keyword"
@@ -66,13 +66,13 @@
               clearable
               size="small"
               style="width: 220px"
-              @keyup.enter="loadData"
+              @keyup.enter="handleSearch"
             >
               <template #prefix>
                 <n-icon><Search /></n-icon>
               </template>
             </n-input>
-            <n-button size="small" type="primary" @click="loadData">搜索</n-button>
+            <n-button size="small" type="primary" @click="handleSearch">搜索</n-button>
           </div>
 
           <n-data-table
@@ -87,13 +87,13 @@
           <div class="compact-pagination">
             <n-pagination
               v-model:page="pageNum"
-              :page-size="pageSize"
+              v-model:page-size="pageSize"
               :page-sizes="[10, 20, 50]"
-              :total="total"
+              :item-count="total"
               show-size-picker
               size="small"
-              @update:page="loadData"
-              @update:page-size="loadData"
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
             />
           </div>
         </section>
@@ -152,7 +152,7 @@ const stats = computed(() => {
   tableData.value.forEach((row: any) => {
     if (map[row.status] !== undefined) map[row.status] += 1;
   });
-  return { total: tableData.value.length, ...map };
+  return { total: total.value, ...map };
 });
 
 const statusDimTree = computed(() =>
@@ -179,21 +179,7 @@ const statusQuickStats = computed(() => [
   { label: '已完成', value: 4, count: stats.value[4] || 0, variant: 'success' as const },
 ]);
 
-const displayData = computed(() => {
-  let list = [...tableData.value];
-  if (selectedStatus.value !== null) list = list.filter((row: any) => row.status === selectedStatus.value);
-  if (filterCategory.value !== null) list = list.filter((row: any) => row.categoryId === filterCategory.value);
-  if (keyword.value.trim()) {
-    const kw = keyword.value.trim().toLowerCase();
-    list = list.filter(
-      (row: any) =>
-        (row.orderSn || '').toLowerCase().includes(kw) ||
-        (row.customerName || '').toLowerCase().includes(kw) ||
-        String(row.orderId).includes(kw)
-    );
-  }
-  return list;
-});
+const displayData = computed(() => tableData.value);
 
 const columns = [
   { title: '订单号', key: 'orderSn', width: 180, ellipsis: { tooltip: true } },
@@ -311,6 +297,22 @@ async function loadData() {
     loading.value = false;
   }
 }
+const handleSearch = () => {
+  pageNum.value = 1;
+  loadData();
+};
+
+const handlePageChange = (page: number) => {
+  pageNum.value = page;
+  loadData();
+};
+
+const handlePageSizeChange = (size: number) => {
+  pageSize.value = size;
+  pageNum.value = 1;
+  loadData();
+};
+
 
 onMounted(async () => {
   await loadData();
@@ -505,9 +507,21 @@ onMounted(async () => {
   gap: 8px;
 }
 
+
+.directory-main :deep(.n-data-table) {
+  flex: 1;
+  min-height: 0;
+}
+
+.directory-main :deep(.n-data-table-wrapper),
+.directory-main :deep(.n-data-table-base-table),
+.directory-main :deep(.n-data-table-base-table-body) {
+  min-height: 0;
+}
 .compact-pagination {
   display: flex;
   justify-content: flex-end;
+  flex-shrink: 0;
   padding-top: 8px;
   border-top: 1px solid var(--border-light);
 }

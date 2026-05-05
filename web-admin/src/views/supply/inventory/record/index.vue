@@ -47,7 +47,7 @@
               placeholder="搜索操作人或模块..."
               size="small"
               clearable
-              @keyup.enter="loadData"
+              @keyup.enter="handleSearch"
               style="width: 220px"
             >
               <template #prefix><n-icon><Search /></n-icon></template>
@@ -59,9 +59,9 @@
               placeholder="状态"
               style="width: 120px"
               size="small"
-              @update:value="loadData"
+              @update:value="handleSearch"
             />
-            <n-button size="small" type="primary" @click="loadData">搜索</n-button>
+            <n-button size="small" type="primary" @click="handleSearch">搜索</n-button>
           </div>
 
           <n-data-table
@@ -76,13 +76,13 @@
           <div class="compact-pagination">
             <n-pagination
               v-model:page="pageNum"
-              :page-size="pageSize"
+              v-model:page-size="pageSize"
               :page-sizes="[10, 20, 50]"
-              :total="total"
+              :item-count="total"
               show-size-picker
               size="small"
-              @update:page="loadData"
-              @update:page-size="loadData"
+              @update:page="handlePageChange"
+              @update:page-size="handlePageSizeChange"
             />
           </div>
         </div>
@@ -149,6 +149,7 @@ const displayData = computed(() => {
 const selectType = (val: 'inbound' | 'outbound' | null) => {
   selectedType.value = val;
   pageNum.value = 1;
+  loadData();
 };
 
 const columns = [
@@ -182,12 +183,29 @@ const loadData = async () => {
   try {
     const params: any = { pageNum: pageNum.value, pageSize: pageSize.value };
     if (searchStatus.value !== null) params.status = searchStatus.value;
-    tableData.value = (await getOperLogList(params)) || [];
-    total.value = tableData.value.length;
+    const res = await getOperLogList(params);
+    tableData.value = res?.records || [];
+    total.value = Number(res?.total || 0);
   } finally {
     loading.value = false;
   }
 };
+const handleSearch = () => {
+  pageNum.value = 1;
+  loadData();
+};
+
+const handlePageChange = (page: number) => {
+  pageNum.value = page;
+  loadData();
+};
+
+const handlePageSizeChange = (size: number) => {
+  pageSize.value = size;
+  pageNum.value = 1;
+  loadData();
+};
+
 
 onMounted(loadData);
 </script>
@@ -274,6 +292,7 @@ onMounted(loadData);
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
   padding: 14px 16px;
   gap: 12px;
 }
@@ -284,9 +303,21 @@ onMounted(loadData);
   gap: 8px;
 }
 
+
+.directory-main :deep(.n-data-table) {
+  flex: 1;
+  min-height: 0;
+}
+
+.directory-main :deep(.n-data-table-wrapper),
+.directory-main :deep(.n-data-table-base-table),
+.directory-main :deep(.n-data-table-base-table-body) {
+  min-height: 0;
+}
 .compact-pagination {
   display: flex;
   justify-content: flex-end;
+  flex-shrink: 0;
   padding-top: 8px;
   border-top: 1px solid var(--border-light);
 }
