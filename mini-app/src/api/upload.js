@@ -5,19 +5,26 @@ const BASE_URL = 'http://localhost:8081/api'
  * @param {string} filePath - 文件路径
  * @returns {Promise<string>} - 返回文件URL
  */
-export const uploadFile = (filePath) => {
+const uploadTo = (filePath, endpoint, formData = {}) => {
   return new Promise((resolve, reject) => {
     const token = uni.getStorageSync('token')
     
     uni.uploadFile({
-      url: BASE_URL + '/v1/oss/upload',
+      url: BASE_URL + endpoint,
       filePath: filePath,
       name: 'file',
+      formData,
       header: {
         'Authorization': token ? `Bearer ${token}` : ''
       },
       success: (res) => {
-        const data = JSON.parse(res.data)
+        let data
+        try {
+          data = JSON.parse(res.data)
+        } catch (error) {
+          reject(new Error('上传响应解析失败'))
+          return
+        }
         if (data.code === 200) {
           resolve(data.data)
         } else {
@@ -28,6 +35,10 @@ export const uploadFile = (filePath) => {
     })
   })
 }
+
+export const uploadFile = (filePath) => uploadTo(filePath, '/v1/oss/upload')
+
+export const uploadChatFile = (filePath, meta = {}) => uploadTo(filePath, '/v1/oss/chat-upload', meta)
 
 /**
  * 批量上传文件

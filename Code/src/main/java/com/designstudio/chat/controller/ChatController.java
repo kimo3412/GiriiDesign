@@ -61,6 +61,7 @@ public class ChatController {
 
         JSONObject push = new JSONObject();
         push.set("type", "NEW_MSG");
+        push.set("msgId", msg.getMsgId());
         push.set("messageId", msg.getMsgId());
         push.set("userId", userId);
         push.set("orderId", orderId);
@@ -114,6 +115,7 @@ public class ChatController {
 
         JSONObject push = new JSONObject();
         push.set("type", "NEW_MSG");
+        push.set("msgId", msg.getMsgId());
         push.set("messageId", msg.getMsgId());
         push.set("userId", userId);
         push.set("orderId", orderId);

@@ -24,6 +24,7 @@
       class="message-area"
       scroll-y
       :scroll-into-view="scrollToId"
+      :scroll-top="scrollTop"
       scroll-with-animation
     >
       <view class="message-canvas">
@@ -125,10 +126,22 @@
                 <image
                   v-else-if="isImageMsg(msg)"
                   class="msg-image"
-                  :src="msg.content"
+                  :src="imageMsgUrl(msg)"
                   mode="widthFix"
-                  @click="previewImage(msg.content)"
+                  @click="previewImage(imageMsgUrl(msg))"
                 />
+                <view
+                  v-else-if="isFileMsg(msg)"
+                  class="file-card"
+                  @click="openFile(msg)"
+                >
+                  <view class="file-card__icon">FILE</view>
+                  <view class="file-card__main">
+                    <text class="file-card__name">{{ fileMsgData(msg).fileName || getFileName(msg.content) }}</text>
+                    <text class="file-card__meta">{{ formatFileSize(fileMsgData(msg).fileSize) || '点击打开文件' }}</text>
+                  </view>
+                  <view class="file-card__button" @click.stop="openFile(msg)">下载</view>
+                </view>
                 <text v-else class="msg-text">{{ msg.content }}</text>
               </view>
 
@@ -136,7 +149,7 @@
             </view>
           </view>
         </view>
-        <view class="message-bottom-space"></view>
+        <view id="message-bottom" class="message-bottom-space"></view>
       </view>
     </scroll-view>
 
@@ -149,7 +162,7 @@
         <text class="handoff-hint">紧急修改、退款、催交付建议转人工</text>
       </view>
       <view class="input-shell">
-        <view class="media-btn" @click="chooseImage">
+        <view class="media-btn" :class="{ 'media-btn--disabled': mediaUploading }" @click="chooseMedia">
           <text class="media-btn__icon">＋</text>
         </view>
         <textarea
@@ -177,17 +190,20 @@
 import { computed, nextTick, onUnmounted, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import { getOrderDetail } from '@/api/order'
+import { uploadChatFile } from '@/api/upload'
 import request from '@/utils/request'
 import storage from '@/utils/storage'
 
 const messages = ref([])
 const inputText = ref('')
 const scrollToId = ref('')
+const scrollTop = ref(0)
 const chatOrderId = ref(null)
 const isConnected = ref(false)
 const reconnecting = ref(false)
 const orderInfo = ref({})
 const handoffLoading = ref(false)
+const mediaUploading = ref(false)
 
 let socketTask = null
 let reconnectTimer = null
@@ -340,6 +356,23 @@ const sendTextMsg = () => {
   inputText.value = ''
 }
 
+const ensureConnected = () => {
+  if (socketTask && isConnected.value) return true
+  uni.showToast({ title: '连接已断开', icon: 'none' })
+  return false
+}
+
+const chooseMedia = () => {
+  if (!ensureConnected() || mediaUploading.value) return
+  uni.showActionSheet({
+    itemList: ['发送图片', '发送文件'],
+    success: ({ tapIndex }) => {
+      if (tapIndex === 0) chooseImage()
+      if (tapIndex === 1) chooseFile()
+    }
+  })
+}
+
 const chooseImage = () => {
   if (!isConnected.value) {
     uni.showToast({ title: '连接已断开', icon: 'none' })
@@ -347,14 +380,60 @@ const chooseImage = () => {
   }
   uni.chooseImage({
     count: 1,
-    sizeType: ['compressed'],
-    success: (res) => {
-      sendMessage(res.tempFilePaths[0], 'image')
+    sizeType: ['original', 'compressed'],
+    success: async (res) => {
+      const tempPath = res.tempFilePaths[0]
+      const file = res.tempFiles?.[0] || {}
+      await uploadAndSend(tempPath, 'image', {
+        fileName: file.name || getFileName(tempPath),
+        fileSize: file.size || 0,
+        mimeType: file.type || 'image/*'
+      })
     }
   })
 }
 
-const sendMessage = (content, msgType) => {
+const chooseFile = () => {
+  if (!ensureConnected()) return
+  if (typeof uni.chooseMessageFile !== 'function') {
+    uni.showToast({ title: '当前环境不支持选择文件', icon: 'none' })
+    return
+  }
+  uni.chooseMessageFile({
+    count: 1,
+    type: 'file',
+    success: async (res) => {
+      const file = res.tempFiles?.[0]
+      if (!file?.path) return
+      await uploadAndSend(file.path, 'file', {
+        fileName: file.name || getFileName(file.path),
+        fileSize: file.size || 0,
+        mimeType: file.type || 'application/octet-stream'
+      })
+    }
+  })
+}
+
+const uploadAndSend = async (filePath, msgType, meta = {}) => {
+  mediaUploading.value = true
+  uni.showLoading({ title: '上传中...' })
+  try {
+    const fileName = meta.fileName || getFileName(filePath)
+    const url = await uploadChatFile(filePath, { fileName, msgType })
+    sendMessage(url, msgType, {
+      ...meta,
+      fileName,
+      fileUrl: url
+    })
+  } catch (err) {
+    uni.showToast({ title: err.message || '上传失败', icon: 'none' })
+  } finally {
+    uni.hideLoading()
+    mediaUploading.value = false
+  }
+}
+
+const sendMessage = (content, msgType, extraJson = null) => {
   if (!socketTask || !isConnected.value) {
     uni.showToast({ title: '连接已断开', icon: 'none' })
     return
@@ -365,6 +444,7 @@ const sendMessage = (content, msgType) => {
       type: 'SEND',
       content,
       msgType,
+      extraJson,
       orderId: chatOrderId.value
     })
   })
@@ -373,6 +453,7 @@ const sendMessage = (content, msgType) => {
     senderType: 'client',
     content,
     msgType,
+    extraJson,
     orderId: chatOrderId.value,
     createTime: new Date().toISOString().replace('T', ' ').substring(0, 19)
   })
@@ -409,20 +490,50 @@ const requestHumanHandoff = async () => {
 const scrollToBottom = () => {
   nextTick(() => {
     if (!messages.value.length) return
-    scrollToId.value = ''
-    setTimeout(() => {
-      scrollToId.value = `msg-${messages.value.length - 1}`
-    }, 50)
+    const scroll = () => {
+      scrollToId.value = ''
+      scrollTop.value += 100000
+      setTimeout(() => {
+        scrollToId.value = 'message-bottom'
+        scrollTop.value += 100000
+      }, 30)
+    }
+    scroll()
+    setTimeout(scroll, 180)
+    setTimeout(scroll, 360)
   })
 }
 
 const previewImage = (url) => {
-  uni.previewImage({ urls: [url], current: url })
+  const imageUrl = toAbsoluteFileUrl(url)
+  if (!imageUrl) return
+  uni.previewImage({ urls: [imageUrl], current: imageUrl })
+}
+
+const openFile = (msg) => {
+  const url = toAbsoluteFileUrl(msg.content || fileMsgData(msg).fileUrl)
+  if (!url) return
+  uni.downloadFile({
+    url,
+    success: (res) => {
+      if (res.statusCode !== 200) {
+        uni.showToast({ title: '文件下载失败', icon: 'none' })
+        return
+      }
+      uni.openDocument({
+        filePath: res.tempFilePath,
+        showMenu: true,
+        fail: () => uni.showToast({ title: '无法打开该文件', icon: 'none' })
+      })
+    },
+    fail: () => uni.showToast({ title: '文件下载失败', icon: 'none' })
+  })
 }
 
 const isMyMsg = (msg) => msg.senderType === 'client' || msg.senderType === 0
 const isAssistantMsg = (msg) => msg.senderType === 2 || msg.senderType === 'ai'
 const isImageMsg = (msg) => msg.msgType === 'image' || msg.contentType === 1
+const isFileMsg = (msg) => msg.msgType === 'file' || msg.contentType === 2
 const isProgressCardMsg = (msg) => msg.msgType === 'progress_card' || msg.contentType === 3
 const isHandoffRequestMsg = (msg) =>
   msg.msgType === 'handoff_request' || parseExtraJson(msg).cardType === 'handoff_request'
@@ -436,9 +547,10 @@ const isActionCardMsg = (msg) =>
 const parseExtraJson = (msg) => {
   const raw = msg.extraJson
   if (!raw) return {}
-  if (typeof raw === 'object') return raw
+  if (typeof raw === 'object') return raw || {}
   try {
-    return JSON.parse(raw)
+    const parsed = JSON.parse(raw)
+    return parsed && typeof parsed === 'object' ? parsed : {}
   } catch (err) {
     return {}
   }
@@ -446,6 +558,27 @@ const parseExtraJson = (msg) => {
 
 const progressCardData = (msg) => parseExtraJson(msg)
 const actionCardData = (msg) => parseExtraJson(msg)
+const fileMsgData = (msg) => parseExtraJson(msg)
+const imageMsgUrl = (msg) => toAbsoluteFileUrl(msg.content || fileMsgData(msg).fileUrl)
+
+const getFileName = (path = '') => {
+  const normalized = String(path).split('?')[0]
+  return normalized.substring(normalized.lastIndexOf('/') + 1) || '附件'
+}
+
+const formatFileSize = (size) => {
+  const bytes = Number(size || 0)
+  if (!bytes) return ''
+  if (bytes < 1024) return `${bytes}B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`
+  return `${(bytes / 1024 / 1024).toFixed(1)}MB`
+}
+
+const toAbsoluteFileUrl = (url) => {
+  if (!url) return ''
+  if (/^https?:\/\//i.test(url)) return url
+  return `http://localhost:8081${url.startsWith('/') ? url : `/${url}`}`
+}
 
 const progressCardSteps = (msg) => {
   const steps = progressCardData(msg).steps
@@ -549,12 +682,14 @@ const getStatusText = (status) => {
 
 <style lang="scss" scoped>
 .chat-page {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background:
-    radial-gradient(circle at top right, rgba(146, 170, 218, 0.14), transparent 28%),
-    linear-gradient(180deg, #faf8f5 0%, #f5f1eb 100%);
+  background: #f5f1eb;
+}
+
+:global(page) {
+  background: #f5f1eb;
 }
 
 .connection-bar {
@@ -643,10 +778,13 @@ const getStatusText = (status) => {
 
 .message-area {
   flex: 1;
+  background: #f5f1eb;
 }
 
 .message-canvas {
   padding: 28rpx 24rpx 12rpx;
+  min-height: 100%;
+  background: #f5f1eb;
 }
 
 .time-divider {
@@ -771,8 +909,10 @@ const getStatusText = (status) => {
 }
 
 .msg-image {
-  width: 100%;
-  max-width: 360rpx;
+  display: block;
+  width: 360rpx;
+  max-width: 100%;
+  min-height: 180rpx;
   border-radius: 18rpx;
 }
 
@@ -926,6 +1066,58 @@ const getStatusText = (status) => {
   justify-content: space-between;
   font-size: 23rpx;
   font-weight: 700;
+}
+
+.file-card {
+  width: 480rpx;
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+}
+
+.file-card__icon {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 18rpx;
+  background: #edf2fb;
+  color: #42557b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20rpx;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.file-card__main {
+  min-width: 0;
+  flex: 1;
+}
+
+.file-card__button {
+  flex-shrink: 0;
+  padding: 12rpx 20rpx;
+  border-radius: 999rpx;
+  background: rgba(75, 123, 236, 0.12);
+  color: #2f6fed;
+  font-size: 23rpx;
+  font-weight: 700;
+}
+
+.file-card__name {
+  display: block;
+  font-size: 27rpx;
+  color: #1a2b3c;
+  font-weight: 700;
+  line-height: 1.4;
+  word-break: break-all;
+}
+
+.file-card__meta {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 22rpx;
+  color: #6d7385;
 }
 
 .handoff-card {

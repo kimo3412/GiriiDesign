@@ -59,7 +59,7 @@
                 <span v-if="conv.orderSn" class="conv-tag">{{ conv.orderSn }}</span>
                 <span v-else class="conv-tag conv-tag--general">普通咨询</span>
                 <div class="conv-alerts">
-                  <span v-if="conv.handoffCount > 0" class="conv-handoff-dot">转人工</span>
+                  <span v-if="conv.handoffActive" class="conv-handoff-dot">转人工</span>
                   <n-badge v-if="conv.unreadCount > 0" :value="conv.unreadCount" :max="99" />
                 </div>
               </div>
@@ -118,14 +118,52 @@
               {{ isAdminMsg(msg) ? '管' : '客' }}
             </div>
             <div class="msg-body">
-              <div class="msg-bubble">
+              <div class="msg-bubble" :class="{ 'msg-bubble--card': isCardMsg(msg) }">
                 <n-image
                   v-if="isImageMsg(msg)"
-                  :src="msg.content"
+                  :src="imageMsgUrl(msg)"
                   width="200"
                   style="border-radius: 10px"
-                  preview-disabled
                 />
+                <div v-else-if="isFileMsg(msg)" class="chat-file" @click="openFileMsg(msg)">
+                  <div class="chat-file__icon">FILE</div>
+                  <div class="chat-file__main">
+                    <div class="chat-file__name">{{ parseExtraJson(msg).fileName || getFileName(msg.content) }}</div>
+                    <div class="chat-file__meta">{{ formatFileSize(parseExtraJson(msg).fileSize) || '点击打开文件' }}</div>
+                  </div>
+                  <button class="chat-file__button" type="button" @click.stop="openFileMsg(msg)">下载</button>
+                </div>
+                <div v-else-if="isProgressCardMsg(msg)" class="chat-card chat-card--progress">
+                  <div class="chat-card__title">{{ parseExtraJson(msg).title || '订单进度' }}</div>
+                  <div class="chat-card__desc">
+                    {{ parseExtraJson(msg).orderSn || '定制订单' }} ·
+                    {{ parseExtraJson(msg).statusText || parseExtraJson(msg).currentStepName || '处理中' }}
+                  </div>
+                  <div class="chat-card__meta">
+                    当前节点：{{ parseExtraJson(msg).currentStepName || '-' }}
+                  </div>
+                </div>
+                <div v-else-if="isHandoffRequestMsg(msg)" class="chat-card chat-card--handoff">
+                  <div class="chat-card__title">{{ parseExtraJson(msg).title || '转人工请求' }}</div>
+                  <div class="chat-card__desc">
+                    {{ parseExtraJson(msg).description || msg.content }}
+                  </div>
+                </div>
+                <div v-else-if="isHandoffResolvedMsg(msg)" class="chat-card chat-card--resolved">
+                  <div class="chat-card__title">{{ parseExtraJson(msg).title || 'AI客服已恢复' }}</div>
+                  <div class="chat-card__desc">
+                    {{ parseExtraJson(msg).description || msg.content }}
+                  </div>
+                </div>
+                <div v-else-if="isActionCardMsg(msg)" class="chat-card">
+                  <div class="chat-card__title">{{ parseExtraJson(msg).title || msg.content }}</div>
+                  <div class="chat-card__desc">
+                    {{ parseExtraJson(msg).description || '动作卡片' }}
+                  </div>
+                  <div v-if="parseExtraJson(msg).actionText" class="chat-card__meta">
+                    {{ parseExtraJson(msg).actionText }}
+                  </div>
+                </div>
                 <span v-else class="msg-content">{{ msg.content }}</span>
               </div>
               <span class="msg-time">{{ formatMsgTime(msg.createTime) }}</span>
@@ -399,7 +437,7 @@
     activeOrderId.value = conv.orderId || null;
     activeUserName.value = conv.nickname || conv.username || `用户#${conv.userId}`;
     activeOrderSn.value = conv.orderSn || '';
-    activeHandoff.value = Boolean(conv.handoffActive || conv.handoffCount > 0);
+    activeHandoff.value = Boolean(conv.handoffActive);
     userSummary.value = null;
     archiveTab.value = conv.orderSn ? 'orders' : 'requests';
     showAllOrders.value = false;
@@ -537,9 +575,61 @@
     return String(timeStr).substring(11, 16);
   };
 
-  const isAdminMsg = (msg: any) => msg.senderType === 'admin' || msg.senderType === 1;
+  const isAdminMsg = (msg: any) =>
+    msg.senderType === 'admin' || msg.senderType === 'ai' || msg.senderType === 1 || msg.senderType === 2;
 
   const isImageMsg = (msg: any) => msg.msgType === 'image' || msg.contentType === 1;
+  const isFileMsg = (msg: any) => msg.msgType === 'file' || msg.contentType === 2;
+
+  const parseExtraJson = (msg: any) => {
+    const raw = msg?.extraJson;
+    if (!raw) return {};
+    if (typeof raw === 'object') return raw ?? {};
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (error) {
+      return {};
+    }
+  };
+
+  const isProgressCardMsg = (msg: any) => msg.msgType === 'progress_card' || msg.contentType === 3;
+  const isHandoffRequestMsg = (msg: any) =>
+    msg.msgType === 'handoff_request' || parseExtraJson(msg).cardType === 'handoff_request';
+  const isHandoffResolvedMsg = (msg: any) =>
+    msg.msgType === 'handoff_resolved' || parseExtraJson(msg).cardType === 'handoff_resolved';
+  const isActionCardMsg = (msg: any) =>
+    (msg.msgType === 'action_card' || msg.contentType === 4) &&
+    !isHandoffRequestMsg(msg) &&
+    !isHandoffResolvedMsg(msg);
+  const isCardMsg = (msg: any) =>
+    isProgressCardMsg(msg) || isHandoffRequestMsg(msg) || isHandoffResolvedMsg(msg) || isActionCardMsg(msg);
+
+  const imageMsgUrl = (msg: any) => toFileUrl(msg.content || parseExtraJson(msg).fileUrl);
+
+  const getFileName = (path = '') => {
+    const normalized = String(path).split('?')[0];
+    return normalized.substring(normalized.lastIndexOf('/') + 1) || '附件';
+  };
+
+  const formatFileSize = (size: any) => {
+    const bytes = Number(size || 0);
+    if (!bytes) return '';
+    if (bytes < 1024) return `${bytes}B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
+  };
+
+  const toFileUrl = (url = '') => {
+    if (!url) return '';
+    if (/^https?:\/\//i.test(url)) return url;
+    return `http://localhost:8081${url.startsWith('/') ? url : `/${url}`}`;
+  };
+
+  const openFileMsg = (msg: any) => {
+    const url = toFileUrl(msg.content || parseExtraJson(msg).fileUrl);
+    if (url) window.open(url, '_blank');
+  };
 </script>
 
 <style scoped>
@@ -915,6 +1005,113 @@
     font-size: 14px;
     line-height: 1.6;
     word-break: break-word;
+  }
+
+  .msg-bubble--card {
+    padding: 0;
+    overflow: hidden;
+  }
+
+  .chat-card {
+    min-width: 240px;
+    max-width: 340px;
+    padding: 12px 14px;
+    background: #fff;
+    color: #1f2937;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    border-radius: 14px;
+  }
+
+  .chat-card--progress {
+    border-color: rgba(75, 123, 236, 0.28);
+  }
+
+  .chat-card--handoff {
+    border-color: rgba(249, 115, 22, 0.32);
+    background: #fff7ed;
+  }
+
+  .chat-card--resolved {
+    border-color: rgba(34, 197, 94, 0.28);
+    background: #f0fdf4;
+  }
+
+  .chat-card__title {
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.45;
+  }
+
+  .chat-card__desc {
+    margin-top: 6px;
+    font-size: 12px;
+    line-height: 1.55;
+    color: #667085;
+  }
+
+  .chat-card__meta {
+    margin-top: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #4b7bec;
+  }
+
+  .chat-file {
+    min-width: 240px;
+    max-width: 340px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 14px;
+    background: #fff;
+    color: #1f2937;
+    border: 1px solid rgba(148, 163, 184, 0.24);
+    cursor: pointer;
+  }
+
+  .chat-file__icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 12px;
+    background: rgba(75, 123, 236, 0.12);
+    color: #4b7bec;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 800;
+    flex-shrink: 0;
+  }
+
+  .chat-file__main {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .chat-file__button {
+    flex-shrink: 0;
+    border: 0;
+    border-radius: 999px;
+    padding: 6px 12px;
+    background: rgba(75, 123, 236, 0.12);
+    color: #2f6fed;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .chat-file__name {
+    font-size: 13px;
+    line-height: 1.45;
+    font-weight: 700;
+    word-break: break-all;
+  }
+
+  .chat-file__meta {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #667085;
   }
 
   .is-client .msg-bubble {

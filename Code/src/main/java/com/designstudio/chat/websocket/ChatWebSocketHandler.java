@@ -47,6 +47,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final int CONTENT_TYPE_TEXT = 0;
     private static final int CONTENT_TYPE_IMAGE = 1;
+    private static final int CONTENT_TYPE_FILE = 2;
     private static final int CONTENT_TYPE_PROGRESS_CARD = 3;
     private static final int CONTENT_TYPE_ACTION_CARD = 4;
 
@@ -87,11 +88,14 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         String content = json.getStr("content");
         String msgType = json.getStr("msgType", "text");
         Long orderId = json.getLong("orderId");
+        Object extraJson = json.get("extraJson");
         int senderTypeInt = "client".equals(userType) ? 0 : 1;
-        int contentTypeInt = "image".equals(msgType) ? CONTENT_TYPE_IMAGE : CONTENT_TYPE_TEXT;
+        int contentTypeInt = resolveContentType(msgType);
 
-        DsChatMessage msg = chatService.saveMessage(chatUserId, senderTypeInt, currentUserId, content, contentTypeInt, orderId);
-        JSONObject pushJson = buildMessagePush("NEW_MSG", msg, chatUserId, orderId, userType, currentUserId, content, msgType, contentTypeInt, null);
+        DsChatMessage msg = chatService.saveMessage(chatUserId, senderTypeInt, currentUserId, content,
+                contentTypeInt, orderId, extraJson == null ? null : extraJson.toString());
+        JSONObject pushJson = buildMessagePush("NEW_MSG", msg, chatUserId, orderId, userType, currentUserId,
+                content, msgType, contentTypeInt, extraJson);
         String pushText = pushJson.toString();
 
         if ("client".equals(userType)) {
@@ -105,18 +109,29 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
         boolean clientMessage = "client".equals(userType);
         boolean humanHandoffActive = clientMessage && chatService.isHumanHandoffActive(chatUserId, orderId);
-        if (clientMessage && !humanHandoffActive && shouldPushProgressCard(content, orderId)) {
+        boolean textMessage = CONTENT_TYPE_TEXT == contentTypeInt;
+        if (clientMessage && textMessage && !humanHandoffActive && shouldPushProgressCard(content, orderId)) {
             pushOrderProgressCard(chatUserId, orderId);
         }
-        if (clientMessage && !humanHandoffActive) {
+        if (clientMessage && textMessage && !humanHandoffActive) {
             pushHelpfulActionCards(chatUserId, orderId, content);
         }
 
-        if (aiCustomerService.isEnabled() && clientMessage && !humanHandoffActive) {
+        if (aiCustomerService.isEnabled() && clientMessage && textMessage && !humanHandoffActive) {
             triggerAiReply(chatUserId, orderId, content);
         }
 
         log.debug("message handled: {} -> chatUserId={}", userType, chatUserId);
+    }
+
+    private int resolveContentType(String msgType) {
+        if ("image".equals(msgType)) {
+            return CONTENT_TYPE_IMAGE;
+        }
+        if ("file".equals(msgType)) {
+            return CONTENT_TYPE_FILE;
+        }
+        return CONTENT_TYPE_TEXT;
     }
 
     private void triggerAiReply(Long chatUserId, Long orderId, String content) {
@@ -159,6 +174,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
                                         int contentType, Object extraJson) {
         JSONObject pushJson = new JSONObject();
         pushJson.set("type", type);
+        pushJson.set("msgId", msg.getMsgId());
         pushJson.set("messageId", msg.getMsgId());
         pushJson.set("userId", chatUserId);
         pushJson.set("orderId", orderId);

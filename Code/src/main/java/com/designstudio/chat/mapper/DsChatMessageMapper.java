@@ -21,7 +21,7 @@ public interface DsChatMessageMapper extends BaseMapper<DsChatMessage> {
             "o.order_sn AS orderSn, " +
             "u.nickname, u.avatar_url AS avatar, " +
             "COUNT(CASE WHEN m.is_read = 0 AND m.sender_type = 0 THEN 1 END) AS unreadCount, " +
-            "COUNT(CASE WHEN m.is_read = 0 AND m.sender_type = 0 AND m.content_type = 4 THEN 1 END) AS handoffCount, " +
+            "COUNT(CASE WHEN m.is_read = 0 AND m.sender_type = 0 AND m.content_type = 4 AND m.extra_json LIKE '%handoff_request%' THEN 1 END) AS handoffCount, " +
             "MAX(m.create_time) AS lastTime, " +
             "(SELECT content FROM ds_chat_message m2 " +
             " WHERE m2.user_id = m.user_id AND (m2.order_id <=> m.order_id) " +

@@ -3,6 +3,7 @@ package com.designstudio.chat.domain;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.time.LocalDateTime;
@@ -21,6 +22,11 @@ public class DsChatMessage {
 
     @TableId(type = IdType.AUTO)
     private Long msgId;
+
+    @JsonProperty("messageId")
+    public Long getMessageId() {
+        return msgId;
+    }
 
     /** 关联客户ID */
     private Long userId;

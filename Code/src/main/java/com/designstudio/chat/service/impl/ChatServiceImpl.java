@@ -1,5 +1,6 @@
 package com.designstudio.chat.service.impl;
 
+import cn.hutool.json.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.designstudio.chat.domain.DsChatMessage;
@@ -17,9 +18,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * 聊天业务 Service 实现
- */
 @Service
 @RequiredArgsConstructor
 public class ChatServiceImpl implements ChatService {
@@ -28,6 +26,8 @@ public class ChatServiceImpl implements ChatService {
     private final DsOrderMapper orderMapper;
     private final DsOrderRequestMapper requestMapper;
 
+    private static final int SENDER_TYPE_CLIENT = 0;
+    private static final int SENDER_TYPE_ADMIN = 1;
     private static final int CONTENT_TYPE_ACTION_CARD = 4;
     private static final String HANDOFF_REQUEST = "handoff_request";
     private static final String HANDOFF_RESOLVED = "handoff_resolved";
@@ -36,24 +36,15 @@ public class ChatServiceImpl implements ChatService {
     public List<DsChatMessage> getClientMessages(Long userId, Long orderId) {
         LambdaQueryWrapper<DsChatMessage> wrapper = new LambdaQueryWrapper<DsChatMessage>()
                 .eq(DsChatMessage::getUserId, userId);
-        if (orderId != null) {
-            wrapper.eq(DsChatMessage::getOrderId, orderId);
-        } else {
-            wrapper.isNull(DsChatMessage::getOrderId);
-        }
+        appendOrderFilter(wrapper, orderId);
         wrapper.orderByAsc(DsChatMessage::getCreateTime);
         List<DsChatMessage> list = messageMapper.selectList(wrapper);
 
-        // 标记管理员消息已读
         LambdaUpdateWrapper<DsChatMessage> updateWrapper = new LambdaUpdateWrapper<DsChatMessage>()
                 .eq(DsChatMessage::getUserId, userId)
-                .eq(DsChatMessage::getSenderType, 1)
+                .eq(DsChatMessage::getSenderType, SENDER_TYPE_ADMIN)
                 .eq(DsChatMessage::getIsRead, 0);
-        if (orderId != null) {
-            updateWrapper.eq(DsChatMessage::getOrderId, orderId);
-        } else {
-            updateWrapper.isNull(DsChatMessage::getOrderId);
-        }
+        appendOrderFilter(updateWrapper, orderId);
         updateWrapper.set(DsChatMessage::getIsRead, 1);
         messageMapper.update(null, updateWrapper);
 
@@ -75,11 +66,7 @@ public class ChatServiceImpl implements ChatService {
     public List<DsChatMessage> getAdminMessages(Long userId, Long orderId) {
         LambdaQueryWrapper<DsChatMessage> wrapper = new LambdaQueryWrapper<DsChatMessage>()
                 .eq(DsChatMessage::getUserId, userId);
-        if (orderId != null) {
-            wrapper.eq(DsChatMessage::getOrderId, orderId);
-        } else {
-            wrapper.isNull(DsChatMessage::getOrderId);
-        }
+        appendOrderFilter(wrapper, orderId);
         wrapper.orderByAsc(DsChatMessage::getCreateTime);
         return messageMapper.selectList(wrapper);
     }
@@ -88,13 +75,9 @@ public class ChatServiceImpl implements ChatService {
     public void markAsRead(Long userId, Long orderId) {
         LambdaUpdateWrapper<DsChatMessage> wrapper = new LambdaUpdateWrapper<DsChatMessage>()
                 .eq(DsChatMessage::getUserId, userId)
-                .eq(DsChatMessage::getSenderType, 0)
+                .eq(DsChatMessage::getSenderType, SENDER_TYPE_CLIENT)
                 .eq(DsChatMessage::getIsRead, 0);
-        if (orderId != null) {
-            wrapper.eq(DsChatMessage::getOrderId, orderId);
-        } else {
-            wrapper.isNull(DsChatMessage::getOrderId);
-        }
+        appendOrderFilter(wrapper, orderId);
         wrapper.set(DsChatMessage::getIsRead, 1);
         messageMapper.update(null, wrapper);
     }
@@ -147,7 +130,6 @@ public class ChatServiceImpl implements ChatService {
                 .orderByDesc(DsChatMessage::getCreateTime)
                 .last("LIMIT " + limit);
         List<DsChatMessage> list = messageMapper.selectList(wrapper);
-        // 反转，按时间正序
         java.util.Collections.reverse(list);
         return list;
     }
@@ -157,7 +139,7 @@ public class ChatServiceImpl implements ChatService {
         if (chatUserId == null) {
             return false;
         }
-        DsChatMessage latestRequest = findLatestStructuredMessage(chatUserId, orderId, 0, HANDOFF_REQUEST);
+        DsChatMessage latestRequest = findLatestStructuredMessage(chatUserId, orderId, SENDER_TYPE_CLIENT, HANDOFF_REQUEST);
         if (latestRequest == null) {
             return false;
         }
@@ -168,26 +150,41 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public DsChatMessage resolveHumanHandoff(Long chatUserId, Long orderId, Long adminId) {
         String content = "人工服务已处理，AI客服已恢复自动接待。";
-        String extraJson = "{\"cardType\":\"handoff_resolved\",\"title\":\"AI客服已恢复\",\"description\":\""
-                + content + "\"}";
-        return saveMessage(chatUserId, 1, adminId, content, CONTENT_TYPE_ACTION_CARD, orderId, extraJson);
+        JSONObject extra = new JSONObject();
+        extra.set("cardType", HANDOFF_RESOLVED);
+        extra.set("title", "AI客服已恢复");
+        extra.set("description", content);
+        extra.set("orderId", orderId);
+        return saveMessage(chatUserId, SENDER_TYPE_ADMIN, adminId, content, CONTENT_TYPE_ACTION_CARD, orderId, extra.toString());
     }
 
     private DsChatMessage findLatestStructuredMessage(Long chatUserId, Long orderId, Integer senderType, String cardType) {
         LambdaQueryWrapper<DsChatMessage> wrapper = new LambdaQueryWrapper<DsChatMessage>()
                 .eq(DsChatMessage::getUserId, chatUserId)
                 .eq(DsChatMessage::getContentType, CONTENT_TYPE_ACTION_CARD)
-                .like(DsChatMessage::getExtraJson, cardType);
+                .like(DsChatMessage::getExtraJson, "\"" + cardType + "\"");
         if (senderType != null) {
             wrapper.eq(DsChatMessage::getSenderType, senderType);
         }
+        appendOrderFilter(wrapper, orderId);
+        wrapper.orderByDesc(DsChatMessage::getCreateTime).last("LIMIT 1");
+        return messageMapper.selectOne(wrapper);
+    }
+
+    private void appendOrderFilter(LambdaQueryWrapper<DsChatMessage> wrapper, Long orderId) {
         if (orderId != null) {
             wrapper.eq(DsChatMessage::getOrderId, orderId);
         } else {
             wrapper.isNull(DsChatMessage::getOrderId);
         }
-        wrapper.orderByDesc(DsChatMessage::getCreateTime).last("LIMIT 1");
-        return messageMapper.selectOne(wrapper);
+    }
+
+    private void appendOrderFilter(LambdaUpdateWrapper<DsChatMessage> wrapper, Long orderId) {
+        if (orderId != null) {
+            wrapper.eq(DsChatMessage::getOrderId, orderId);
+        } else {
+            wrapper.isNull(DsChatMessage::getOrderId);
+        }
     }
 
     private Long toLong(Object value) {
