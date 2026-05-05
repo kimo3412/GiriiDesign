@@ -1,56 +1,52 @@
 <template>
-  <view class="category-container">
-    <!-- 顶部品牌区 -->
-    <view class="header">
-      <text class="brand">ZeHana</text>
-      <text class="title">专属定制</text>
-      <text class="subtitle">选择您期待的定制形式，开启专属之旅</text>
+  <scroll-view scroll-y class="custom-page">
+    <view class="hero">
+      <text class="hero-kicker">ZEHANA ATELIER</text>
+      <text class="hero-title">选择定制品类</text>
+      <text class="hero-desc">从服装、皮具到插画，让设计师围绕你的需求开启一对一创作。</text>
     </view>
 
-    <!-- 品类卡片列表 -->
-    <view class="category-list" v-if="categories.length > 0">
+    <view v-if="categories.length > 0" class="category-list">
       <view
         v-for="(item, index) in categories"
         :key="item.categoryId"
         class="category-card"
-        :class="'card-theme-' + (index % 3)"
+        :class="`category-card--${index % 3}`"
         @click="selectCategory(item)"
       >
-        <view class="card-bg">
-          <view class="card-icon">
-            <text class="icon-text">{{ item.name ? item.name.substring(0, 1) : 'Z' }}</text>
+        <view class="category-mark">
+          <text class="category-mark__text">{{ getInitial(item.name) }}</text>
+        </view>
+        <view class="category-main">
+          <view class="category-row">
+            <text class="category-name">{{ item.name }}</text>
+            <text class="category-index">0{{ index + 1 }}</text>
           </view>
-          <view class="card-content">
-            <text class="card-name">{{ item.name }}</text>
-            <text class="card-desc">{{ getDesc(item, index) }}</text>
-          </view>
-          <view class="card-action">
-            <text class="action-text">开始定制</text>
-            <text class="action-arrow">→</text>
+          <text class="category-desc">{{ getDesc(item, index) }}</text>
+          <view class="category-action">
+            <text>开始定制</text>
+            <text class="category-action__arrow">→</text>
           </view>
         </view>
       </view>
     </view>
 
-    <!-- 空状态 -->
-    <view class="empty-state" v-else-if="!loading">
-      <text class="empty-icon">✦</text>
-      <text class="empty-text">暂无定制方案</text>
-      <text class="empty-hint">敬请期待更多定制服务</text>
+    <view v-else-if="!loading" class="empty-state">
+      <text class="empty-state__icon">✦</text>
+      <text class="empty-state__title">暂无定制方案</text>
+      <text class="empty-state__desc">新的定制品类正在整理中，请稍后再来看看。</text>
     </view>
 
-    <!-- 加载中 -->
-    <view class="loading-state" v-if="loading">
-      <text>加载中...</text>
+    <view v-if="loading" class="loading-state">
+      <text>正在整理定制品类...</text>
     </view>
 
-    <!-- 底部说明 -->
-    <view class="footer-note" v-if="categories.length > 0">
-      <view class="note-line"></view>
-      <text class="note-text">所有定制方案均由资深设计师一对一服务</text>
-      <view class="note-line"></view>
+    <view v-if="categories.length > 0" class="service-note">
+      <view class="service-note__line"></view>
+      <text class="service-note__text">所有定制方案均由资深设计师一对一服务</text>
+      <view class="service-note__line"></view>
     </view>
-  </view>
+  </scroll-view>
 </template>
 
 <script setup>
@@ -61,18 +57,19 @@ import { getCategoryList } from '@/api/custom'
 const categories = ref([])
 const loading = ref(false)
 
-// 品类描述映射（根据品类名称智能匹配）
 const descMap = {
-  '高级定制': '量身定制专属礼服，展现独特气质',
-  '手工皮具': '甄选头层皮料，手工精心打造',
-  '数字插画': '将灵感化为艺术，定制专属画作',
+  服装: '量体、版型、面料与细节全程沟通，适合礼服、西装与日常定制。',
+  皮具: '甄选皮料与五金，围绕使用习惯打造耐用又有个性的作品。',
+  插画: '将灵感、人物和故事转化为专属画作，可用于礼物或收藏。',
 }
 
 const defaultDescs = [
-  '独立设计师一对一沟通，完整跟进定制细节',
-  '从版型到材料都围绕你的需求打磨',
-  '小批量手作流程，让作品更有个人印记'
+  '独立设计师一对一沟通，完整跟进从灵感到交付的每个细节。',
+  '围绕材料、工艺与使用场景定制，让作品更贴合你的日常。',
+  '小批量手作流程，保留独特质感，也让每次定制更有仪式感。',
 ]
+
+const getInitial = (name = '') => name.trim().slice(0, 1) || 'Z'
 
 const getDesc = (item, index) => {
   if (item.description) return item.description
@@ -82,27 +79,22 @@ const getDesc = (item, index) => {
   return defaultDescs[index % defaultDescs.length]
 }
 
-/**
- * 获取品类列表（动态从数据库加载）
- */
 const fetchCategories = async () => {
   loading.value = true
   try {
     const data = await getCategoryList()
-    categories.value = data || []
+    categories.value = Array.isArray(data) ? data : (data?.records || data?.list || [])
   } catch (err) {
     console.error('获取品类列表失败', err)
     uni.showToast({ title: '获取品类失败', icon: 'none' })
+  } finally {
+    loading.value = false
   }
-  loading.value = false
 }
 
-/**
- * 选择品类，跳转到动态表单
- */
 const selectCategory = (item) => {
   uni.navigateTo({
-    url: `/pages/custom/form/index?categoryId=${item.categoryId}&categoryName=${item.name}`
+    url: `/pages/custom/form/index?categoryId=${item.categoryId}&categoryName=${encodeURIComponent(item.name || '')}`,
   })
 }
 
@@ -112,203 +104,230 @@ onLoad(() => {
 </script>
 
 <style lang="scss" scoped>
-.category-container {
+.custom-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #F5F0EB 0%, #F8F8F8 40%);
-  padding: 0 40rpx 60rpx;
+  box-sizing: border-box;
+  background:
+    radial-gradient(circle at 85% 8%, rgba(210, 228, 251, 0.72), transparent 34%),
+    linear-gradient(180deg, #fbf9fa 0%, #f5f3f4 100%);
+  color: #1b1c1d;
 }
 
-.header {
-  padding: 80rpx 0 50rpx;
+.hero {
+  padding: 84rpx 44rpx 44rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
+}
 
-  .brand {
-    display: block;
-    font-family: 'Times New Roman', serif;
-    font-size: 24rpx;
-    color: $primary-color;
-    letter-spacing: 10rpx;
-    margin-bottom: 20rpx;
-    text-transform: uppercase;
-  }
+.hero-kicker {
+  font-family: 'Times New Roman', serif;
+  font-size: 22rpx;
+  letter-spacing: 12rpx;
+  color: #2d4b41;
+  margin-bottom: 24rpx;
+}
 
-  .title {
-    display: block;
-    font-size: 52rpx;
-    font-weight: 300;
-    color: $text-color;
-    letter-spacing: 8rpx;
-    margin-bottom: 20rpx;
-  }
+.hero-title {
+  font-family: 'Times New Roman', serif;
+  font-size: 58rpx;
+  line-height: 1.16;
+  letter-spacing: 6rpx;
+  color: #1a2b3c;
+  margin-bottom: 20rpx;
+}
 
-  .subtitle {
-    display: block;
-    font-size: 22rpx;
-    color: $text-color-light;
-    letter-spacing: 4rpx;
-  }
+.hero-desc {
+  max-width: 560rpx;
+  font-size: 26rpx;
+  line-height: 1.72;
+  color: #6b6b6b;
 }
 
 .category-list {
+  padding: 0 32rpx;
   display: flex;
   flex-direction: column;
-  gap: 30rpx;
+  gap: 24rpx;
 }
 
 .category-card {
-  border-radius: 4rpx;
+  position: relative;
+  min-height: 188rpx;
+  padding: 34rpx 32rpx;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
+  border: 1rpx solid rgba(229, 226, 218, 0.9);
+  border-radius: 16rpx;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 14rpx 38rpx rgba(26, 43, 60, 0.06);
   overflow: hidden;
-  box-shadow: 0 8rpx 40rpx rgba(0,0,0,0.06);
-  transition: all 0.3s ease;
-
-  &:active {
-    transform: scale(0.98);
-    box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.08);
-  }
-
-  .card-bg {
-    padding: 48rpx 40rpx;
-    display: flex;
-    align-items: center;
-  }
-
-  .card-icon {
-    width: 110rpx;
-    height: 110rpx;
-    border-radius: 4rpx;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 36rpx;
-    flex-shrink: 0;
-
-    .icon-text {
-      font-family: 'Times New Roman', serif;
-      font-size: 48rpx;
-      font-weight: 300;
-    }
-  }
-
-  .card-content {
-    flex: 1;
-    min-width: 0;
-
-    .card-name {
-      display: block;
-      font-size: 30rpx;
-      font-weight: 500;
-      letter-spacing: 3rpx;
-      margin-bottom: 12rpx;
-    }
-
-    .card-desc {
-      display: block;
-      font-size: 22rpx;
-      letter-spacing: 1rpx;
-      line-height: 1.5;
-    }
-  }
-
-  .card-action {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-left: 20rpx;
-    flex-shrink: 0;
-
-    .action-text {
-      font-size: 18rpx;
-      letter-spacing: 2rpx;
-      margin-bottom: 8rpx;
-    }
-
-    .action-arrow {
-      font-size: 32rpx;
-      font-weight: 300;
-    }
-  }
 }
 
-/* 三种主题色交替 */
-.card-theme-0 {
-  .card-bg { background: #FFFFFF; }
-  .card-icon { background: $primary-color; .icon-text { color: #fff; } }
-  .card-name { color: $text-color; }
-  .card-desc { color: $text-color-light; }
-  .action-text { color: $primary-color; }
-  .action-arrow { color: $primary-color; }
+.category-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16), transparent 52%);
+  pointer-events: none;
 }
 
-.card-theme-1 {
-  .card-bg { background: $primary-color; }
-  .card-icon { background: rgba(255,255,255,0.2); .icon-text { color: #fff; } }
-  .card-name { color: #fff; }
-  .card-desc { color: rgba(255,255,255,0.75); }
-  .action-text { color: rgba(255,255,255,0.9); }
-  .action-arrow { color: #fff; }
+.category-card:active {
+  transform: scale(0.985);
+  opacity: 0.92;
 }
 
-.card-theme-2 {
-  .card-bg { background: #2C2C2C; }
-  .card-icon { background: rgba(255,255,255,0.12); .icon-text { color: rgba(255,255,255,0.9); } }
-  .card-name { color: #fff; }
-  .card-desc { color: rgba(255,255,255,0.6); }
-  .action-text { color: rgba(255,255,255,0.8); }
-  .action-arrow { color: #fff; }
+.category-card--1 {
+  background: #2d4b41;
+  border-color: rgba(45, 75, 65, 0.24);
+  box-shadow: 0 18rpx 44rpx rgba(45, 75, 65, 0.18);
 }
 
-.empty-state {
+.category-card--2 {
+  background: #1a2b3c;
+  border-color: rgba(26, 43, 60, 0.18);
+  box-shadow: 0 18rpx 44rpx rgba(26, 43, 60, 0.18);
+}
+
+.category-mark {
+  width: 112rpx;
+  height: 112rpx;
+  margin-right: 32rpx;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10rpx;
+  background: #2d4b41;
+}
+
+.category-card--1 .category-mark,
+.category-card--2 .category-mark {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.category-mark__text {
+  font-family: 'Times New Roman', serif;
+  font-size: 56rpx;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.category-main {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+}
+
+.category-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 12rpx;
+}
+
+.category-name {
+  font-size: 34rpx;
+  line-height: 1.32;
+  font-weight: 600;
+  color: #1a2b3c;
+}
+
+.category-index {
+  font-family: 'Times New Roman', serif;
+  font-size: 24rpx;
+  color: rgba(26, 43, 60, 0.35);
+}
+
+.category-desc {
+  display: block;
+  max-width: 430rpx;
+  font-size: 25rpx;
+  line-height: 1.58;
+  color: #74777d;
+}
+
+.category-action {
+  margin-top: 22rpx;
+  display: inline-flex;
+  align-items: center;
+  gap: 12rpx;
+  font-size: 22rpx;
+  letter-spacing: 2rpx;
+  color: #1a2b3c;
+}
+
+.category-action__arrow {
+  font-size: 30rpx;
+  line-height: 1;
+}
+
+.category-card--1 .category-name,
+.category-card--1 .category-action,
+.category-card--2 .category-name,
+.category-card--2 .category-action {
+  color: #ffffff;
+}
+
+.category-card--1 .category-desc,
+.category-card--1 .category-index,
+.category-card--2 .category-desc,
+.category-card--2 .category-index {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.empty-state,
+.loading-state {
+  margin: 0 32rpx;
+  padding: 96rpx 44rpx;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 120rpx 0;
-
-  .empty-icon {
-    font-size: 60rpx;
-    color: $primary-color;
-    margin-bottom: 30rpx;
-  }
-
-  .empty-text {
-    font-size: 28rpx;
-    color: $text-color;
-    letter-spacing: 4rpx;
-    margin-bottom: 12rpx;
-  }
-
-  .empty-hint {
-    font-size: 22rpx;
-    color: $text-color-light;
-    letter-spacing: 2rpx;
-  }
+  border: 1rpx solid rgba(229, 226, 218, 0.9);
+  border-radius: 18rpx;
+  background: rgba(255, 255, 255, 0.88);
+  color: #6b6b6b;
 }
 
+.empty-state__icon {
+  font-size: 46rpx;
+  color: #2d4b41;
+  margin-bottom: 20rpx;
+}
+
+.empty-state__title {
+  font-size: 30rpx;
+  color: #1a2b3c;
+  font-weight: 600;
+  margin-bottom: 12rpx;
+}
+
+.empty-state__desc,
 .loading-state {
-  display: flex;
-  justify-content: center;
-  padding: 120rpx 0;
-  font-size: 22rpx;
-  color: $text-color-light;
-  letter-spacing: 4rpx;
+  font-size: 24rpx;
+  line-height: 1.6;
 }
 
-.footer-note {
+.service-note {
+  padding: 54rpx 36rpx 90rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-top: 60rpx;
-  gap: 20rpx;
+  gap: 22rpx;
+}
 
-  .note-line {
-    width: 60rpx;
-    height: 1px;
-    background: $border-color;
-  }
+.service-note__line {
+  width: 72rpx;
+  height: 1rpx;
+  background: #d8d4cf;
+}
 
-  .note-text {
-    font-size: 20rpx;
-    color: $text-color-light;
-    letter-spacing: 2rpx;
-  }
+.service-note__text {
+  font-size: 22rpx;
+  color: #74777d;
 }
 </style>

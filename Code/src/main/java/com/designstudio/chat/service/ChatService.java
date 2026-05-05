@@ -42,7 +42,23 @@ public interface ChatService {
                               String content, int contentType, Long orderId);
 
     /**
+     * 保存带结构化扩展数据的消息。
+     */
+    DsChatMessage saveMessage(Long chatUserId, int senderType, Long senderId,
+                              String content, int contentType, Long orderId, String extraJson);
+
+    /**
      * 获取最近 N 条聊天记录（用于 AI 上下文）
      */
     List<DsChatMessage> getRecentMessages(Long chatUserId, int limit);
+
+    /**
+     * 判断当前会话是否已转人工。转人工后 AI 不再自动回复，直到后台恢复 AI。
+     */
+    boolean isHumanHandoffActive(Long chatUserId, Long orderId);
+
+    /**
+     * 后台人工处理完毕后恢复 AI 自动接待，并写入一条会话状态消息。
+     */
+    DsChatMessage resolveHumanHandoff(Long chatUserId, Long orderId, Long adminId);
 }

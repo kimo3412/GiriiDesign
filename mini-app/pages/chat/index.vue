@@ -55,8 +55,75 @@
               </view>
 
               <view class="msg-bubble" :class="bubbleClass(msg)">
+                <view
+                  v-if="isProgressCardMsg(msg)"
+                  class="progress-card"
+                  @click="openProgressCard(msg)"
+                >
+                  <view class="progress-card__head">
+                    <view>
+                      <text class="progress-card__kicker">订单进度</text>
+                      <text class="progress-card__title">{{ progressCardData(msg).orderSn || '定制订单' }}</text>
+                    </view>
+                    <text class="progress-card__status">{{ progressCardData(msg).statusText || '处理中' }}</text>
+                  </view>
+                  <view class="progress-card__body">
+                    <view class="progress-card__metric">
+                      <text class="progress-card__label">当前节点</text>
+                      <text class="progress-card__value">{{ progressCardData(msg).currentStepName || '-' }}</text>
+                    </view>
+                    <view class="progress-card__metric">
+                      <text class="progress-card__label">预计交付</text>
+                      <text class="progress-card__value">{{ progressCardData(msg).expectedDateText || progressCardData(msg).expectedDate || '-' }}</text>
+                    </view>
+                  </view>
+                  <view class="progress-card__track">
+                    <view
+                      v-for="(step, stepIndex) in progressCardSteps(msg)"
+                      :key="step.stepId || stepIndex"
+                      class="progress-card__dot"
+                      :class="{ active: stepIndex <= progressCardCurrentIndex(msg) }"
+                    ></view>
+                  </view>
+                  <text v-if="progressCardData(msg).latestProgress" class="progress-card__latest">
+                    {{ progressCardData(msg).latestProgress }}
+                  </text>
+                  <view class="progress-card__action">
+                    <text>{{ progressCardData(msg).actionText || '查看订单详情' }}</text>
+                    <text>→</text>
+                  </view>
+                </view>
+                <view v-else-if="isHandoffRequestMsg(msg)" class="handoff-card">
+                  <view class="handoff-card__icon">!</view>
+                  <view class="handoff-card__main">
+                    <text class="handoff-card__title">已请求人工客服</text>
+                    <text class="handoff-card__desc">我们已经通知后台客服接入，请稍等片刻。</text>
+                  </view>
+                </view>
+                <view v-else-if="isHandoffResolvedMsg(msg)" class="handoff-card handoff-card--resolved">
+                  <view class="handoff-card__icon">✓</view>
+                  <view class="handoff-card__main">
+                    <text class="handoff-card__title">AI客服已恢复</text>
+                    <text class="handoff-card__desc">人工服务已处理，后续可继续由小Z协助解答。</text>
+                  </view>
+                </view>
+                <view
+                  v-else-if="isActionCardMsg(msg)"
+                  class="action-card"
+                  @click="openActionCard(msg)"
+                >
+                  <view class="action-card__icon">{{ actionCardIcon(msg) }}</view>
+                  <view class="action-card__main">
+                    <text class="action-card__title">{{ actionCardData(msg).title || msg.content }}</text>
+                    <text class="action-card__desc">{{ actionCardData(msg).description || '点击查看相关内容' }}</text>
+                    <view class="action-card__button">
+                      <text>{{ actionCardData(msg).actionText || '立即查看' }}</text>
+                      <text>→</text>
+                    </view>
+                  </view>
+                </view>
                 <image
-                  v-if="isImageMsg(msg)"
+                  v-else-if="isImageMsg(msg)"
                   class="msg-image"
                   :src="msg.content"
                   mode="widthFix"
@@ -74,6 +141,13 @@
     </scroll-view>
 
     <view class="input-area">
+      <view class="handoff-row">
+        <view class="handoff-btn" :class="{ disabled: handoffLoading }" @click="requestHumanHandoff">
+          <text class="handoff-btn__dot"></text>
+          <text>{{ handoffLoading ? '正在通知人工...' : '转人工客服' }}</text>
+        </view>
+        <text class="handoff-hint">紧急修改、退款、催交付建议转人工</text>
+      </view>
       <view class="input-shell">
         <view class="media-btn" @click="chooseImage">
           <text class="media-btn__icon">＋</text>
@@ -113,6 +187,7 @@ const chatOrderId = ref(null)
 const isConnected = ref(false)
 const reconnecting = ref(false)
 const orderInfo = ref({})
+const handoffLoading = ref(false)
 
 let socketTask = null
 let reconnectTimer = null
@@ -304,6 +379,33 @@ const sendMessage = (content, msgType) => {
   scrollToBottom()
 }
 
+const requestHumanHandoff = async () => {
+  if (handoffLoading.value) return
+  handoffLoading.value = true
+  try {
+    const msg = await request({
+      url: '/v1/app/chat/handoff',
+      method: 'POST',
+      data: { orderId: chatOrderId.value }
+    })
+    messages.value.push({
+      ...msg,
+      messageId: msg.msgId || msg.messageId,
+      senderType: 'client',
+      msgType: 'handoff_request',
+      contentType: 4,
+      orderId: chatOrderId.value,
+      createTime: msg.createTime || new Date().toISOString().replace('T', ' ').substring(0, 19)
+    })
+    uni.showToast({ title: '已通知人工客服', icon: 'success' })
+    scrollToBottom()
+  } catch (err) {
+    uni.showToast({ title: err.message || '转人工失败', icon: 'none' })
+  } finally {
+    handoffLoading.value = false
+  }
+}
+
 const scrollToBottom = () => {
   nextTick(() => {
     if (!messages.value.length) return
@@ -321,6 +423,69 @@ const previewImage = (url) => {
 const isMyMsg = (msg) => msg.senderType === 'client' || msg.senderType === 0
 const isAssistantMsg = (msg) => msg.senderType === 2 || msg.senderType === 'ai'
 const isImageMsg = (msg) => msg.msgType === 'image' || msg.contentType === 1
+const isProgressCardMsg = (msg) => msg.msgType === 'progress_card' || msg.contentType === 3
+const isHandoffRequestMsg = (msg) =>
+  msg.msgType === 'handoff_request' || parseExtraJson(msg).cardType === 'handoff_request'
+const isHandoffResolvedMsg = (msg) =>
+  msg.msgType === 'handoff_resolved' || parseExtraJson(msg).cardType === 'handoff_resolved'
+const isActionCardMsg = (msg) =>
+  (msg.msgType === 'action_card' || msg.contentType === 4) &&
+  !isHandoffRequestMsg(msg) &&
+  !isHandoffResolvedMsg(msg)
+
+const parseExtraJson = (msg) => {
+  const raw = msg.extraJson
+  if (!raw) return {}
+  if (typeof raw === 'object') return raw
+  try {
+    return JSON.parse(raw)
+  } catch (err) {
+    return {}
+  }
+}
+
+const progressCardData = (msg) => parseExtraJson(msg)
+const actionCardData = (msg) => parseExtraJson(msg)
+
+const progressCardSteps = (msg) => {
+  const steps = progressCardData(msg).steps
+  return Array.isArray(steps) ? steps : []
+}
+
+const progressCardCurrentIndex = (msg) => {
+  const index = Number(progressCardData(msg).currentStepIndex)
+  return Number.isNaN(index) ? -1 : index
+}
+
+const openProgressCard = (msg) => {
+  const card = progressCardData(msg)
+  const url = card.actionUrl || (card.orderId ? `/pages/order/detail/index?id=${card.orderId}` : '')
+  if (!url) return
+  uni.navigateTo({ url })
+}
+
+const actionCardIcon = (msg) => {
+  const type = actionCardData(msg).iconType
+  const icons = {
+    service: '客',
+    portfolio: '作',
+    custom: '定',
+    notification: '铃',
+    payment: '¥'
+  }
+  return icons[type] || 'Z'
+}
+
+const openActionCard = (msg) => {
+  const url = actionCardData(msg).actionUrl
+  if (!url) return
+  const tabPages = ['/pages/index/index', '/pages/order/list/index', '/pages/user/index']
+  if (tabPages.includes(url)) {
+    uni.switchTab({ url })
+    return
+  }
+  uni.navigateTo({ url })
+}
 
 const avatarText = (msg) => {
   if (isMyMsg(msg)) return '我'
@@ -611,6 +776,218 @@ const getStatusText = (status) => {
   border-radius: 18rpx;
 }
 
+.progress-card {
+  width: 480rpx;
+  padding: 6rpx 2rpx 2rpx;
+}
+
+.progress-card__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 20rpx;
+  margin-bottom: 22rpx;
+}
+
+.progress-card__kicker,
+.progress-card__label {
+  display: block;
+  font-size: 20rpx;
+  color: #74777d;
+}
+
+.progress-card__title {
+  display: block;
+  margin-top: 6rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1a2b3c;
+}
+
+.progress-card__status {
+  height: 42rpx;
+  padding: 0 16rpx;
+  border-radius: 999rpx;
+  background: #c8eadc;
+  color: #2d4b41;
+  font-size: 21rpx;
+  line-height: 42rpx;
+  flex-shrink: 0;
+}
+
+.progress-card__body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16rpx;
+}
+
+.progress-card__metric {
+  padding: 18rpx;
+  border-radius: 16rpx;
+  background: #ffffff;
+  border: 1rpx solid rgba(229, 226, 218, 0.8);
+}
+
+.progress-card__value {
+  display: block;
+  margin-top: 8rpx;
+  font-size: 25rpx;
+  color: #1a2b3c;
+  font-weight: 700;
+}
+
+.progress-card__track {
+  margin: 24rpx 0 16rpx;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+
+.progress-card__dot {
+  flex: 1;
+  height: 8rpx;
+  border-radius: 999rpx;
+  background: #e4e2e3;
+}
+
+.progress-card__dot.active {
+  background: #1a2b3c;
+}
+
+.progress-card__latest {
+  display: block;
+  padding: 14rpx 16rpx;
+  border-radius: 14rpx;
+  background: rgba(210, 228, 251, 0.5);
+  color: #38485a;
+  font-size: 22rpx;
+  line-height: 1.5;
+}
+
+.progress-card__action {
+  margin-top: 18rpx;
+  padding-top: 18rpx;
+  border-top: 1rpx solid rgba(229, 226, 218, 0.9);
+  display: flex;
+  justify-content: space-between;
+  color: #1a2b3c;
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.action-card {
+  width: 480rpx;
+  display: flex;
+  gap: 22rpx;
+}
+
+.action-card__icon {
+  width: 72rpx;
+  height: 72rpx;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 18rpx;
+  background: #1a2b3c;
+  color: #ffffff;
+  font-size: 28rpx;
+  font-weight: 700;
+}
+
+.action-card__main {
+  flex: 1;
+  min-width: 0;
+}
+
+.action-card__title {
+  display: block;
+  font-size: 29rpx;
+  color: #1a2b3c;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.action-card__desc {
+  display: block;
+  margin-top: 10rpx;
+  font-size: 23rpx;
+  color: #6b6b6b;
+  line-height: 1.55;
+}
+
+.action-card__button {
+  margin-top: 18rpx;
+  padding: 16rpx 18rpx;
+  border-radius: 14rpx;
+  background: #c8eadc;
+  color: #2d4b41;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 23rpx;
+  font-weight: 700;
+}
+
+.handoff-card {
+  display: flex;
+  align-items: center;
+  gap: 18rpx;
+  padding: 18rpx;
+  border-radius: 18rpx;
+  background: #fff7ed;
+  border: 1rpx solid rgba(249, 115, 22, 0.28);
+}
+
+.handoff-card__icon {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 999rpx;
+  background: #f97316;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.handoff-card__main {
+  min-width: 0;
+}
+
+.handoff-card__title {
+  display: block;
+  color: #9a3412;
+  font-size: 27rpx;
+  font-weight: 800;
+}
+
+.handoff-card__desc {
+  display: block;
+  margin-top: 6rpx;
+  color: #7c2d12;
+  font-size: 22rpx;
+  line-height: 1.45;
+}
+
+.handoff-card--resolved {
+  background: #f0fdf4;
+  border-color: rgba(34, 197, 94, 0.26);
+}
+
+.handoff-card--resolved .handoff-card__icon {
+  background: #22c55e;
+}
+
+.handoff-card--resolved .handoff-card__title {
+  color: #166534;
+}
+
+.handoff-card--resolved .handoff-card__desc {
+  color: #15803d;
+}
+
 .msg-time {
   margin-top: 10rpx;
   font-size: 20rpx;
@@ -627,6 +1004,46 @@ const getStatusText = (status) => {
   backdrop-filter: blur(10rpx);
   border-top: 1rpx solid rgba(206, 202, 195, 0.5);
   box-shadow: 0 -6rpx 24rpx rgba(26, 43, 60, 0.03);
+}
+
+.handoff-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  margin-bottom: 14rpx;
+}
+
+.handoff-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 12rpx 18rpx;
+  border-radius: 999rpx;
+  background: #fff4ed;
+  color: #b45309;
+  font-size: 23rpx;
+  font-weight: 700;
+  border: 1rpx solid rgba(245, 158, 11, 0.28);
+}
+
+.handoff-btn.disabled {
+  opacity: 0.58;
+}
+
+.handoff-btn__dot {
+  width: 12rpx;
+  height: 12rpx;
+  border-radius: 999rpx;
+  background: #f97316;
+  box-shadow: 0 0 0 6rpx rgba(249, 115, 22, 0.12);
+}
+
+.handoff-hint {
+  flex: 1;
+  text-align: right;
+  font-size: 21rpx;
+  color: #8b8f9a;
 }
 
 .input-shell {

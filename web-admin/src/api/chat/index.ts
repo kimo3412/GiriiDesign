@@ -23,3 +23,10 @@ export const markChatRead = (userId: number, orderId?: number | null) => {
 export const getUserSummary = (userId: number) => {
   return Alova.Get<any>(`/v1/admin/chat/user-summary/${userId}`);
 };
+
+/** 恢复当前会话的 AI 客服自动接待 */
+export const resolveHumanHandoff = (userId: number, orderId?: number | null) => {
+  const params: any = {};
+  if (orderId != null) params.orderId = orderId;
+  return Alova.Put<any>(`/v1/admin/chat/${userId}/handoff/resolve`, null, { params });
+};

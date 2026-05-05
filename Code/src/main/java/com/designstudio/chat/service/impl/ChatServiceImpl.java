@@ -28,6 +28,10 @@ public class ChatServiceImpl implements ChatService {
     private final DsOrderMapper orderMapper;
     private final DsOrderRequestMapper requestMapper;
 
+    private static final int CONTENT_TYPE_ACTION_CARD = 4;
+    private static final String HANDOFF_REQUEST = "handoff_request";
+    private static final String HANDOFF_RESOLVED = "handoff_resolved";
+
     @Override
     public List<DsChatMessage> getClientMessages(Long userId, Long orderId) {
         LambdaQueryWrapper<DsChatMessage> wrapper = new LambdaQueryWrapper<DsChatMessage>()
@@ -58,7 +62,13 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public List<Map<String, Object>> getConversations() {
-        return messageMapper.selectConversationList();
+        List<Map<String, Object>> conversations = messageMapper.selectConversationList();
+        conversations.forEach(item -> {
+            Long userId = toLong(item.get("userId"));
+            Long orderId = toLong(item.get("orderId"));
+            item.put("handoffActive", isHumanHandoffActive(userId, orderId));
+        });
+        return conversations;
     }
 
     @Override
@@ -109,6 +119,12 @@ public class ChatServiceImpl implements ChatService {
     @Override
     public DsChatMessage saveMessage(Long chatUserId, int senderType, Long senderId,
                                      String content, int contentType, Long orderId) {
+        return saveMessage(chatUserId, senderType, senderId, content, contentType, orderId, null);
+    }
+
+    @Override
+    public DsChatMessage saveMessage(Long chatUserId, int senderType, Long senderId,
+                                     String content, int contentType, Long orderId, String extraJson) {
         DsChatMessage msg = new DsChatMessage();
         msg.setUserId(chatUserId);
         msg.setOrderId(orderId);
@@ -116,6 +132,7 @@ public class ChatServiceImpl implements ChatService {
         msg.setSenderId(senderId);
         msg.setContent(content);
         msg.setContentType(contentType);
+        msg.setExtraJson(extraJson);
         msg.setIsRead(0);
         msg.setDelFlag(0);
         msg.setCreateTime(LocalDateTime.now());
@@ -133,5 +150,57 @@ public class ChatServiceImpl implements ChatService {
         // 反转，按时间正序
         java.util.Collections.reverse(list);
         return list;
+    }
+
+    @Override
+    public boolean isHumanHandoffActive(Long chatUserId, Long orderId) {
+        if (chatUserId == null) {
+            return false;
+        }
+        DsChatMessage latestRequest = findLatestStructuredMessage(chatUserId, orderId, 0, HANDOFF_REQUEST);
+        if (latestRequest == null) {
+            return false;
+        }
+        DsChatMessage latestResolved = findLatestStructuredMessage(chatUserId, orderId, null, HANDOFF_RESOLVED);
+        return latestResolved == null || latestResolved.getCreateTime().isBefore(latestRequest.getCreateTime());
+    }
+
+    @Override
+    public DsChatMessage resolveHumanHandoff(Long chatUserId, Long orderId, Long adminId) {
+        String content = "人工服务已处理，AI客服已恢复自动接待。";
+        String extraJson = "{\"cardType\":\"handoff_resolved\",\"title\":\"AI客服已恢复\",\"description\":\""
+                + content + "\"}";
+        return saveMessage(chatUserId, 1, adminId, content, CONTENT_TYPE_ACTION_CARD, orderId, extraJson);
+    }
+
+    private DsChatMessage findLatestStructuredMessage(Long chatUserId, Long orderId, Integer senderType, String cardType) {
+        LambdaQueryWrapper<DsChatMessage> wrapper = new LambdaQueryWrapper<DsChatMessage>()
+                .eq(DsChatMessage::getUserId, chatUserId)
+                .eq(DsChatMessage::getContentType, CONTENT_TYPE_ACTION_CARD)
+                .like(DsChatMessage::getExtraJson, cardType);
+        if (senderType != null) {
+            wrapper.eq(DsChatMessage::getSenderType, senderType);
+        }
+        if (orderId != null) {
+            wrapper.eq(DsChatMessage::getOrderId, orderId);
+        } else {
+            wrapper.isNull(DsChatMessage::getOrderId);
+        }
+        wrapper.orderByDesc(DsChatMessage::getCreateTime).last("LIMIT 1");
+        return messageMapper.selectOne(wrapper);
+    }
+
+    private Long toLong(Object value) {
+        if (value == null) {
+            return null;
+        }
+        if (value instanceof Number number) {
+            return number.longValue();
+        }
+        try {
+            return Long.parseLong(String.valueOf(value));
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 }

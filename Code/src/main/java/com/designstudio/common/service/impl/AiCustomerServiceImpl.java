@@ -18,6 +18,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -100,13 +101,22 @@ public class AiCustomerServiceImpl implements AiCustomerService {
             ));
         }
 
-        Map<String, Object> requestBody = Map.of(
-                "model", config.model(),
-                "messages", chatMessages,
-                "max_tokens", 500,
-                "temperature", 0.7
-        );
+        Map<String, Object> requestBody = new HashMap<>();
+        requestBody.put("model", config.model());
+        requestBody.put("messages", chatMessages);
+        requestBody.put("max_tokens", 500);
+        requestBody.put("temperature", 0.7);
+        if (isDeepSeekV4(config)) {
+            // Customer-service replies should be fast plain text; V4 thinking mode defaults to enabled.
+            requestBody.put("thinking", Map.of("type", "disabled"));
+        }
         return JSONUtil.toJsonStr(requestBody);
+    }
+
+    private boolean isDeepSeekV4(AiConfigService.RuntimeAiConfig config) {
+        String provider = config.providerName() == null ? "" : config.providerName().toLowerCase();
+        String model = config.model() == null ? "" : config.model().toLowerCase();
+        return provider.contains("deepseek") || model.startsWith("deepseek-v4");
     }
 
     private String parseResponse(String response) {

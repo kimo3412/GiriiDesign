@@ -40,6 +40,9 @@ public class DsChatMessage {
     /** 消息内容 */
     private String content;
 
+    /** 结构化消息扩展数据，例如订单进度卡片、跳转动作等 */
+    private String extraJson;
+
     /** 是否已读 */
     private Integer isRead;
 

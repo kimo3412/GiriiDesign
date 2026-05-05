@@ -22,5 +22,5 @@ CREATE TABLE IF NOT EXISTS `ds_banner` (
 
 -- 初始化 Banner 数据
 INSERT INTO ds_banner (title, image_url, link_url, link_type, sort_order, status) VALUES
-('示例轮播图1', '/uploads/banners/banner1.jpg', NULL, NULL, 1, 1),
-('示例轮播图2', '/uploads/banners/banner2.jpg', NULL, NULL, 2, 1);
+('示例轮播图1', '/static/images/home-banner-couture.png', NULL, NULL, 1, 1),
+('示例轮播图2', '/static/images/home-banner-leather.png', NULL, NULL, 2, 1);

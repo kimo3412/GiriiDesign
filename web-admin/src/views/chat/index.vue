@@ -58,7 +58,10 @@
               <div class="conv-middle">
                 <span v-if="conv.orderSn" class="conv-tag">{{ conv.orderSn }}</span>
                 <span v-else class="conv-tag conv-tag--general">普通咨询</span>
-                <n-badge v-if="conv.unreadCount > 0" :value="conv.unreadCount" :max="99" />
+                <div class="conv-alerts">
+                  <span v-if="conv.handoffCount > 0" class="conv-handoff-dot">转人工</span>
+                  <n-badge v-if="conv.unreadCount > 0" :value="conv.unreadCount" :max="99" />
+                </div>
               </div>
               <div class="conv-last">{{ conv.lastContent || '暂无消息' }}</div>
             </div>
@@ -79,10 +82,21 @@
             </div>
             <div class="chat-header__meta">
               <span v-if="activeOrderSn" class="header-pill">{{ activeOrderSn }}</span>
-              <span v-else class="header-pill header-pill--muted">普通咨询</span>
+              <span v-if="activeHandoff" class="header-pill header-pill--handoff">人工接入中</span>
+              <span v-if="!activeOrderSn" class="header-pill header-pill--muted">普通咨询</span>
             </div>
           </div>
 
+          <n-button
+            v-if="activeHandoff"
+            size="small"
+            type="warning"
+            ghost
+            :loading="resolvingHandoff"
+            @click="restoreAiService"
+          >
+            恢复AI客服
+          </n-button>
           <n-button size="small" quaternary @click="showOrderPanel = !showOrderPanel">
             {{ showOrderPanel ? '收起档案' : '展开档案' }}
           </n-button>
@@ -268,6 +282,7 @@
     getChatMessages,
     getUserSummary as fetchUserSummaryApi,
     markChatRead,
+    resolveHumanHandoff,
   } from '@/api/chat/index';
   import { getCategoryList } from '@/api/config/category';
 
@@ -280,6 +295,8 @@
   const activeOrderId = ref<number | null>(null);
   const activeUserName = ref('');
   const activeOrderSn = ref('');
+  const activeHandoff = ref(false);
+  const resolvingHandoff = ref(false);
   const messages = ref<any[]>([]);
   const inputText = ref('');
   const messagesRef = ref<HTMLElement | null>(null);
@@ -369,6 +386,8 @@
       conversations.value = (result || []).map((item: any) => ({
         ...item,
         unreadCount: Number(item.unreadCount ?? item.unread_count ?? 0),
+        handoffCount: Number(item.handoffCount ?? item.handoff_count ?? 0),
+        handoffActive: Boolean(item.handoffActive ?? item.handoff_active ?? false),
       }));
     } catch (error) {
       console.error('获取会话列表失败', error);
@@ -380,6 +399,7 @@
     activeOrderId.value = conv.orderId || null;
     activeUserName.value = conv.nickname || conv.username || `用户#${conv.userId}`;
     activeOrderSn.value = conv.orderSn || '';
+    activeHandoff.value = Boolean(conv.handoffActive || conv.handoffCount > 0);
     userSummary.value = null;
     archiveTab.value = conv.orderSn ? 'orders' : 'requests';
     showAllOrders.value = false;
@@ -391,6 +411,7 @@
       scrollToBottom();
       await markChatRead(conv.userId, activeOrderId.value);
       conv.unreadCount = 0;
+      conv.handoffCount = 0;
     } catch (error) {
       console.error('获取聊天记录失败', error);
     }
@@ -419,6 +440,12 @@
         if (msg.type === 'NEW_MSG') {
           if (msg.userId === activeUserId.value && msg.orderId == activeOrderId.value) {
             messages.value.push(msg);
+            if (msg.msgType === 'handoff_request') {
+              activeHandoff.value = true;
+            }
+            if (msg.msgType === 'handoff_resolved') {
+              activeHandoff.value = false;
+            }
             scrollToBottom();
           }
           fetchConversations();
@@ -461,6 +488,35 @@
 
     inputText.value = '';
     scrollToBottom();
+  };
+
+  const restoreAiService = async () => {
+    if (!activeUserId.value || resolvingHandoff.value) return;
+    resolvingHandoff.value = true;
+    try {
+      const msg = await resolveHumanHandoff(activeUserId.value, activeOrderId.value);
+      activeHandoff.value = false;
+      const current = conversations.value.find(
+        (item) => item.userId === activeUserId.value && (item.orderId || null) === activeOrderId.value
+      );
+      if (current) {
+        current.handoffActive = false;
+        current.handoffCount = 0;
+      }
+      if (msg) {
+        messages.value.push({
+          ...msg,
+          senderType: 'admin',
+          msgType: 'handoff_resolved',
+          contentType: 4,
+          createTime: msg.createTime || new Date().toISOString().replace('T', ' ').substring(0, 19),
+        });
+        scrollToBottom();
+      }
+      fetchConversations();
+    } finally {
+      resolvingHandoff.value = false;
+    }
   };
 
   const scrollToBottom = () => {
@@ -651,6 +707,35 @@
     color: #64748b;
   }
 
+  .conv-alerts {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .conv-handoff-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #fff1f2;
+    color: #e11d48;
+    border: 1px solid rgba(225, 29, 72, 0.24);
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .conv-handoff-dot::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: #e11d48;
+    box-shadow: 0 0 0 4px rgba(225, 29, 72, 0.12);
+  }
+
   .conv-last {
     font-size: 12px;
     color: #667085;
@@ -753,6 +838,12 @@
   .header-pill--muted {
     background: rgba(148, 163, 184, 0.14);
     color: #64748b;
+  }
+
+  .header-pill--handoff {
+    background: #fff7ed;
+    color: #c2410c;
+    border: 1px solid rgba(249, 115, 22, 0.24);
   }
 
   .chat-messages {
