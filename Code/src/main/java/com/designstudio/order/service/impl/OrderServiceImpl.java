@@ -158,7 +158,7 @@ public class OrderServiceImpl implements OrderService {
         List<DsWorkflowStep> steps = requireWorkflowSteps(order.getCategoryId());
         DsWorkflowStep nextStep = resolveNextStep(steps, order.getCurrentStepId());
         if (nextStep == null) {
-            finishOrder(order);
+            finishOrder(order, dto);
             return;
         }
 
@@ -236,7 +236,7 @@ public class OrderServiceImpl implements OrderService {
 
         DsOrderProgress progress = new DsOrderProgress();
         progress.setOrderId(orderId);
-        progress.setStepId(order.getCurrentStepId());
+        progress.setStepId(resolveProgressStepId(order));
         progress.setDescription(dto.getDescription());
         progress.setImageUrls(normalizeJsonField(dto.getImageUrls()));
         progress.setFormData(normalizeJsonField(dto.getFormData()));
@@ -651,7 +651,7 @@ public class OrderServiceImpl implements OrderService {
         return null;
     }
 
-    private void finishOrder(DsOrder order) {
+    private void finishOrder(DsOrder order, OrderController.AdvanceDTO dto) {
         boolean needsBalancePayment = order.getTotalAmount() != null
                 && order.getPrepayAmount() != null
                 && order.getTotalAmount().compareTo(order.getPrepayAmount()) > 0;
@@ -668,9 +668,14 @@ public class OrderServiceImpl implements OrderService {
         orderMapper.updateById(order);
         DsOrderProgress progress = new DsOrderProgress();
         progress.setOrderId(order.getOrderId());
-        progress.setDescription(progressDescription);
-        progress.setOperatorId(null);
+        progress.setStepId(resolveProgressStepId(order));
+        progress.setDescription(StringUtils.hasText(dto.getDescription()) ? dto.getDescription() : progressDescription);
+        progress.setImageUrls(normalizeJsonField(dto.getImageUrls()));
+        progress.setFormData(normalizeJsonField(dto.getFormData()));
+        LoginUser loginUser = LoginHelper.getLoginUser();
+        progress.setOperatorId(loginUser != null ? loginUser.getAdminId() : null);
         progress.setCreateTime(LocalDateTime.now());
+        progress.setDelFlag(0);
         progressMapper.insert(progress);
 
         if (order.getUserId() != null) {
@@ -682,6 +687,17 @@ public class OrderServiceImpl implements OrderService {
                     notifyContent,
                     "order_status", order.getOrderId(), "order");
         }
+    }
+
+    private Long resolveProgressStepId(DsOrder order) {
+        if (order.getCurrentStepId() != null) {
+            return order.getCurrentStepId();
+        }
+        DsWorkflowStep currentStep = resolveCurrentStep(order);
+        if (currentStep != null) {
+            return currentStep.getStepId();
+        }
+        throw new RuntimeException("当前订单未绑定工作流节点，无法记录进度");
     }
 
     private Long resolveWorkbenchStepId(Long categoryId, List<DsWorkflowStep> steps) {

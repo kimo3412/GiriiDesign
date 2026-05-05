@@ -190,6 +190,15 @@
                   />
                 </n-form-item>
 
+                <template v-if="selectedStep?.needImageUpload === 1">
+                  <div class="section-title">节点图片</div>
+                  <n-form-item label="节点图片">
+                    <n-upload v-model:file-list="uploadFiles" list-type="image-card" :custom-request="handleUpload" :max="6" multiple accept="image/*">
+                      上传图片
+                    </n-upload>
+                  </n-form-item>
+                </template>
+
                 <div class="action-bar">
                   <n-button v-if="canRenderAction('save')" quaternary :loading="submittingAction === 'save'" @click="submitAction('save')">保存记录</n-button>
                   <n-button v-if="canRenderAction('unblock')" quaternary type="success" :disabled="activeOrder.isBlocked !== 1" :loading="submittingAction === 'unblock'" @click="submitAction('unblock')">解除阻塞</n-button>
@@ -217,9 +226,9 @@
                     </n-form-item>
                   </div>
 
-                  <div class="section-title">参考图片</div>
-                  <n-form-item label="节点图片">
-                    <n-upload v-model:file-list="uploadFiles" list-type="image-card" :custom-request="handleUpload" :default-upload="false" :max="6" multiple>
+                  <div v-if="selectedStep?.needImageUpload !== 1" class="section-title">参考图片</div>
+                  <n-form-item v-if="selectedStep?.needImageUpload !== 1" label="节点图片">
+                    <n-upload v-model:file-list="uploadFiles" list-type="image-card" :custom-request="handleUpload" :max="6" multiple accept="image/*">
                       上传图片
                     </n-upload>
                   </n-form-item>
@@ -546,7 +555,11 @@ function validateRequiredFields(): boolean {
       return false;
     }
   }
-  if (selectedStep.value?.needImageUpload === 1 && !getUploadedImageUrls().length) {
+  if (selectedStep.value?.needImageUpload === 1 && !hasFinishedUploadedImages()) {
+    if (hasPendingUploadImages()) {
+      message.warning('图片还在上传中，请稍候再推进');
+      return false;
+    }
     message.warning('当前节点要求上传图片');
     return false;
   }
@@ -661,6 +674,14 @@ function toFileUrl(url?: string | null) {
 
 function getUploadedImageUrls() {
   return uploadFiles.value.map((file) => file.url).filter((url): url is string => typeof url === 'string' && !!url);
+}
+
+function hasFinishedUploadedImages() {
+  return uploadFiles.value.some((file) => file.status === 'finished' && typeof file.url === 'string' && !!file.url);
+}
+
+function hasPendingUploadImages() {
+  return uploadFiles.value.some((file) => file.status === 'pending' || file.status === 'uploading');
 }
 
 async function handleUpload(options: UploadCustomRequestOptions) {

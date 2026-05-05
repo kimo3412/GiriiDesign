@@ -90,20 +90,16 @@
               </view>
             </picker>
 
-            <picker
+            <view
               v-else-if="field.fieldType === 'select'"
-              :value="Math.max(getSelectIndex(field), 0)"
-              :range="field.parsedOptions || []"
-              range-key="label"
-              @change="(e) => onSelectChange(field, e)"
+              class="ctrl-picker"
+              @click="openSelectSheet(field)"
             >
-              <view class="ctrl-picker">
-                <text :class="{ 'is-placeholder': !getSelectLabel(field) }">
-                  {{ getSelectLabel(field) || field.placeholder || `请选择${field.label}` }}
-                </text>
-                <text class="picker-arrow">›</text>
-              </view>
-            </picker>
+              <text :class="{ 'is-placeholder': !getSelectLabel(field) }">
+                {{ getSelectLabel(field) || field.placeholder || `请选择${field.label}` }}
+              </text>
+              <text class="picker-arrow">›</text>
+            </view>
 
             <view v-else-if="field.fieldType === 'radio'" class="ctrl-tags">
               <view
@@ -259,20 +255,48 @@ const progressPercent = computed(() => {
 })
 
 const parseOptions = (field) => {
+  let options = []
   if (typeof field.options === 'string' && field.options) {
     try {
-      return JSON.parse(field.options)
+      options = JSON.parse(field.options)
     } catch {
-      return []
+      options = []
     }
+  } else if (Array.isArray(field.options)) {
+    options = field.options
   }
-  return Array.isArray(field.options) ? field.options : []
+  return normalizeOptions(options)
 }
 
-const normalizeField = (field) => ({
-  ...field,
-  parsedOptions: parseOptions(field),
-})
+const normalizeOptions = (options) => {
+  if (!Array.isArray(options)) return []
+  return options
+    .map((option) => {
+      if (option && typeof option === 'object') {
+        const label = option.label ?? option.name ?? option.text ?? option.title ?? option.value
+        const value = option.value ?? option.key ?? option.id ?? label
+        return {
+          ...option,
+          label: String(label ?? ''),
+          value: value ?? '',
+        }
+      }
+      return {
+        label: String(option ?? ''),
+        value: option ?? '',
+      }
+    })
+    .filter(option => option.label !== '')
+}
+
+const normalizeField = (field) => {
+  const parsedOptions = parseOptions(field)
+  return {
+    ...field,
+    parsedOptions,
+    optionLabels: parsedOptions.map(option => option.label),
+  }
+}
 
 const fetchSchema = async () => {
   loading.value = true
@@ -292,22 +316,31 @@ const setValue = (fieldKey, value) => {
   formData[fieldKey] = value
 }
 
-const getSelectIndex = (field) => {
-  const value = formData[field.fieldKey]
-  return (field.parsedOptions || []).findIndex(option => option.value === value)
-}
-
 const getSelectLabel = (field) => {
   const value = formData[field.fieldKey]
   const option = (field.parsedOptions || []).find(option => option.value === value)
   return option?.label
 }
 
-const onSelectChange = (field, e) => {
-  const index = Number(e.detail.value)
-  const option = field.parsedOptions?.[index]
-  if (!option) return
-  setValue(field.fieldKey, option.value)
+const getOptionLabels = (field) => {
+  const labels = field.optionLabels || (field.parsedOptions || []).map(option => option.label)
+  return labels.map(label => String(label ?? ''))
+}
+
+const openSelectSheet = (field) => {
+  const options = field.parsedOptions || []
+  const itemList = getOptionLabels(field)
+  if (!itemList.length) {
+    uni.showToast({ title: '暂无可选项', icon: 'none' })
+    return
+  }
+  uni.showActionSheet({
+    itemList,
+    success: ({ tapIndex }) => {
+      const option = options[tapIndex]
+      if (option) setValue(field.fieldKey, option.value)
+    }
+  })
 }
 
 const toggleCheckbox = (fieldKey, value) => {
