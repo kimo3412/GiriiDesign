@@ -1,1200 +1,1409 @@
--- MySQL dump 10.13  Distrib 8.4.8, for Win64 (x86_64)
---
--- Host: localhost    Database: design_studio
--- ------------------------------------------------------
--- Server version	8.4.8
+/*
+ Navicat Premium Dump SQL
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+ Source Server         : localhost
+ Source Server Type    : MySQL
+ Source Server Version : 80408 (8.4.8)
+ Source Host           : localhost:3306
+ Source Schema         : design_studio
 
---
--- Table structure for table `ds_address`
---
+ Target Server Type    : MySQL
+ Target Server Version : 80408 (8.4.8)
+ File Encoding         : 65001
 
+ Date: 05/05/2026 23:15:55
+*/
+
+SET NAMES utf8mb4;
+SET FOREIGN_KEY_CHECKS = 0;
+
+-- ----------------------------
+-- Table structure for ds_address
+-- ----------------------------
 DROP TABLE IF EXISTS `ds_address`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_address` (
+CREATE TABLE `ds_address`  (
   `address_id` bigint NOT NULL AUTO_INCREMENT,
-  `user_id` bigint NOT NULL COMMENT '鎵€灞炵敤鎴?,
-  `receiver_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '鏀惰揣浜?,
-  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '鑱旂郴鐢佃瘽',
-  `province` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鐪?,
-  `city` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '甯?,
-  `district` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鍖?,
-  `detail_address` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '璇︾粏鍦板潃',
-  `is_default` tinyint(1) DEFAULT '0' COMMENT '鏄惁榛樿',
-  `create_by` bigint DEFAULT NULL,
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `update_by` bigint DEFAULT NULL,
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `del_flag` tinyint(1) DEFAULT '0',
+  `user_id` bigint NOT NULL COMMENT '所属用户',
+  `receiver_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '收货人',
+  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '联系电话',
+  `province` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '省',
+  `city` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '市',
+  `district` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '区',
+  `detail_address` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '详细地址',
+  `is_default` tinyint(1) NULL DEFAULT 0 COMMENT '是否默认',
+  `create_by` bigint NULL DEFAULT NULL,
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_by` bigint NULL DEFAULT NULL,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `del_flag` tinyint(1) NULL DEFAULT 0,
   PRIMARY KEY (`address_id`) USING BTREE,
-  KEY `idx_user` (`user_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='瀹㈡埛鍦板潃琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_address`
---
-
-LOCK TABLES `ds_address` WRITE;
-/*!40000 ALTER TABLE `ds_address` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ds_address` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_banner`
---
-
-DROP TABLE IF EXISTS `ds_banner`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_banner` (
-  `banner_id` bigint NOT NULL AUTO_INCREMENT COMMENT '杞挱鍥綢D',
-  `title` varchar(100) NOT NULL COMMENT '杞挱鍥炬爣棰?,
-  `image_url` varchar(500) NOT NULL COMMENT '鍥剧墖鍦板潃',
-  `link_url` varchar(500) DEFAULT NULL COMMENT '璺宠浆閾炬帴锛堝彲閫夛級',
-  `link_type` varchar(20) DEFAULT NULL COMMENT '璺宠浆绫诲瀷锛歱ortfolio/order/custom/null',
-  `sort_order` int DEFAULT '0' COMMENT '鎺掑簭锛堣秺澶ц秺闈犲墠锛?,
-  `status` tinyint(1) DEFAULT '1' COMMENT '鐘舵€侊細0绂佺敤 1鍚敤',
-  `create_by` bigint DEFAULT NULL,
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `update_by` bigint DEFAULT NULL,
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `del_flag` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`banner_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='灏忕▼搴忛椤佃疆鎾浘';
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_banner`
---
-
-LOCK TABLES `ds_banner` WRITE;
-/*!40000 ALTER TABLE `ds_banner` DISABLE KEYS */;
-INSERT INTO `ds_banner` VALUES (1,'绀轰緥杞挱鍥?','/static/images/home-banner-couture.png',NULL,NULL,1,1,NULL,'2026-04-14 22:09:31',NULL,'2026-04-14 22:09:31',0),(2,'绀轰緥杞挱鍥?','/static/images/home-banner-leather.png',NULL,NULL,2,1,NULL,'2026-04-14 22:09:31',NULL,'2026-04-14 22:09:31',0);
-/*!40000 ALTER TABLE `ds_banner` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_bill_record`
---
-
-DROP TABLE IF EXISTS `ds_bill_record`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_bill_record` (
-  `bill_id` bigint NOT NULL AUTO_INCREMENT,
-  `bill_date` date NOT NULL COMMENT '璐﹀崟鏃ユ湡',
-  `wx_transaction_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '寰俊浜ゆ槗鍙?,
-  `local_payment_no` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鏈湴娴佹按鍙?,
-  `wx_amount` decimal(10,2) DEFAULT NULL COMMENT '寰俊璐﹀崟閲戦',
-  `local_amount` decimal(10,2) DEFAULT NULL COMMENT '鏈湴璁板綍閲戦',
-  `match_status` tinyint(1) DEFAULT NULL COMMENT '0=鍖归厤,1=閲戦涓嶇,2=鏈湴缂哄け,3=寰俊缂哄け',
-  `handle_status` tinyint(1) DEFAULT '0' COMMENT '0=寰呭鐞?1=宸插鐞?,
-  `handle_remark` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '澶勭悊澶囨敞',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`bill_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='瀵硅处璁板綍琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_bill_record`
---
-
-LOCK TABLES `ds_bill_record` WRITE;
-/*!40000 ALTER TABLE `ds_bill_record` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ds_bill_record` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_bom_item`
---
-
-DROP TABLE IF EXISTS `ds_bom_item`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_bom_item` (
-  `bom_item_id` bigint NOT NULL AUTO_INCREMENT,
-  `order_id` bigint NOT NULL COMMENT '鎵€灞炶鍗?,
-  `material_id` bigint NOT NULL COMMENT '鐗╂枡ID',
-  `quantity` decimal(10,2) NOT NULL COMMENT '瀹為檯鐢ㄩ噺',
-  `material_snapshot` json DEFAULT NULL COMMENT '鐗╂枡蹇収(鍚嶇О銆佸崟浠?',
-  `is_allocated` tinyint(1) DEFAULT '0' COMMENT '鏄惁宸插嚭搴?,
-  `del_flag` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`bom_item_id`) USING BTREE,
-  KEY `idx_order` (`order_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='璁㈠崟BOM娓呭崟琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_bom_item`
---
-
-LOCK TABLES `ds_bom_item` WRITE;
-/*!40000 ALTER TABLE `ds_bom_item` DISABLE KEYS */;
-INSERT INTO `ds_bom_item` VALUES (1,7,1,3.50,'{\"sku\": \"FAB-LINEN-001\", \"name\": \"楂樼骇浜氶夯闈㈡枡锛堟祬绫宠壊锛塡", \"unit\": \"绫砛", \"unitPrice\": 120.0}',0,0),(2,7,6,2.00,'{\"sku\": \"FAB-COTTON-001\", \"name\": \"绾琛噷锛堢櫧鑹诧級\", \"unit\": \"绫砛", \"unitPrice\": 35.0}',0,0),(3,7,5,1.00,'{\"sku\": \"ACC-ZIP-001\", \"name\": \"YKK鎷夐摼锛?0cm锛塡", \"unit\": \"鏉", \"unitPrice\": 8.5}',0,0),(4,7,9,2.00,'{\"sku\": \"HW-SNAP-001\", \"name\": \"鏆楁墸\", \"unit\": \"濂梊", \"unitPrice\": 3.0}',0,0),(5,7,10,1.00,'{\"sku\": \"PKG-BOX-001\", \"name\": \"鍖呰鐩掞紙澶у彿锛塡", \"unit\": \"涓猏", \"unitPrice\": 15.0}',0,0),(6,8,1,3.50,'{\"sku\": \"FAB-LINEN-001\", \"name\": \"楂樼骇浜氶夯闈㈡枡锛堟祬绫宠壊锛塡", \"unit\": \"绫砛", \"unitPrice\": 120.0}',1,0),(7,8,6,2.00,'{\"sku\": \"FAB-COTTON-001\", \"name\": \"绾琛噷锛堢櫧鑹诧級\", \"unit\": \"绫砛", \"unitPrice\": 35.0}',1,0),(8,8,5,1.00,'{\"sku\": \"ACC-ZIP-001\", \"name\": \"YKK鎷夐摼锛?0cm锛塡", \"unit\": \"鏉", \"unitPrice\": 8.5}',1,0),(9,8,9,2.00,'{\"sku\": \"HW-SNAP-001\", \"name\": \"鏆楁墸\", \"unit\": \"濂梊", \"unitPrice\": 3.0}',1,0),(10,8,10,1.00,'{\"sku\": \"PKG-BOX-001\", \"name\": \"鍖呰鐩掞紙澶у彿锛塡", \"unit\": \"涓猏", \"unitPrice\": 15.0}',1,0);
-/*!40000 ALTER TABLE `ds_bom_item` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_bom_template`
---
-
-DROP TABLE IF EXISTS `ds_bom_template`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_bom_template` (
-  `template_id` bigint NOT NULL AUTO_INCREMENT,
-  `name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '妯℃澘鍚嶇О',
-  `category_id` bigint DEFAULT NULL COMMENT '鍏宠仈鍝佺被',
-  `remark` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '澶囨敞',
-  `create_by` bigint DEFAULT NULL,
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `update_by` bigint DEFAULT NULL,
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `del_flag` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`template_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='BOM妯℃澘琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_bom_template`
---
-
-LOCK TABLES `ds_bom_template` WRITE;
-/*!40000 ALTER TABLE `ds_bom_template` DISABLE KEYS */;
-INSERT INTO `ds_bom_template` VALUES (1,'鏃楄鏍囧噯BOM',1,'鏃楄绫绘湇瑁呯殑鏍囧噯鐗╂枡娓呭崟',NULL,'2026-03-17 15:11:05',NULL,'2026-03-17 15:11:05',0),(2,'鎵嬪伐閽卞寘BOM',2,'灏忓瀷鐨叿閽卞寘鐨勬爣鍑嗙墿鏂欐竻鍗?,NULL,'2026-03-17 15:11:05',NULL,'2026-03-17 15:11:05',0);
-/*!40000 ALTER TABLE `ds_bom_template` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_bom_template_item`
---
-
-DROP TABLE IF EXISTS `ds_bom_template_item`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_bom_template_item` (
-  `item_id` bigint NOT NULL AUTO_INCREMENT,
-  `template_id` bigint NOT NULL COMMENT '鎵€灞炴ā鏉?,
-  `material_id` bigint NOT NULL COMMENT '鐗╂枡ID',
-  `quantity` decimal(10,2) NOT NULL COMMENT '鎵€闇€鏁伴噺',
-  `del_flag` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`item_id`) USING BTREE,
-  KEY `idx_template` (`template_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='BOM妯℃澘鏄庣粏琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_bom_template_item`
---
-
-LOCK TABLES `ds_bom_template_item` WRITE;
-/*!40000 ALTER TABLE `ds_bom_template_item` DISABLE KEYS */;
-INSERT INTO `ds_bom_template_item` VALUES (1,1,1,3.50,0),(2,1,6,2.00,0),(3,1,5,1.00,0),(4,1,9,2.00,0),(5,1,10,1.00,0),(6,2,3,0.50,0),(7,2,8,1.00,0),(8,2,7,4.00,0),(9,2,9,1.00,0),(10,2,10,1.00,0);
-/*!40000 ALTER TABLE `ds_bom_template_item` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_category`
---
-
-DROP TABLE IF EXISTS `ds_category`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_category` (
-  `category_id` bigint NOT NULL AUTO_INCREMENT COMMENT '鍝佺被ID',
-  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '鍝佺被鍚嶇О',
-  `icon_url` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鍥炬爣URL',
-  `is_active` tinyint(1) DEFAULT '1' COMMENT '鏄惁鍚敤',
-  `has_bom` tinyint(1) DEFAULT '0' COMMENT '鏄惁闇€瑕丅OM',
-  `is_physical` tinyint(1) DEFAULT '1' COMMENT '鏄惁瀹炰綋浜у搧',
-  `sort_order` int DEFAULT '0' COMMENT '鎺掑簭',
-  `create_by` bigint DEFAULT NULL COMMENT '鍒涘缓浜?,
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '鍒涘缓鏃堕棿',
-  `update_by` bigint DEFAULT NULL COMMENT '鏇存柊浜?,
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '鏇存柊鏃堕棿',
-  `del_flag` tinyint(1) DEFAULT '0' COMMENT '閫昏緫鍒犻櫎',
-  PRIMARY KEY (`category_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='鍝佺被琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_category`
---
-
-LOCK TABLES `ds_category` WRITE;
-/*!40000 ALTER TABLE `ds_category` DISABLE KEYS */;
-INSERT INTO `ds_category` VALUES (1,'鏈嶈瀹氬埗',NULL,1,1,1,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(2,'鎵嬪伐鐨叿',NULL,1,1,1,2,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(3,'鏁板瓧鎻掔敾',NULL,1,0,0,3,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0);
-/*!40000 ALTER TABLE `ds_category` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_chat_message`
---
-
-DROP TABLE IF EXISTS `ds_chat_message`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_chat_message` (
-  `msg_id` bigint NOT NULL AUTO_INCREMENT,
-  `user_id` bigint NOT NULL COMMENT '鎵€灞炲鎴?,
-  `sender_type` tinyint(1) NOT NULL COMMENT '0=瀹㈡埛,1=璁捐甯?,
-  `sender_id` bigint NOT NULL COMMENT '鍙戦€佹柟ID',
-  `content_type` tinyint(1) DEFAULT '0' COMMENT '0=鏂囨湰,1=鍥剧墖',
-  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '娑堟伅鍐呭',
-  `is_read` tinyint(1) DEFAULT '0' COMMENT '鏄惁宸茶',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `del_flag` tinyint(1) DEFAULT '0',
-  `order_id` bigint DEFAULT NULL COMMENT '鍏宠仈璁㈠崟ID',
-  PRIMARY KEY (`msg_id`) USING BTREE,
-  KEY `idx_sender` (`sender_type`,`sender_id`) USING BTREE,
-  KEY `idx_user` (`user_id`) USING BTREE,
-  KEY `idx_order` (`order_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='鑱婂ぉ璁板綍琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_chat_message`
---
-
-LOCK TABLES `ds_chat_message` WRITE;
-/*!40000 ALTER TABLE `ds_chat_message` DISABLE KEYS */;
-INSERT INTO `ds_chat_message` VALUES (1,1,0,1,0,'hallop',1,'2026-04-06 15:09:44',0,NULL),(2,1,1,2,0,'1',1,'2026-04-06 15:11:24',0,NULL),(3,1,0,1,0,'鍏虫敞',1,'2026-04-09 19:56:14',0,NULL),(4,1,0,1,0,'浣犲ソ',1,'2026-04-09 21:36:36',0,NULL),(5,1,1,1,0,'濂?,1,'2026-04-09 21:36:43',0,NULL),(6,1,0,1,0,'璁㈠崟6鐨勫挩璇㈡秷鎭?,1,'2026-04-10 23:52:00',0,6),(7,1,1,2,0,'濂界殑锛屾垜鏉ュ鐞嗚鍗?',0,'2026-04-10 23:52:00',0,6),(8,1,0,1,0,'璁㈠崟7鏈夐棶棰樻兂闂?,1,'2026-04-10 23:52:00',0,7),(9,1,1,1,0,'璁㈠崟6鐨勬渶鏂拌繘灞曞浣曪紵',0,'2026-04-10 23:57:14',0,6),(10,1,0,1,0,'123',1,'2026-04-11 18:00:41',0,NULL);
-/*!40000 ALTER TABLE `ds_chat_message` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_custom_field`
---
-
-DROP TABLE IF EXISTS `ds_custom_field`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_custom_field` (
-  `field_id` bigint NOT NULL AUTO_INCREMENT,
-  `category_id` bigint NOT NULL COMMENT '鎵€灞炲搧绫?,
-  `label` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '瀛楁鏄剧ず鍚?,
-  `field_key` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '瀛楁閿悕',
-  `field_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '鎺т欢绫诲瀷: text/number/select/date/image',
-  `unit` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鍗曚綅',
-  `options` json DEFAULT NULL COMMENT '閫夐」鍒楄〃(select鐢?',
-  `placeholder` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '杈撳叆鎻愮ず',
-  `is_required` tinyint(1) DEFAULT '0' COMMENT '鏄惁蹇呭～',
-  `sort_order` int DEFAULT '0' COMMENT '鎺掑簭',
-  `create_by` bigint DEFAULT NULL,
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `update_by` bigint DEFAULT NULL,
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `del_flag` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`field_id`) USING BTREE,
-  KEY `idx_category` (`category_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=12 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='鍔ㄦ€佸瓧娈靛畾涔夎〃';
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_custom_field`
---
-
-LOCK TABLES `ds_custom_field` WRITE;
-/*!40000 ALTER TABLE `ds_custom_field` DISABLE KEYS */;
-INSERT INTO `ds_custom_field` VALUES (1,1,'鑳稿洿','chest','number','cm',NULL,'璇疯緭鍏ヨ兏鍥村昂瀵?,1,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(2,1,'鑵板洿','waist','number','cm',NULL,'璇疯緭鍏ヨ叞鍥村昂瀵?,1,2,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(3,1,'鑲╁','shoulder','number','cm',NULL,'璇疯緭鍏ヨ偐瀹藉昂瀵?,1,3,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(4,1,'琛ｉ暱','length','number','cm',NULL,'璇疯緭鍏ヨ。闀?,0,4,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(5,1,'闈㈡枡鍋忓ソ','fabric_type','select',NULL,'[\"绾\", \"浜氶夯\", \"涓濈桓\", \"缇婃瘺\", \"娣风汉\"]','璇烽€夋嫨闈㈡枡',0,5,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(6,2,'鐨潻绫诲瀷','leather_type','select',NULL,'[\"鐗涚毊\", \"缇婄毊\", \"槌勯奔鐨甛", \"妞嶉灒闈‐"]','璇烽€夋嫨鐨潻',1,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(7,2,'棰滆壊','color','text',NULL,NULL,'鏈熸湜鐨勯鑹?,1,2,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(8,2,'灏哄瑙勬牸','size_spec','text',NULL,NULL,'濡傦細闀?0cm脳瀹?5cm',0,3,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(9,3,'鐢婚','art_style','select',NULL,'[\"鏃ョ郴\", \"娆х編\", \"姘村僵椋嶾", \"鎵佸钩鍖朶", \"鍐欏疄\"]','璇烽€夋嫨鐢婚',1,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(10,3,'鍒嗚鲸鐜?,'resolution','select',NULL,'[\"1080脳1080\", \"1920脳1080\", \"3000脳3000\", \"鑷畾涔塡"]','璇烽€夋嫨鍒嗚鲸鐜?,0,2,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(11,3,'鐢ㄩ€?,'usage','text',NULL,NULL,'濡傦細澶村儚銆佹捣鎶ャ€佹彃鍥剧瓑',0,3,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0);
-/*!40000 ALTER TABLE `ds_custom_field` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_designer_category`
---
-
-DROP TABLE IF EXISTS `ds_designer_category`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_designer_category` (
-  `admin_id` bigint NOT NULL COMMENT '璁捐甯圛D',
-  `category_id` bigint NOT NULL COMMENT '鍝佺被ID',
-  PRIMARY KEY (`admin_id`,`category_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='璁捐甯?鍝佺被鍏宠仈琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_designer_category`
---
-
-LOCK TABLES `ds_designer_category` WRITE;
-/*!40000 ALTER TABLE `ds_designer_category` DISABLE KEYS */;
-INSERT INTO `ds_designer_category` VALUES (2,1),(2,2),(3,2),(3,3);
-/*!40000 ALTER TABLE `ds_designer_category` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_material`
---
-
-DROP TABLE IF EXISTS `ds_material`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_material` (
-  `material_id` bigint NOT NULL AUTO_INCREMENT,
-  `name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '鐗╂枡鍚嶇О',
-  `sku` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鐗╂枡缂栫爜',
-  `category` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鐗╂枡鍒嗙被(闈㈡枡/杈呮枡/浜旈噾)',
-  `unit` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鍗曚綅(绫?涓?kg)',
-  `unit_price` decimal(10,2) DEFAULT NULL COMMENT '鍗曚环',
-  `stock` decimal(10,2) DEFAULT '0.00' COMMENT '褰撳墠搴撳瓨',
-  `warning_stock` decimal(10,2) DEFAULT NULL COMMENT '棰勮闃堝€?,
-  `image_url` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鐗╂枡鍥剧墖',
-  `remark` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '澶囨敞',
-  `version` int DEFAULT '0' COMMENT '鐗堟湰鍙?涔愯閿?',
-  `create_by` bigint DEFAULT NULL,
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `update_by` bigint DEFAULT NULL,
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `del_flag` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`material_id`) USING BTREE,
-  UNIQUE KEY `uk_sku` (`sku`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='鐗╂枡琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_material`
---
-
-LOCK TABLES `ds_material` WRITE;
-/*!40000 ALTER TABLE `ds_material` DISABLE KEYS */;
-INSERT INTO `ds_material` VALUES (1,'楂樼骇浜氶夯闈㈡枡锛堟祬绫宠壊锛?,'FAB-LINEN-001','闈㈡枡','绫?,120.00,56.50,10.00,NULL,'浼樿川浜氶夯锛岄€傚悎鏄ュ鏈嶈',4,NULL,'2026-03-17 15:11:05',1,'2026-03-17 15:11:05',0),(2,'鐪熶笣闈㈡枡锛堥妲熻壊锛?,'FAB-SILK-001','闈㈡枡','绫?,280.00,30.00,5.00,NULL,'100%妗戣殨涓?,0,NULL,'2026-03-17 15:11:05',NULL,'2026-03-17 15:11:05',0),(3,'妞嶉灒闈╋紙妫曡壊锛?,'FAB-LEATHER-001','闈㈡枡','寮?,350.00,15.00,3.00,NULL,'鎰忓ぇ鍒╄繘鍙ｆ闉ｉ潻',0,NULL,'2026-03-17 15:11:05',NULL,'2026-03-17 15:11:05',0),(4,'槌勯奔鐨紙榛戣壊锛?,'FAB-CROC-001','闈㈡枡','寮?,1200.00,2.00,2.00,NULL,'绋€鏈夐硠楸肩毊锛岄渶杩涘彛',0,NULL,'2026-03-17 15:11:05',NULL,'2026-03-17 15:11:05',0),(5,'YKK鎷夐摼锛?0cm锛?,'ACC-ZIP-001','杈呮枡','鏉?,8.50,199.00,50.00,NULL,'YKK閲戝睘鎷夐摼',3,NULL,'2026-03-17 15:11:05',1,'2026-03-17 15:11:05',0),(6,'绾琛噷锛堢櫧鑹诧級','FAB-COTTON-001','闈㈡枡','绫?,35.00,98.00,20.00,NULL,'绾閲岃‖',3,NULL,'2026-03-17 15:11:05',1,'2026-03-17 15:11:05',0),(7,'D鍨嬩簲閲戞墸','HW-DRING-001','浜旈噾浠?,'涓?,5.00,500.00,100.00,NULL,'涓嶉攬閽鍨嬬幆',0,NULL,'2026-03-17 15:11:05',NULL,'2026-03-17 15:11:05',0),(8,'鎵嬬紳铚＄嚎锛堟鑹诧級','ACC-WAX-001','杈呮枡','鍗?,25.00,80.00,20.00,NULL,'鎵嬪伐鐨叿涓撶敤',0,NULL,'2026-03-17 15:11:05',NULL,'2026-03-17 15:11:05',0),(9,'鏆楁墸','HW-SNAP-001','浜旈噾浠?,'濂?,3.00,298.00,60.00,NULL,'纾佸惛鏆楁墸',3,NULL,'2026-03-17 15:11:05',1,'2026-03-17 15:11:05',0),(10,'鍖呰鐩掞紙澶у彿锛?,'PKG-BOX-001','杈呮枡','涓?,15.00,99.00,20.00,NULL,'楂樼瀹氬埗鍖呰鐩?,3,NULL,'2026-03-17 15:11:05',1,'2026-03-17 15:11:05',0);
-/*!40000 ALTER TABLE `ds_material` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_notification`
---
-
-DROP TABLE IF EXISTS `ds_notification`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_notification` (
-  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '涓婚敭',
-  `user_id` bigint NOT NULL COMMENT '鎺ユ敹鐢ㄦ埛ID',
-  `title` varchar(100) NOT NULL COMMENT '閫氱煡鏍囬',
-  `content` text COMMENT '閫氱煡鍐呭',
-  `type` varchar(30) DEFAULT NULL COMMENT '閫氱煡绫诲瀷: order_status/payment/workbench/system',
-  `related_id` bigint DEFAULT NULL COMMENT '鍏宠仈ID锛屽璁㈠崟ID',
-  `related_type` varchar(30) DEFAULT NULL COMMENT '鍏宠仈绫诲瀷: order/request',
-  `is_read` tinyint(1) DEFAULT '0' COMMENT '鏄惁宸茶 (0=鏈, 1=宸茶)',
-  `create_by` bigint DEFAULT NULL COMMENT '鍒涘缓浜篒D',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '鍒涘缓鏃堕棿',
-  `update_by` bigint DEFAULT NULL COMMENT '鏇存柊浜篒D',
-  `update_time` datetime DEFAULT NULL COMMENT '鏇存柊鏃堕棿',
-  `del_flag` tinyint(1) DEFAULT '0' COMMENT '閫昏緫鍒犻櫎鏍囪',
-  PRIMARY KEY (`id`) USING BTREE,
-  KEY `idx_notification_user_id` (`user_id`) USING BTREE,
-  KEY `idx_notification_user_read` (`user_id`,`is_read`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='绔欏唴閫氱煡琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_notification`
---
-
-LOCK TABLES `ds_notification` WRITE;
-/*!40000 ALTER TABLE `ds_notification` DISABLE KEYS */;
-INSERT INTO `ds_notification` VALUES (1,1,'瀹氶噾鏀粯鎴愬姛','鎮ㄥ凡鎴愬姛鏀粯瀹氶噾 楼10.00锛岃鍗曟寮忚繘鍏ョ敓浜?,'payment',8,'order',0,1,'2026-04-30 13:15:06',1,'2026-04-30 13:15:06',0),(2,1,'璁㈠崟杩涘害鏇存柊','鎮ㄧ殑璁㈠崟宸叉帹杩涜嚦鏂拌妭鐐癸細闈㈡枡閲囪喘','workbench',9,'order',0,1,'2026-05-01 14:33:15',1,'2026-05-01 14:33:15',0);
-/*!40000 ALTER TABLE `ds_notification` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_order`
---
-
-DROP TABLE IF EXISTS `ds_order`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_order` (
-  `order_id` bigint NOT NULL AUTO_INCREMENT,
-  `order_sn` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '璁㈠崟缂栧彿',
-  `user_id` bigint NOT NULL COMMENT '瀹㈡埛ID',
-  `category_id` bigint NOT NULL COMMENT '鍝佺被ID',
-  `designer_id` bigint DEFAULT NULL COMMENT '鎸囨淳鐨勮璁″笀ID',
-  `current_step_id` bigint DEFAULT NULL COMMENT '褰撳墠宸ヤ綔娴佽妭鐐?,
-  `status` tinyint(1) DEFAULT '0' COMMENT '0=寰呮敮浠?1=鐢熶骇涓?2=寰呭彂璐?3=寰呮敹璐?4=宸插畬鎴?5=宸插彇娑?,
-  `custom_data_snapshot` json DEFAULT NULL COMMENT '瀹氬埗鍙傛暟蹇収',
-  `total_amount` decimal(10,2) DEFAULT NULL COMMENT '鎬婚噾棰?,
-  `prepay_amount` decimal(10,2) DEFAULT NULL COMMENT '棰勪粯娆?,
-  `paid_amount` decimal(10,2) DEFAULT '0.00' COMMENT '宸叉敮浠橀噾棰?,
-  `expected_date` date DEFAULT NULL COMMENT '棰勮浜や粯鏃ユ湡',
-  `address_snapshot` json DEFAULT NULL COMMENT '鏀惰揣鍦板潃蹇収',
-  `remark` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '澶囨敞',
-  `is_blocked` tinyint(1) DEFAULT '0' COMMENT '鏄惁闃诲',
-  `block_reason` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '闃诲鍘熷洜',
-  `cancel_reason` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鍙栨秷鍘熷洜',
-  `delay_reason` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '寤舵湡鍘熷洜',
-  `version` int DEFAULT '0' COMMENT '鐗堟湰鍙?涔愯閿?',
-  `create_by` bigint DEFAULT NULL,
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `update_by` bigint DEFAULT NULL,
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `finish_time` datetime DEFAULT NULL COMMENT '瀹屾垚鏃堕棿',
-  `delivery_time` datetime DEFAULT NULL COMMENT '鍙戣揣鏃堕棿',
-  `confirm_time` datetime DEFAULT NULL COMMENT '纭瀹屾垚鏃堕棿',
-  `del_flag` tinyint(1) DEFAULT '0',
-  `bom_template_id` bigint DEFAULT NULL COMMENT '鍏宠仈BOM妯℃澘',
-  `material_cost` decimal(10,2) DEFAULT '0.00' COMMENT '鐗╂枡鎴愭湰',
-  PRIMARY KEY (`order_id`) USING BTREE,
-  UNIQUE KEY `uk_order_sn` (`order_sn`) USING BTREE,
-  KEY `idx_user_status` (`user_id`,`status`) USING BTREE,
-  KEY `idx_designer` (`designer_id`) USING BTREE,
-  KEY `idx_create_time` (`create_time`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='璁㈠崟涓昏〃';
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_order`
---
-
-LOCK TABLES `ds_order` WRITE;
-/*!40000 ALTER TABLE `ds_order` DISABLE KEYS */;
-INSERT INTO `ds_order` VALUES (1,'DS202603081601001',3,1,2,2,1,'{\"chest\": \"92\", \"waist\": \"72\", \"length\": \"130\", \"shoulder\": \"40\", \"fabric_type\": \"浜氶夯\"}',3500.00,1750.00,1750.00,'2026-04-18',NULL,'鏀硅壇姹夋湇锛屽鎴疯姹傚鏉剧増鍨?,1,'澶╂皵鍘熷洜',NULL,'????????',11,NULL,'2026-03-08 16:05:00',1,'2026-04-11 18:05:24',NULL,NULL,NULL,0,NULL,0.00),(2,'DS202603071102001',2,3,3,12,1,'{\"usage\": \"鍏徃鍝佺墝Logo\", \"art_style\": \"鎵佸钩鍖朶", \"resolution\": \"3000脳3000\"}',800.00,400.00,400.00,'2026-03-25',NULL,'Logo璁捐锛岄渶瑕佷笁涓閫夋柟妗?,0,NULL,NULL,NULL,3,NULL,'2026-03-07 11:05:00',1,'2026-04-10 11:29:04',NULL,NULL,NULL,0,NULL,0.00),(3,'DS202603151400001',1,2,2,8,4,'{\"color\": \"榛戣壊\", \"size_spec\": \"闀?5cm脳瀹?5cm\", \"leather_type\": \"槌勯奔鐨甛"}',5800.00,2900.00,2900.00,'2026-04-20',NULL,'槌勯奔鐨墜鎷垮寘锛岄珮绔畾鍒?,1,'槌勯奔鐨師鏂欑己璐э紝棰勮3澶╁埌璐?,NULL,NULL,4,NULL,'2026-03-15 14:00:00',1,'2026-04-10 21:06:20','2026-04-10 21:06:20','2026-04-10 21:04:19','2026-04-10 21:06:20',0,NULL,0.00),(4,'DS202602201000001',1,3,3,16,4,'{\"usage\": \"涓汉鏀惰棌\", \"art_style\": \"姘村僵椋嶾", \"resolution\": \"1920脳1080\"}',600.00,300.00,600.00,'2026-03-05',NULL,'姘村僵椋庢櫙鐢?,0,NULL,NULL,NULL,0,NULL,'2026-02-20 10:00:00',NULL,'2026-04-09 21:07:17','2026-03-03 18:00:00',NULL,NULL,0,NULL,0.00),(5,'DS202604051756345882',1,1,2,NULL,1,'{\"chest\": \"1\", \"waist\": \"2\", \"length\": \"4\", \"shoulder\": \"3\"}',800.00,300.00,0.00,'2026-04-29',NULL,'',0,NULL,NULL,NULL,0,1,'2026-04-05 17:56:34',1,'2026-04-05 17:56:34',NULL,NULL,NULL,0,NULL,0.00),(6,'DS202604092137346349',1,1,2,1,5,'{\"chest\": \"20\", \"waist\": \"30\", \"shoulder\": \"20\"}',100.00,10.00,0.00,'2026-04-09',NULL,'',0,'13','??????????',NULL,5,1,'2026-04-09 21:37:35',1,'2026-04-10 21:03:33','2026-04-10 21:03:33',NULL,NULL,0,NULL,0.00),(7,'DS202604102239321777',1,1,2,1,5,'{\"chest\": \"88\", \"waist\": \"68\", \"length\": \"120\", \"shoulder\": \"38\", \"fabric_type\": \"涓濈桓\"}',3500.00,1500.00,1500.00,'2026-05-20',NULL,'BOM娴嬭瘯杞崟',0,NULL,'娴嬭瘯鍙栨秷-褰掕繕搴撳瓨',NULL,3,1,'2026-04-10 22:39:33',1,'2026-04-10 22:57:01','2026-04-10 22:57:01',NULL,NULL,0,1,519.50),(8,'DS202604111743293930',1,1,2,1,1,'{\"chest\": \"123\", \"waist\": \"32\", \"length\": \"123\", \"shoulder\": \"45\"}',100.00,10.00,10.00,NULL,NULL,'',0,NULL,NULL,NULL,2,1,'2026-04-11 17:43:29',1,'2026-04-30 13:15:06',NULL,NULL,NULL,0,1,519.50),(9,'DS202604111801332055',1,1,2,2,1,'{\"chest\": \"123\", \"waist\": \"12\", \"length\": \"3\", \"shoulder\": \"12\"}',1000.00,10.00,10.00,'2026-04-25',NULL,'',0,NULL,NULL,NULL,2,1,'2026-04-11 18:01:33',1,'2026-05-01 14:33:15',NULL,NULL,NULL,0,NULL,0.00);
-/*!40000 ALTER TABLE `ds_order` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_order_progress`
---
-
-DROP TABLE IF EXISTS `ds_order_progress`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_order_progress` (
-  `progress_id` bigint NOT NULL AUTO_INCREMENT,
-  `order_id` bigint NOT NULL COMMENT '鎵€灞炶鍗?,
-  `step_id` bigint NOT NULL COMMENT '瀵瑰簲宸ヤ綔娴佽妭鐐?,
-  `description` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '杩涘害鎻忚堪',
-  `image_urls` json DEFAULT NULL COMMENT '杩涘害鍥剧墖',
-  `form_data` json DEFAULT NULL COMMENT '鑺傜偣琛ㄥ崟濉啓鏁版嵁',
-  `operator_id` bigint DEFAULT NULL COMMENT '鎿嶄綔浜篒D',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `del_flag` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`progress_id`) USING BTREE,
-  KEY `idx_order` (`order_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=49 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='璁㈠崟杩涘害琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_order_progress`
---
-
-LOCK TABLES `ds_order_progress` WRITE;
-/*!40000 ALTER TABLE `ds_order_progress` DISABLE KEYS */;
-INSERT INTO `ds_order_progress` VALUES (1,1,1,'瀹㈡埛闇€姹傚凡纭锛屾敼鑹眽鏈嶅鏉剧増鍨嬶紝浜氶夯闈㈡枡',NULL,NULL,2,'2026-03-08 16:10:00',0),(2,1,2,'鐗归€夐珮鍝佽川浜氶夯闈㈡枡宸查噰璐埌浣嶏紝棰滆壊涓烘祬绫宠壊',NULL,NULL,2,'2026-03-10 09:00:00',0),(3,1,3,'寮€濮嬭鍓紝鎸夌収瀹㈡埛灏哄鏀炬牱',NULL,NULL,2,'2026-03-12 14:00:00',0),(4,2,12,'闇€姹傚凡纭锛屽鎴疯姹傛墎骞冲寲椋庢牸Logo',NULL,NULL,3,'2026-03-07 11:10:00',0),(5,2,13,'鑽夌瀹屾垚锛屽凡鎻愪氦3涓閫夋柟妗堢粰瀹㈡埛',NULL,NULL,3,'2026-03-09 16:00:00',0),(6,2,14,'瀹㈡埛閫夋嫨鏂规B锛屽紑濮嬬嚎绋跨粏鍖?,NULL,NULL,3,'2026-03-11 10:00:00',0),(7,4,12,'闇€姹傜‘璁ゅ畬姣?,NULL,NULL,3,'2026-02-20 10:10:00',0),(8,4,13,'鑽夌瀹屾垚',NULL,NULL,3,'2026-02-22 15:00:00',0),(9,4,14,'绾跨宸插畾绋?,NULL,NULL,3,'2026-02-25 11:00:00',0),(10,4,15,'涓婅壊瀹屾垚锛屾渶缁堢宸插嚭',NULL,NULL,3,'2026-02-28 17:00:00',0),(11,4,16,'瀹㈡埛楠屾敹閫氳繃锛屼氦浠樺畬鎴?,NULL,NULL,3,'2026-03-03 18:00:00',0),(12,3,8,'閮ㄥ垎',NULL,NULL,1,'2026-03-17 15:16:03',0),(13,1,3,'宸ヤ綔鍙版帴鍙ｈ仈璋冭褰?,NULL,NULL,1,'2026-04-09 21:13:19',0),(14,1,3,'upload-ok','\"/uploads/321f10cac04241249a1c608ce6c9b048.png\"',NULL,1,'2026-04-09 21:33:42',0),(15,6,1,'1',NULL,NULL,1,'2026-04-09 21:37:59',0),(16,6,1,'璁㈠崟宸查樆濉烇細11',NULL,NULL,2,'2026-04-09 21:42:51',0),(17,6,1,'璁㈠崟宸茶В闄ら樆濉?,NULL,NULL,2,'2026-04-09 21:43:14',0),(18,6,1,'璁㈠崟宸查樆濉烇細13',NULL,NULL,2,'2026-04-09 21:43:17',0),(19,6,1,'璁㈠崟宸茶В闄ら樆濉?,NULL,NULL,2,'2026-04-09 21:43:22',0),(20,1,2,'rollback-api-test',NULL,NULL,1,'2026-04-10 10:36:27',0),(21,1,3,'rollback-restore',NULL,NULL,1,'2026-04-10 10:36:28',0),(22,1,2,'閫€鍥炶嚦鑺傜偣锛氶潰鏂欓噰璐?,NULL,NULL,1,'2026-04-10 10:48:26',0),(23,2,12,'鑱旇皟锛氭寚瀹氶€€鍥炲埌闇€姹傜‘璁?,NULL,NULL,1,'2026-04-10 11:26:40',0),(24,2,13,'鑱旇皟锛氭帹杩涘埌鑽夌鏋勫浘',NULL,NULL,1,'2026-04-10 11:29:04',0),(25,2,12,'鑱旇皟锛氶€€鍥炲埌闇€姹傜‘璁?,NULL,NULL,1,'2026-04-10 11:29:04',0),(26,1,3,'鎺ㄨ繘鑷宠妭鐐癸細瑁佸壀',NULL,NULL,1,'2026-04-10 11:34:08',0),(27,1,2,'閫€鍥炶嚦鑺傜偣锛氶潰鏂欓噰璐?,NULL,NULL,1,'2026-04-10 11:34:13',0),(28,1,1,'閫€鍥炶嚦鑺傜偣锛氶渶姹傜‘璁?,NULL,NULL,1,'2026-04-10 11:34:30',0),(29,6,1,'????????',NULL,'{\"chest\": 88, \"waist\": 66}',1,'2026-04-10 15:43:40',0),(30,6,1,'璁㈠崟宸插彇娑堬細??????????',NULL,NULL,1,'2026-04-10 21:03:33',0),(31,1,1,'璁㈠崟寤舵湡鑷?2026-04-18锛屽師鍥狅細????????',NULL,NULL,1,'2026-04-10 21:03:33',0),(32,3,8,'??????',NULL,NULL,1,'2026-04-10 21:04:19',0),(33,3,8,'瀹㈡埛宸茬‘璁ゆ敹璐э紝璁㈠崟宸插畬鎴?,NULL,NULL,1,'2026-04-10 21:06:20',0),(34,7,1,'瀹㈡埛宸叉敮浠樺畾閲戯細楼1500.00',NULL,NULL,1,'2026-04-10 22:56:34',0),(35,7,1,'璁㈠崟宸插彇娑堬細娴嬭瘯鍙栨秷-褰掕繕搴撳瓨',NULL,NULL,1,'2026-04-10 22:57:01',0),(36,1,2,'鎺ㄨ繘鑷宠妭鐐癸細闈㈡枡閲囪喘',NULL,'{\"chest\": \"92\", \"waist\": \"72\"}',1,'2026-04-11 17:17:35',0),(37,1,1,'閫€鍥炶嚦鑺傜偣锛氶渶姹傜‘璁?,NULL,NULL,1,'2026-04-11 18:02:52',0),(38,1,2,'瀹屾垚闇€姹?,NULL,'{\"chest\": \"92\", \"waist\": \"72\"}',1,'2026-04-11 18:04:27',0),(39,1,2,'璁㈠崟宸查樆濉烇細澶╂皵鍘熷洜',NULL,NULL,1,'2026-04-11 18:05:24',0),(40,9,1,'瀹㈡埛宸叉敮浠樺畾閲戯細楼10.00',NULL,NULL,1,'2026-04-11 18:08:26',0),(41,9,1,NULL,NULL,'{\"chest\": \"123\", \"waist\": \"12\"}',1,'2026-04-21 00:28:54',0),(42,9,1,NULL,NULL,'{\"chest\": \"123\", \"waist\": \"12\"}',1,'2026-04-21 00:28:56',0),(43,9,1,NULL,NULL,'{\"chest\": \"123\", \"waist\": \"12\"}',1,'2026-04-21 00:28:58',0),(44,9,1,NULL,NULL,'{\"chest\": \"123\", \"waist\": \"12\"}',1,'2026-04-21 00:29:03',0),(45,9,1,NULL,NULL,'{\"chest\": \"123\", \"waist\": \"12\"}',1,'2026-04-21 00:40:00',0),(46,8,1,'瀹㈡埛宸叉敮浠樺畾閲戯細楼10.00',NULL,NULL,1,'2026-04-30 13:15:06',0),(47,9,1,'灏哄宸茬‘璁わ細鑳稿洿90cm锛岃叞鍥?5cm锛屽噯澶囪繘鍏ヤ笅涓€闃舵銆?,NULL,'{\"chest\": 90, \"waist\": 75}',1,'2026-05-01 14:32:49',0),(48,9,2,'鎺ㄨ繘鑷宠妭鐐癸細闈㈡枡閲囪喘',NULL,'{\"chest\": 90, \"waist\": 75}',1,'2026-05-01 14:33:15',0);
-/*!40000 ALTER TABLE `ds_order_progress` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_order_request`
---
-
-DROP TABLE IF EXISTS `ds_order_request`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_order_request` (
-  `request_id` bigint NOT NULL AUTO_INCREMENT,
-  `user_id` bigint NOT NULL COMMENT '鎻愪氦瀹㈡埛',
-  `category_id` bigint NOT NULL COMMENT '瀹氬埗鍝佺被',
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT '瀹㈡埛鏂囧瓧鎻忚堪',
-  `image_urls` json DEFAULT NULL COMMENT '鍙傝€冨浘鐗?JSON鏁扮粍)',
-  `custom_data` json DEFAULT NULL COMMENT '鍔ㄦ€佽〃鍗曟暟鎹?,
-  `status` tinyint(1) DEFAULT '0' COMMENT '0=寰呭鐞?1=宸茶浆鍗?2=宸插叧闂?,
-  `close_reason` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鍏抽棴鍘熷洜',
-  `linked_order_id` bigint DEFAULT NULL COMMENT '杞寲鍚庣殑璁㈠崟ID',
-  `create_by` bigint DEFAULT NULL,
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `update_by` bigint DEFAULT NULL,
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `del_flag` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`request_id`) USING BTREE,
-  KEY `idx_user` (`user_id`) USING BTREE,
-  KEY `idx_status` (`status`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='璁㈠崟鎰忓悜琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_order_request`
---
-
-LOCK TABLES `ds_order_request` WRITE;
-/*!40000 ALTER TABLE `ds_order_request` DISABLE KEYS */;
-INSERT INTO `ds_order_request` VALUES (1,1,1,'鎯冲畾鍒朵竴浠舵棗琚嶏紝鐢ㄤ簬鍙傚姞鏈嬪弸濠氱ぜ',NULL,'{\"chest\": \"88\", \"waist\": \"68\", \"length\": \"120\", \"shoulder\": \"38\", \"fabric_type\": \"涓濈桓\"}',1,NULL,7,NULL,'2026-03-10 10:00:00',1,'2026-03-17 15:11:05',0),(2,2,2,'鎯冲仛涓€涓墜宸ョ毊闈╅挶鍖咃紝閫佺粰鐢锋湅鍙嬪仛鐢熸棩绀肩墿',NULL,'{\"color\": \"娣辨鑹瞈", \"size_spec\": \"闀?0cm脳瀹?0cm\", \"leather_type\": \"妞嶉灒闈‐"}',0,NULL,NULL,NULL,'2026-03-11 14:30:00',NULL,'2026-03-17 15:11:05',0),(3,1,3,'闇€瑕佷竴寮犳棩绯婚鏍肩殑澶村儚鎻掔敾',NULL,'{\"usage\": \"绀句氦濯掍綋澶村儚\", \"art_style\": \"鏃ョ郴\", \"resolution\": \"1080脳1080\"}',0,NULL,NULL,NULL,'2026-03-12 09:15:00',NULL,'2026-03-17 15:11:05',0),(4,3,1,'闇€瑕佷竴濂楁敼鑹眽鏈?,NULL,'{\"chest\": \"92\", \"waist\": \"72\", \"length\": \"130\", \"shoulder\": \"40\", \"fabric_type\": \"浜氶夯\"}',1,NULL,1,NULL,'2026-03-08 16:00:00',NULL,'2026-03-17 15:11:05',0),(5,2,3,'璁捐鍏徃 Logo 鎵佸钩鍖栨彃鐢?,NULL,'{\"usage\": \"鍏徃鍝佺墝Logo\", \"art_style\": \"鎵佸钩鍖朶", \"resolution\": \"3000脳3000\"}',1,NULL,2,NULL,'2026-03-07 11:00:00',NULL,'2026-03-17 15:11:05',0),(6,3,2,'澶嶅彜椋庢牸鎵嬫彁鍖?,NULL,'{\"color\": \"閰掔孩鑹瞈", \"size_spec\": \"闀?0cm脳瀹?0cm脳楂?5cm\", \"leather_type\": \"鐗涚毊\"}',2,'瀹㈡埛鍙栨秷锛岄绠椾笉瓒?,NULL,NULL,'2026-03-05 08:45:00',NULL,'2026-03-17 15:11:05',0),(7,1,1,'','[]','{\"chest\": \"123\", \"waist\": \"32\", \"length\": \"123\", \"shoulder\": \"45\"}',1,NULL,8,1,'2026-04-05 17:45:08',1,'2026-04-05 17:45:08',0),(8,1,1,'','[]','{\"chest\": \"1\", \"waist\": \"2\", \"length\": \"4\", \"shoulder\": \"3\"}',1,NULL,5,1,'2026-04-05 17:46:11',1,'2026-04-05 17:46:11',0),(9,1,1,'','[]','{\"chest\": \"20\", \"waist\": \"30\", \"shoulder\": \"20\"}',1,NULL,6,1,'2026-04-09 21:37:09',1,'2026-04-09 21:37:09',0),(10,1,1,'','[]','{\"chest\": \"123\", \"waist\": \"12\", \"length\": \"3\", \"shoulder\": \"12\"}',1,NULL,9,1,'2026-04-11 18:01:09',1,'2026-04-11 18:01:09',0);
-/*!40000 ALTER TABLE `ds_order_request` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_payment_record`
---
-
-DROP TABLE IF EXISTS `ds_payment_record`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_payment_record` (
-  `payment_id` bigint NOT NULL AUTO_INCREMENT,
-  `payment_no` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '绯荤粺鏀粯娴佹按鍙?,
-  `order_id` bigint NOT NULL COMMENT '鍏宠仈璁㈠崟',
-  `user_id` bigint NOT NULL COMMENT '鏀粯鐢ㄦ埛',
-  `payment_type` tinyint(1) NOT NULL COMMENT '1=棰勪粯娆?2=灏炬',
-  `amount` decimal(10,2) NOT NULL COMMENT '鏀粯閲戦',
-  `wx_transaction_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '寰俊鏀粯浜ゆ槗鍙?,
-  `wx_prepay_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '寰俊棰勬敮浠業D',
-  `status` tinyint(1) DEFAULT '0' COMMENT '0=寰呮敮浠?1=鎴愬姛,2=澶辫触,3=宸插叧闂?,
-  `pay_time` datetime DEFAULT NULL COMMENT '瀹為檯鏀粯鏃堕棿',
-  `expire_time` datetime DEFAULT NULL COMMENT '鏀粯杩囨湡鏃堕棿',
-  `notify_data` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT '寰俊鍥炶皟鍘熷鏁版嵁',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `del_flag` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`payment_id`) USING BTREE,
-  UNIQUE KEY `uk_payment_no` (`payment_no`) USING BTREE,
-  KEY `idx_order` (`order_id`) USING BTREE,
-  KEY `idx_user` (`user_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='鏀粯娴佹按琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_payment_record`
---
-
-LOCK TABLES `ds_payment_record` WRITE;
-/*!40000 ALTER TABLE `ds_payment_record` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ds_payment_record` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_portfolio`
---
-
-DROP TABLE IF EXISTS `ds_portfolio`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_portfolio` (
-  `portfolio_id` bigint NOT NULL AUTO_INCREMENT,
-  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '浣滃搧鏍囬',
-  `category_id` bigint DEFAULT NULL COMMENT '鍏宠仈鍝佺被',
-  `cover_url` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '灏侀潰鍥?,
-  `image_urls` json NOT NULL COMMENT '鍥剧墖鍒楄〃(JSON鏁扮粍)',
-  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT '瀵屾枃鏈弿杩?,
-  `status` tinyint(1) DEFAULT '0' COMMENT '0=鑽夌,1=鍙戝竷',
-  `view_count` int DEFAULT '0' COMMENT '娴忚娆℃暟',
-  `sort_order` int DEFAULT '0' COMMENT '鎺掑簭',
-  `create_by` bigint DEFAULT NULL,
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `update_by` bigint DEFAULT NULL,
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `del_flag` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`portfolio_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='浣滃搧闆嗚〃';
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_portfolio`
---
-
-LOCK TABLES `ds_portfolio` WRITE;
-/*!40000 ALTER TABLE `ds_portfolio` DISABLE KEYS */;
-INSERT INTO `ds_portfolio` VALUES (1,'鐚?,1,'https://i0.hdslb.com/bfs/new_dyn/a4833ebe1038fcd60a196da9b53c0e44270317383.jpg@420w_560h_1e_1c.webp','[\"https://i0.hdslb.com/bfs/new_dyn/a4833ebe1038fcd60a196da9b53c0e44270317383.jpg@420w_560h_1e_1c.webp\", \"https://i0.hdslb.com/bfs/new_dyn/a42924b84d925cfabf5672f8e7373ee6270317383.jpg@264w_264h_1e_1c.webp\"]','',1,4,1,1,'2026-04-10 19:53:02',1,'2026-04-10 19:53:02',0),(2,'娴嬭瘯涓婁紶浣滃搧',1,'http://localhost:8081/uploads/fc1a62f7bca648898b01d8239d4fb54b.png','[]','',0,0,0,1,'2026-04-10 20:05:54',1,'2026-04-10 20:05:54',0);
-/*!40000 ALTER TABLE `ds_portfolio` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_refund_record`
---
-
-DROP TABLE IF EXISTS `ds_refund_record`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_refund_record` (
-  `refund_id` bigint NOT NULL AUTO_INCREMENT,
-  `refund_no` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '绯荤粺閫€娆炬祦姘村彿',
-  `order_id` bigint NOT NULL COMMENT '鍏宠仈璁㈠崟',
-  `payment_id` bigint DEFAULT NULL COMMENT '鍏宠仈鍘熸敮浠樿褰?,
-  `refund_amount` decimal(10,2) NOT NULL COMMENT '閫€娆鹃噾棰?,
-  `refund_reason` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '閫€娆惧師鍥?,
-  `wx_refund_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '寰俊閫€娆惧崟鍙?,
-  `status` tinyint(1) DEFAULT '0' COMMENT '0=澶勭悊涓?1=閫€娆炬垚鍔?2=閫€娆惧け璐?,
-  `refund_time` datetime DEFAULT NULL COMMENT '瀹為檯閫€娆炬椂闂?,
-  `operator_id` bigint DEFAULT NULL COMMENT '鎿嶄綔浜篒D',
-  `notify_data` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT '寰俊鍥炶皟鍘熷鏁版嵁',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `del_flag` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`refund_id`) USING BTREE,
-  UNIQUE KEY `uk_refund_no` (`refund_no`) USING BTREE,
-  KEY `idx_order` (`order_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='閫€娆捐褰曡〃';
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_refund_record`
---
-
-LOCK TABLES `ds_refund_record` WRITE;
-/*!40000 ALTER TABLE `ds_refund_record` DISABLE KEYS */;
-/*!40000 ALTER TABLE `ds_refund_record` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_user`
---
-
-DROP TABLE IF EXISTS `ds_user`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_user` (
-  `user_id` bigint NOT NULL AUTO_INCREMENT,
-  `openid` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '寰俊OpenID',
-  `unionid` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '寰俊UnionID',
-  `nickname` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鏄电О',
-  `avatar_url` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '澶村儚URL',
-  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鎵嬫満鍙?,
-  `status` tinyint(1) DEFAULT '1' COMMENT '0=绂佺敤,1=姝ｅ父',
-  `gender` tinyint(1) DEFAULT NULL COMMENT '鎬у埆',
-  `default_address_id` bigint DEFAULT NULL COMMENT '榛樿鍦板潃ID',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '娉ㄥ唽鏃堕棿',
-  `last_login_time` datetime DEFAULT NULL COMMENT '鏈€鍚庣櫥褰?,
-  `del_flag` tinyint(1) DEFAULT '0',
-  `create_by` bigint DEFAULT NULL,
-  `update_by` bigint DEFAULT NULL,
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`user_id`) USING BTREE,
-  UNIQUE KEY `uk_openid` (`openid`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='灏忕▼搴忕敤鎴疯〃';
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_user`
---
-
-LOCK TABLES `ds_user` WRITE;
-/*!40000 ALTER TABLE `ds_user` DISABLE KEYS */;
-INSERT INTO `ds_user` VALUES (1,'wx_test_openid_001',NULL,'寮犲皬濮?,NULL,'13900001001',1,NULL,NULL,'2026-03-17 15:11:05','2026-04-30 13:04:23',0,NULL,5,'2026-03-24 16:43:20'),(2,'wx_test_openid_002',NULL,'鍒樺厛鐢?,NULL,'13900001002',1,NULL,NULL,'2026-03-17 15:11:05',NULL,0,NULL,NULL,'2026-03-24 16:43:20'),(3,'wx_test_openid_003',NULL,'闄堝コ澹?,NULL,'13900001003',1,NULL,NULL,'2026-03-17 15:11:05','2026-04-11 18:03:48',0,NULL,NULL,'2026-03-24 16:43:20'),(4,'wx_test_openid_13888888888',NULL,'瀹㈡埛8888',NULL,'13888888888',1,NULL,NULL,'2026-03-24 16:44:41','2026-03-25 19:19:38',0,NULL,4,'2026-03-24 16:44:41'),(5,'wx_test_openid_default',NULL,'ZeHana娴嬭瘯瀹㈡埛',NULL,'13888888888',1,NULL,NULL,'2026-03-25 19:24:46','2026-04-05 16:57:43',0,NULL,1,'2026-03-25 19:24:46');
-/*!40000 ALTER TABLE `ds_user` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_workflow`
---
-
-DROP TABLE IF EXISTS `ds_workflow`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_workflow` (
-  `workflow_id` bigint NOT NULL AUTO_INCREMENT,
-  `category_id` bigint NOT NULL COMMENT '鍏宠仈鍝佺被(涓€瀵逛竴)',
-  `workflow_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '宸ヤ綔娴佸悕绉?,
-  `create_by` bigint DEFAULT NULL,
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `update_by` bigint DEFAULT NULL,
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `del_flag` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`workflow_id`) USING BTREE,
-  UNIQUE KEY `uk_category` (`category_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='宸ヤ綔娴佹ā鏉胯〃';
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_workflow`
---
-
-LOCK TABLES `ds_workflow` WRITE;
-/*!40000 ALTER TABLE `ds_workflow` DISABLE KEYS */;
-INSERT INTO `ds_workflow` VALUES (1,1,'鏈嶈瀹氬埗娴佺▼',NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(2,2,'鐨叿鍒朵綔娴佺▼',NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(3,3,'鏁板瓧鎻掔敾娴佺▼',NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0);
-/*!40000 ALTER TABLE `ds_workflow` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `ds_workflow_step`
---
-
-DROP TABLE IF EXISTS `ds_workflow_step`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_workflow_step` (
-  `step_id` bigint NOT NULL AUTO_INCREMENT,
-  `workflow_id` bigint NOT NULL COMMENT '鎵€灞炲伐浣滄祦',
-  `step_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '鑺傜偣鍚嶇О',
-  `step_order` int NOT NULL DEFAULT '1' COMMENT '鑺傜偣椤哄簭',
-  `is_start_step` tinyint(1) DEFAULT '0' COMMENT '鏄惁璧峰鑺傜偣',
-  `is_end_step` tinyint(1) DEFAULT '0' COMMENT '鏄惁缁撴潫鑺傜偣',
-  `node_description` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '????',
-  `allowed_actions` json DEFAULT NULL COMMENT '????(JSON??)',
-  `need_image_upload` tinyint(1) DEFAULT '0' COMMENT '????????',
-  `visible_to_client` tinyint(1) DEFAULT '1' COMMENT '???????',
-  `expected_duration_days` int DEFAULT NULL COMMENT '??????(?)',
-  `node_form_fields` json DEFAULT NULL COMMENT '鑺傜偣琛ㄥ崟瀛楁閿垪琛?,
-  `create_by` bigint DEFAULT NULL,
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `update_by` bigint DEFAULT NULL,
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `del_flag` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`step_id`) USING BTREE,
-  KEY `idx_workflow` (`workflow_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='宸ヤ綔娴佽妭鐐硅〃';
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `ds_workflow_step`
---
-
-LOCK TABLES `ds_workflow_step` WRITE;
-/*!40000 ALTER TABLE `ds_workflow_step` DISABLE KEYS */;
-INSERT INTO `ds_workflow_step` VALUES (1,1,'闇€姹傜‘璁?,1,1,0,'澶勭悊鑺傜偣锛氶渶姹傜‘璁?,'[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]',0,1,1,'[\"chest\", \"waist\"]',NULL,'2026-03-04 15:06:58',NULL,'2026-04-10 15:43:02',0),(2,1,'闈㈡枡閲囪喘',2,0,0,'澶勭悊鑺傜偣锛氶潰鏂欓噰璐?,'[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]',0,1,2,NULL,NULL,'2026-03-04 15:06:58',NULL,'2026-04-10 10:33:15',0),(3,1,'瑁佸壀',3,0,0,'澶勭悊鑺傜偣锛氳鍓?,'[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]',1,1,3,NULL,NULL,'2026-03-04 15:06:58',NULL,'2026-04-10 10:33:15',0),(4,1,'缂濆埗',4,0,0,'澶勭悊鑺傜偣锛氱紳鍒?,'[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]',1,1,3,NULL,NULL,'2026-03-04 15:06:58',NULL,'2026-04-10 10:33:15',0),(5,1,'璐ㄦ',5,0,0,'澶勭悊鑺傜偣锛氳川妫€','[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]',1,1,1,NULL,NULL,'2026-03-04 15:06:58',NULL,'2026-04-10 10:33:15',0),(6,1,'鍖呰鍙戣揣',6,0,1,'澶勭悊鑺傜偣锛氬寘瑁呭彂璐?,'[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]',0,1,1,NULL,NULL,'2026-03-04 15:06:58',NULL,'2026-04-10 10:33:15',0),(7,2,'闇€姹傜‘璁?,1,1,0,'澶勭悊鑺傜偣锛氶渶姹傜‘璁?,'[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]',0,1,1,NULL,NULL,'2026-03-04 15:06:58',NULL,'2026-04-10 10:33:15',0),(8,2,'鐨枡瑁佸垏',2,0,0,'澶勭悊鑺傜偣锛氱毊鏂欒鍒?,'[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]',0,1,2,NULL,NULL,'2026-03-04 15:06:58',NULL,'2026-04-10 10:33:15',0),(9,2,'缂濈嚎鎵撶（',3,0,0,'澶勭悊鑺傜偣锛氱紳绾挎墦纾?,'[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]',1,1,3,NULL,NULL,'2026-03-04 15:06:58',NULL,'2026-04-10 10:33:15',0),(10,2,'涓婅壊灏佽竟',4,0,0,'澶勭悊鑺傜偣锛氫笂鑹插皝杈?,'[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]',1,1,3,NULL,NULL,'2026-03-04 15:06:58',NULL,'2026-04-10 10:33:15',0),(11,2,'璐ㄦ鍑鸿揣',5,0,1,'澶勭悊鑺傜偣锛氳川妫€鍑鸿揣','[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]',1,1,1,NULL,NULL,'2026-03-04 15:06:58',NULL,'2026-04-10 10:33:15',0),(12,3,'闇€姹傜‘璁?,1,1,0,'澶勭悊鑺傜偣锛氶渶姹傜‘璁?,'[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]',0,1,1,NULL,NULL,'2026-03-04 15:06:58',NULL,'2026-04-10 10:33:15',0),(13,3,'鑽夌鏋勫浘',2,0,0,'澶勭悊鑺傜偣锛氳崏绋挎瀯鍥?,'[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]',1,1,2,NULL,NULL,'2026-03-04 15:06:58',NULL,'2026-04-10 10:33:15',0),(14,3,'绾跨缁嗗寲',3,0,0,'澶勭悊鑺傜偣锛氱嚎绋跨粏鍖?,'[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]',1,1,3,NULL,NULL,'2026-03-04 15:06:58',NULL,'2026-04-10 10:33:15',0),(15,3,'涓婅壊瀹岀',4,0,0,'澶勭悊鑺傜偣锛氫笂鑹插畬绋?,'[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]',1,1,3,NULL,NULL,'2026-03-04 15:06:58',NULL,'2026-04-10 10:33:15',0),(16,3,'瀹㈡埛楠屾敹',5,0,1,'澶勭悊鑺傜偣锛氬鎴烽獙鏀?,'[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]',1,1,1,NULL,NULL,'2026-03-04 15:06:58',NULL,'2026-04-10 10:33:15',0);
-/*!40000 ALTER TABLE `ds_workflow_step` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `sys_admin`
---
-
-DROP TABLE IF EXISTS `sys_admin`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `sys_admin` (
-  `admin_id` bigint NOT NULL AUTO_INCREMENT,
-  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '鐧诲綍璐﹀彿',
-  `password` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '瀵嗙爜(BCrypt)',
-  `nickname` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鏄电О',
-  `avatar` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '澶村儚',
-  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鎵嬫満鍙?,
-  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '閭',
-  `status` tinyint(1) DEFAULT '1' COMMENT '0=绂佺敤,1=姝ｅ父',
-  `create_by` bigint DEFAULT NULL,
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `update_by` bigint DEFAULT NULL,
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `last_login_time` datetime DEFAULT NULL COMMENT '鏈€鍚庣櫥褰?,
-  `del_flag` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`admin_id`) USING BTREE,
-  UNIQUE KEY `uk_username` (`username`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='鍚庡彴鐢ㄦ埛琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `sys_admin`
---
-
-LOCK TABLES `sys_admin` WRITE;
-/*!40000 ALTER TABLE `sys_admin` DISABLE KEYS */;
-INSERT INTO `sys_admin` VALUES (1,'admin','$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2','瓒呯骇绠＄悊鍛?,NULL,NULL,NULL,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',NULL,0),(2,'designer1','$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2','鏉庤璁″笀',NULL,'13800001001',NULL,1,NULL,'2026-03-17 15:11:05',NULL,'2026-03-17 15:11:05',NULL,0),(3,'designer2','$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2','鐜嬭璁″笀',NULL,'13800001002',NULL,1,NULL,'2026-03-17 15:11:05',1,'2026-03-17 15:11:05',NULL,0),(4,'storekeeper','$2a$10$lquZWWPAEjT1D3Ugbh2NTuZURlkeRF.K3LJcRSDQSTq3ljats0T96','storekeeper',NULL,'',NULL,1,1,'2026-04-20 00:45:35',1,'2026-04-20 00:45:35',NULL,0),(5,'purchaser','$2a$10$MqEyuumZ9MXB/nmwzeV4euzEhnyxbn1Pvw.8b1S1V.g0BtZBrtgP2','purchaser',NULL,'',NULL,1,1,'2026-04-20 00:45:44',1,'2026-04-20 00:45:44',NULL,0),(6,'finance','$2a$10$7ahdyzysipm.sGUK/eC5u.kmXmANkbg6oHz/xJVympU3XDVbg1r.a','finance',NULL,'',NULL,1,1,'2026-04-20 00:45:54',1,'2026-04-20 00:45:54',NULL,0),(7,'customer_service','$2a$10$EI4ij7ybYwOwfck0R9xc7eYthj.vysnH7zYLup406nWkFLxXYqxXO','customer_service',NULL,'',NULL,1,1,'2026-04-20 00:46:07',1,'2026-04-20 00:46:07',NULL,0);
-/*!40000 ALTER TABLE `sys_admin` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `sys_admin_role`
---
-
-DROP TABLE IF EXISTS `sys_admin_role`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `sys_admin_role` (
-  `admin_id` bigint NOT NULL COMMENT '鐢ㄦ埛ID',
-  `role_id` bigint NOT NULL COMMENT '瑙掕壊ID',
-  PRIMARY KEY (`admin_id`,`role_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='鐢ㄦ埛瑙掕壊鍏宠仈琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `sys_admin_role`
---
-
-LOCK TABLES `sys_admin_role` WRITE;
-/*!40000 ALTER TABLE `sys_admin_role` DISABLE KEYS */;
-INSERT INTO `sys_admin_role` VALUES (1,1),(2,2),(3,2),(4,3),(5,4),(6,5),(7,6);
-/*!40000 ALTER TABLE `sys_admin_role` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `sys_api_metrics`
---
-
-DROP TABLE IF EXISTS `sys_api_metrics`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `sys_api_metrics` (
-  `metric_id` bigint NOT NULL AUTO_INCREMENT,
-  `api_path` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '鎺ュ彛璺緞',
-  `http_method` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'HTTP鏂规硶',
-  `stat_date` date NOT NULL COMMENT '缁熻鏃ユ湡',
-  `stat_hour` int DEFAULT NULL COMMENT '缁熻灏忔椂(0-23)',
-  `call_count` int DEFAULT '0' COMMENT '璋冪敤娆℃暟',
-  `success_count` int DEFAULT '0',
-  `fail_count` int DEFAULT '0',
-  `avg_cost_ms` int DEFAULT '0' COMMENT '骞冲潎鑰楁椂(ms)',
-  `max_cost_ms` int DEFAULT '0',
-  `p99_cost_ms` int DEFAULT '0',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`metric_id`) USING BTREE,
-  UNIQUE KEY `uk_api_date_hour` (`api_path`,`stat_date`,`stat_hour`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='鎺ュ彛鐩戞帶鎸囨爣琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `sys_api_metrics`
---
-
-LOCK TABLES `sys_api_metrics` WRITE;
-/*!40000 ALTER TABLE `sys_api_metrics` DISABLE KEYS */;
-/*!40000 ALTER TABLE `sys_api_metrics` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `sys_dict_data`
---
-
-DROP TABLE IF EXISTS `sys_dict_data`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `sys_dict_data` (
-  `dict_code` bigint NOT NULL AUTO_INCREMENT,
-  `dict_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '瀛楀吀绫诲瀷鏍囪瘑',
-  `dict_label` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '瀛楀吀鏍囩',
-  `dict_value` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '瀛楀吀鍊?,
-  `sort_order` int DEFAULT '0' COMMENT '鎺掑簭',
-  `remark` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '澶囨敞',
-  `del_flag` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`dict_code`) USING BTREE,
-  KEY `idx_dict_type` (`dict_type`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='瀛楀吀鏁版嵁琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `sys_dict_data`
---
-
-LOCK TABLES `sys_dict_data` WRITE;
-/*!40000 ALTER TABLE `sys_dict_data` DISABLE KEYS */;
-INSERT INTO `sys_dict_data` VALUES (1,'order_status','寰呮敮浠?,'0',0,NULL,0),(2,'order_status','鐢熶骇涓?,'1',1,NULL,0),(3,'order_status','寰呭彂璐?,'2',2,NULL,0),(4,'order_status','寰呮敹璐?,'3',3,NULL,0),(5,'order_status','宸插畬鎴?,'4',4,NULL,0),(6,'order_status','宸插彇娑?,'5',5,NULL,0),(7,'request_status','寰呭鐞?,'0',0,NULL,0),(8,'request_status','宸茶浆鍗?,'1',1,NULL,0),(9,'request_status','宸插叧闂?,'2',2,NULL,0),(10,'payment_type','棰勪粯娆?,'1',1,NULL,0),(11,'payment_type','灏炬','2',2,NULL,0),(12,'material_category','闈㈡枡','fabric',1,NULL,0),(13,'material_category','杈呮枡','accessory',2,NULL,0),(14,'material_category','浜旈噾浠?,'hardware',3,NULL,0);
-/*!40000 ALTER TABLE `sys_dict_data` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `sys_dict_type`
---
-
-DROP TABLE IF EXISTS `sys_dict_type`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `sys_dict_type` (
-  `dict_id` bigint NOT NULL AUTO_INCREMENT,
-  `dict_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '瀛楀吀鍚嶇О',
-  `dict_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '瀛楀吀绫诲瀷鏍囪瘑',
-  `remark` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '澶囨敞',
-  `create_by` bigint DEFAULT NULL,
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `update_by` bigint DEFAULT NULL,
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `del_flag` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`dict_id`) USING BTREE,
-  UNIQUE KEY `uk_dict_type` (`dict_type`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='瀛楀吀绫诲瀷琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `sys_dict_type`
---
-
-LOCK TABLES `sys_dict_type` WRITE;
-/*!40000 ALTER TABLE `sys_dict_type` DISABLE KEYS */;
-INSERT INTO `sys_dict_type` VALUES (1,'璁㈠崟鐘舵€?,'order_status','璁㈠崟鐢熷懡鍛ㄦ湡鐘舵€?,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(2,'鎰忓悜鐘舵€?,'request_status','瀹㈡埛鎰忓悜鐘舵€?,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(3,'鏀粯绫诲瀷','payment_type','鏀粯绫诲瀷',NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(4,'鐗╂枡鍒嗙被','material_category','鐗╂枡鍒嗙被',NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(5,'1','1','',NULL,'2026-04-05 14:58:11',NULL,'2026-04-05 15:03:50',1),(7,'2','2','',NULL,'2026-04-05 15:00:09',NULL,'2026-04-05 15:03:49',1);
-/*!40000 ALTER TABLE `sys_dict_type` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `sys_exception_log`
---
-
-DROP TABLE IF EXISTS `sys_exception_log`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `sys_exception_log` (
-  `exception_id` bigint NOT NULL AUTO_INCREMENT,
-  `exception_type` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '寮傚父绫诲瀷(绫诲悕)',
-  `exception_msg` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT '寮傚父娑堟伅',
-  `stack_trace` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT '鍫嗘爤淇℃伅',
-  `request_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '璇锋眰URL',
-  `request_method` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'HTTP鏂规硶',
-  `request_param` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT '璇锋眰鍙傛暟',
-  `operator_id` bigint DEFAULT NULL COMMENT '鎿嶄綔浜篒D',
-  `operator_ip` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鎿嶄綔浜篒P',
-  `is_handled` tinyint(1) DEFAULT '0' COMMENT '鏄惁宸插鐞?,
-  `handle_remark` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '澶勭悊澶囨敞',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '鍙戠敓鏃堕棿',
-  PRIMARY KEY (`exception_id`) USING BTREE,
-  KEY `idx_create_time` (`create_time`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='寮傚父鏃ュ織琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `sys_exception_log`
---
-
-LOCK TABLES `sys_exception_log` WRITE;
-/*!40000 ALTER TABLE `sys_exception_log` DISABLE KEYS */;
-/*!40000 ALTER TABLE `sys_exception_log` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `sys_login_log`
---
-
-DROP TABLE IF EXISTS `sys_login_log`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `sys_login_log` (
-  `login_id` bigint NOT NULL AUTO_INCREMENT,
-  `admin_id` bigint DEFAULT NULL COMMENT '鐧诲綍鐢ㄦ埛ID',
-  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鐧诲綍璐﹀彿',
-  `login_ip` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鐧诲綍IP',
-  `login_location` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鐧诲綍鍦扮偣',
-  `browser` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '娴忚鍣?,
-  `os` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鎿嶄綔绯荤粺',
-  `status` tinyint(1) DEFAULT NULL COMMENT '0=鎴愬姛,1=澶辫触',
-  `msg` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鎻愮ず娑堟伅',
-  `login_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '鐧诲綍鏃堕棿',
-  PRIMARY KEY (`login_id`) USING BTREE,
-  KEY `idx_admin` (`admin_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='鐧诲綍鏃ュ織琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `sys_login_log`
---
-
-LOCK TABLES `sys_login_log` WRITE;
-/*!40000 ALTER TABLE `sys_login_log` DISABLE KEYS */;
-/*!40000 ALTER TABLE `sys_login_log` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `sys_menu`
---
-
-DROP TABLE IF EXISTS `sys_menu`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `sys_menu` (
-  `menu_id` bigint NOT NULL AUTO_INCREMENT,
-  `parent_id` bigint DEFAULT '0' COMMENT '鐖惰彍鍗旾D',
-  `menu_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '鑿滃崟鍚嶇О',
-  `menu_type` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'M=鐩綍,C=鑿滃崟,F=鎸夐挳',
-  `path` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '璺敱鍦板潃',
-  `component` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '缁勪欢璺緞',
-  `perms` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鏉冮檺鏍囪瘑(濡俹rder:list)',
-  `icon` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鍥炬爣',
-  `sort_order` int DEFAULT '0' COMMENT '鎺掑簭',
-  `visible` tinyint(1) DEFAULT '1' COMMENT '鏄惁鍙',
-  `create_by` bigint DEFAULT NULL,
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `update_by` bigint DEFAULT NULL,
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `del_flag` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`menu_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=34 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='鑿滃崟鏉冮檺琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `sys_menu`
---
-
-LOCK TABLES `sys_menu` WRITE;
-/*!40000 ALTER TABLE `sys_menu` DISABLE KEYS */;
-INSERT INTO `sys_menu` VALUES (1,0,'璁㈠崟绠＄悊','M','/order',NULL,NULL,'ShoppingCart',3,1,NULL,'2026-03-04 15:06:58',NULL,'2026-04-11 14:05:26',0),(2,0,'鎰忓悜绠＄悊','M','/request',NULL,NULL,'Mail',4,1,NULL,'2026-03-04 15:06:58',NULL,'2026-04-11 14:05:26',0),(3,0,'閰嶇疆涓績','M','/config',NULL,NULL,'Settings',8,1,NULL,'2026-03-04 15:06:58',NULL,'2026-04-11 14:05:26',0),(4,0,'渚涘簲閾?,'M','/supply',NULL,NULL,'Package',6,1,NULL,'2026-03-04 15:06:58',NULL,'2026-04-11 14:05:26',0),(5,0,'浣滃搧闆?,'M','/portfolio',NULL,NULL,'Image',5,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(6,0,'鏁版嵁鍒嗘瀽','M','/statistics',NULL,NULL,'TrendingUp',7,1,NULL,'2026-03-04 15:06:58',NULL,'2026-04-11 14:05:26',0),(7,0,'绯荤粺绠＄悊','M','/system',NULL,NULL,'Tool',9,1,NULL,'2026-03-04 15:06:58',NULL,'2026-04-11 14:05:26',0),(8,1,'璁㈠崟鐪嬫澘','C','/order/kanban',NULL,'order:kanban',NULL,1,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(9,1,'璁㈠崟鍒楄〃','C','/order/list',NULL,'order:list',NULL,2,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(10,2,'鎰忓悜姹?,'C','/request/list',NULL,'request:list',NULL,1,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(11,3,'鍝佺被绠＄悊','C','/config/category',NULL,'category:list',NULL,1,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(12,3,'鍔ㄦ€佸瓧娈?,'C','/config/field',NULL,'field:list',NULL,2,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(13,3,'宸ヤ綔娴佺鐞?,'C','/config/workflow',NULL,'workflow:list',NULL,3,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(14,4,'鐗╂枡绠＄悊','C','/supply/material',NULL,'material:list',NULL,1,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(15,4,'BOM妯℃澘','C','/supply/bom',NULL,'bom:list',NULL,2,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(16,5,'浣滃搧绠＄悊','C','/portfolio/list',NULL,'portfolio:list',NULL,1,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(17,6,'缁忚惀鐪嬫澘','C','/statistics/dashboard',NULL,'statistics:dashboard',NULL,1,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(18,7,'鐢ㄦ埛绠＄悊','C','/system/admin',NULL,'admin:list',NULL,1,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(19,7,'瑙掕壊绠＄悊','C','/system/role',NULL,'role:list',NULL,2,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(20,7,'鑿滃崟绠＄悊','C','/system/menu',NULL,'menu:list',NULL,3,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(21,7,'瀛楀吀绠＄悊','C','/system/dict',NULL,'dict:list',NULL,4,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(22,7,'鎿嶄綔鏃ュ織','C','/system/log',NULL,'log:list',NULL,5,1,NULL,'2026-03-04 15:06:58',NULL,'2026-03-04 15:06:58',0),(23,0,'娑堟伅涓績','M','/chat',NULL,NULL,'ChatboxEllipsesOutline',2,1,NULL,'2026-03-25 19:24:46',NULL,'2026-04-11 14:05:26',0),(24,23,'鍦ㄧ嚎娌熼€?,'C','/chat/index',NULL,'chat:list',NULL,1,1,NULL,'2026-03-25 19:24:46',NULL,'2026-03-25 19:24:46',0),(25,0,'鑺傜偣宸ヤ綔鍙?,'M','/workbench','LAYOUT',NULL,'AppstoreOutlined',1,1,NULL,'2026-04-09 20:59:05',NULL,'2026-04-11 14:05:26',0),(26,25,'鑺傜偣宸ヤ綔鍙?,'C','nodes','/order/workbench','workbench:list',NULL,1,1,NULL,'2026-04-09 20:59:05',NULL,'2026-04-09 21:04:12',0),(27,4,'搴撳瓨绠＄悊','C','/supply/inventory',NULL,'inventory:list','CubeOutline',3,1,NULL,'2026-04-14 22:09:37',NULL,'2026-04-14 22:09:37',0),(28,4,'搴撳瓨璁板綍','C','/supply/inventory/record',NULL,'inventory:record','ListOutline',4,1,NULL,'2026-04-14 22:09:37',NULL,'2026-04-14 22:09:37',0),(29,0,'瀹㈡埛绠＄悊','M','/customer',NULL,NULL,'PeopleOutline',9,1,NULL,'2026-04-14 22:09:37',NULL,'2026-04-14 22:09:37',0),(30,29,'瀹㈡埛鍒楄〃','C','/customer/list',NULL,'customer:list',NULL,1,1,NULL,'2026-04-14 22:09:37',NULL,'2026-04-14 22:09:37',0),(31,29,'鍦板潃绠＄悊','C','/customer/address',NULL,'customer:address',NULL,2,1,NULL,'2026-04-14 22:09:37',NULL,'2026-04-14 22:09:37',0),(32,3,'杞挱鍥剧鐞?,'C','/config/banner',NULL,'banner:list','ImagesOutline',4,1,NULL,'2026-04-14 22:09:37',NULL,'2026-04-14 22:09:37',0),(33,3,'AI閰嶇疆','C','/config/ai',NULL,'ai:config','HardwareChipOutline',5,1,NULL,'2026-04-20 01:01:17',NULL,'2026-04-20 01:01:17',0);
-/*!40000 ALTER TABLE `sys_menu` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `sys_role`
---
-
-DROP TABLE IF EXISTS `sys_role`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `sys_role` (
-  `role_id` bigint NOT NULL AUTO_INCREMENT,
-  `role_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '瑙掕壊鍚嶇О',
-  `role_key` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '瑙掕壊鏍囪瘑(admin/designer)',
-  `role_type` varchar(50) DEFAULT NULL COMMENT '瑙掕壊绫诲瀷: admin/designer/storekeeper/purchaser/finance/customer_service',
-  `remark` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '澶囨敞',
-  `create_by` bigint DEFAULT NULL,
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP,
-  `update_by` bigint DEFAULT NULL,
-  `update_time` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `del_flag` tinyint(1) DEFAULT '0',
-  PRIMARY KEY (`role_id`) USING BTREE,
-  UNIQUE KEY `uk_role_key` (`role_key`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='瑙掕壊琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `sys_role`
---
-
-LOCK TABLES `sys_role` WRITE;
-/*!40000 ALTER TABLE `sys_role` DISABLE KEYS */;
-INSERT INTO `sys_role` VALUES (1,'绠＄悊鍛?,'admin','admin','Full backend access',NULL,'2026-03-04 15:06:58',NULL,'2026-04-14 22:09:37',0),(2,'璁捐甯?,'designer','designer','Order execution, request handling, portfolio and chat access',NULL,'2026-03-04 15:06:58',NULL,'2026-04-14 22:09:37',0),(3,'搴撶','storekeeper','storekeeper','璐熻矗鐗╂枡绠＄悊鍜屽簱瀛樻煡鐪?,NULL,'2026-04-14 22:09:37',NULL,'2026-04-14 22:09:37',0),(4,'閲囪喘','purchaser','purchaser','璐熻矗鐗╂枡閲囪喘鍜屽簱瀛樼鐞?,NULL,'2026-04-14 22:09:37',NULL,'2026-04-14 22:09:37',0),(5,'璐㈠姟','finance','finance','璐熻矗璁㈠崟鏀舵鍜岃储鍔℃姤琛?,NULL,'2026-04-14 22:09:37',NULL,'2026-04-14 22:09:37',0),(6,'瀹㈡湇','customer_service','customer_service','璐熻矗瀹㈡埛娌熼€氬拰鍦ㄧ嚎绛旂枒',NULL,'2026-04-14 22:09:37',NULL,'2026-04-14 22:09:37',0);
-/*!40000 ALTER TABLE `sys_role` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Table structure for table `sys_role_menu`
---
-
-DROP TABLE IF EXISTS `sys_role_menu`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `sys_role_menu` (
-  `role_id` bigint NOT NULL COMMENT '瑙掕壊ID',
-  `menu_id` bigint NOT NULL COMMENT '鑿滃崟ID',
-  PRIMARY KEY (`role_id`,`menu_id`) USING BTREE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='瑙掕壊鑿滃崟鍏宠仈琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-
---
--- Dumping data for table `sys_role_menu`
---
-
-LOCK TABLES `sys_role_menu` WRITE;
-/*!40000 ALTER TABLE `sys_role_menu` DISABLE KEYS */;
-INSERT INTO `sys_role_menu` VALUES (1,1),(1,2),(1,3),(1,4),(1,5),(1,6),(1,7),(1,8),(1,9),(1,10),(1,11),(1,12),(1,13),(1,14),(1,15),(1,16),(1,17),(1,18),(1,19),(1,20),(1,21),(1,22),(1,23),(1,24),(1,25),(1,26),(1,27),(1,28),(1,29),(1,30),(1,31),(1,32),(1,33),(2,1),(2,2),(2,5),(2,6),(2,8),(2,9),(2,10),(2,16),(2,17),(2,23),(2,24),(2,25),(2,26),(3,4),(3,14),(3,27),(3,28),(4,4),(4,14),(4,27),(4,28),(5,1),(5,6),(5,9),(5,17),(6,23),(6,24),(6,29),(6,30),(6,31);
-/*!40000 ALTER TABLE `sys_role_menu` ENABLE KEYS */;
-UNLOCK TABLES;
-
---
--- Dumping routines for database 'design_studio'
---
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
-
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
-
--- Dump completed
-
--- MySQL dump 10.13  Distrib 8.4.8, for Win64 (x86_64)
---
--- Host: localhost    Database: design_studio
--- ------------------------------------------------------
--- Server version	8.4.8
-
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
-
---
--- Table structure for table `ds_ai_config`
---
-
+  INDEX `idx_user`(`user_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '客户地址表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of ds_address
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for ds_ai_config
+-- ----------------------------
 DROP TABLE IF EXISTS `ds_ai_config`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `ds_ai_config` (
+CREATE TABLE `ds_ai_config`  (
   `config_id` bigint NOT NULL AUTO_INCREMENT COMMENT 'Primary key',
-  `provider_name` varchar(100) DEFAULT NULL COMMENT 'Provider name',
-  `enabled` tinyint(1) DEFAULT '0' COMMENT 'Enabled flag',
-  `api_url` varchar(500) DEFAULT NULL COMMENT 'OpenAI compatible endpoint',
-  `api_key` varchar(500) DEFAULT NULL COMMENT 'API key',
-  `model` varchar(100) DEFAULT NULL COMMENT 'Model name',
-  `system_prompt` text COMMENT 'System prompt',
-  `create_by` bigint DEFAULT NULL COMMENT 'Created by',
-  `create_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT 'Created time',
-  `update_by` bigint DEFAULT NULL COMMENT 'Updated by',
-  `update_time` datetime DEFAULT NULL COMMENT 'Updated time',
-  `del_flag` tinyint(1) DEFAULT '0' COMMENT 'Logical delete flag',
+  `provider_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'Provider name',
+  `enabled` tinyint(1) NULL DEFAULT 0 COMMENT 'Enabled flag',
+  `api_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'OpenAI compatible endpoint',
+  `api_key` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'API key',
+  `model` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'Model name',
+  `system_prompt` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT 'System prompt',
+  `create_by` bigint NULL DEFAULT NULL COMMENT 'Created by',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Created time',
+  `update_by` bigint NULL DEFAULT NULL COMMENT 'Updated by',
+  `update_time` datetime NULL DEFAULT NULL COMMENT 'Updated time',
+  `del_flag` tinyint(1) NULL DEFAULT 0 COMMENT 'Logical delete flag',
   PRIMARY KEY (`config_id`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='AI customer service config';
-/*!40101 SET character_set_client = @saved_cs_client */;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+) ENGINE = InnoDB AUTO_INCREMENT = 2 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = 'AI customer service config' ROW_FORMAT = Dynamic;
 
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+-- ----------------------------
+-- Records of ds_ai_config
+-- ----------------------------
+INSERT INTO `ds_ai_config` VALUES (1, 'DeepSeek', 1, 'https://api.deepseek.com/chat/completions', 'sk-02943ca6b8db4fbf84151ac565318f2f', 'deepseek-v4-flash', '你是 ZeHana 独立设计师工作室的智能客服「小Z」。你的角色不是普通闲聊机器人，而是客户的专属定制管家，负责帮助客户理解定制流程、订单进度、付款节点、交付安排、作品案例和沟通方式。\n\n服务风格：\n1. 使用温和、专业、简洁的中文，语气像工作室助理，不要机械、不要过度营销。\n2. 先回应客户真实诉求，再给出下一步建议；复杂问题分点说明。\n3. 当客户焦虑、催进度、询问付款或交付时，要安抚情绪，并基于系统提供的实时订单上下文回答。\n\n记忆与上下文：\n1. 你会看到最近的聊天记录，请把其中的客户偏好、尺寸、风格、预算、交付时间、忌讳元素、沟通习惯当作短期记忆使用。\n2. 如果上下文中已经出现过客户偏好，后续回答要自然承接，例如“你之前提到喜欢更简洁的线条”。\n3. 不能把没有出现在系统上下文或聊天记录里的信息当成事实；不确定时要说明“我这边暂时没有看到该信息”。\n4. 涉及订单号、当前节点、金额、预计交付、最近进度时，只能基于系统注入的实时订单信息回答，禁止编造。\n\n业务边界：\n1. 你可以解释定制流程、引导客户查看订单详情、付款、通知中心、作品集或填写定制需求。\n2. 你不能承诺不存在的工期、折扣、退款结果或人工已经处理的事项。\n3. 遇到投诉、复杂改款、退款、地址异常、紧急交付等高风险问题，要建议联系人工客服或等待设计师确认。\n4. 如果聊天中出现进度卡片、支付卡片、作品集卡片、定制入口卡片或通知卡片，要引导客户点击卡片继续操作。', 1, '2026-05-01 14:32:05', 1, '2026-05-04 17:50:42', 0);
 
--- Dump completed
+-- ----------------------------
+-- Table structure for ds_banner
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_banner`;
+CREATE TABLE `ds_banner`  (
+  `banner_id` bigint NOT NULL AUTO_INCREMENT COMMENT '轮播图ID',
+  `title` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '轮播图标题',
+  `image_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '图片地址',
+  `link_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '跳转链接（可选）',
+  `link_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '跳转类型：portfolio/order/custom/null',
+  `sort_order` int NULL DEFAULT 0 COMMENT '排序（越大越靠前）',
+  `status` tinyint(1) NULL DEFAULT 1 COMMENT '状态：0禁用 1启用',
+  `create_by` bigint NULL DEFAULT NULL,
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_by` bigint NULL DEFAULT NULL,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  PRIMARY KEY (`banner_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '小程序首页轮播图' ROW_FORMAT = Dynamic;
 
--- Sanitized seed data for ds_ai_config
-INSERT INTO `ds_ai_config` VALUES (1, 'OpenAI Compatible', 1, 'https://api.example.com/v1/chat/completions', 'your-api-key', 'your-model-name', '你是 ZeHana 独立设计师工作室的智能客服「小Z」。你的角色不是普通闲聊机器人，而是客户的专属定制管家，负责帮助客户理解定制流程、订单进度、付款节点、交付安排、作品案例和沟通方式。请使用温和、专业、简洁的中文，先回应客户真实诉求，再给出下一步建议。你会看到最近聊天记录，请把客户偏好、尺寸、风格、预算、交付时间、忌讳元素、沟通习惯当作短期记忆使用，但不能编造没有出现在系统上下文或聊天记录里的信息。涉及订单号、当前节点、金额、预计交付、最近进度时，只能基于系统注入的实时订单信息回答。不确定时说明暂时没有看到该信息。遇到投诉、退款、紧急交付、复杂改款等高风险问题，要建议联系人工客服或等待设计师确认。如果聊天中出现进度卡片、支付卡片、作品集卡片、定制入口卡片或通知卡片，要引导客户点击卡片继续操作。', 1, '2026-05-01 14:32:05', 1, '2026-05-01 14:32:05', 0);
+-- ----------------------------
+-- Records of ds_banner
+-- ----------------------------
+INSERT INTO `ds_banner` VALUES (1, '示例轮播图1', '/static/images/home-banner-couture.png', NULL, NULL, 1, 1, NULL, '2026-04-14 22:09:31', NULL, '2026-05-04 15:10:16', 0);
+INSERT INTO `ds_banner` VALUES (2, '示例轮播图2', '/static/images/home-banner-leather.png', NULL, NULL, 2, 1, NULL, '2026-04-14 22:09:31', NULL, '2026-05-04 15:10:16', 0);
 
--- MySQL dump 10.13  Distrib 8.4.8, for Win64 (x86_64)
---
--- Host: localhost    Database: design_studio
--- ------------------------------------------------------
--- Server version	8.4.8
+-- ----------------------------
+-- Table structure for ds_bill_record
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_bill_record`;
+CREATE TABLE `ds_bill_record`  (
+  `bill_id` bigint NOT NULL AUTO_INCREMENT,
+  `bill_date` date NOT NULL COMMENT '账单日期',
+  `wx_transaction_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '微信交易号',
+  `local_payment_no` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '本地流水号',
+  `wx_amount` decimal(10, 2) NULL DEFAULT NULL COMMENT '微信账单金额',
+  `local_amount` decimal(10, 2) NULL DEFAULT NULL COMMENT '本地记录金额',
+  `match_status` tinyint(1) NULL DEFAULT NULL COMMENT '0=匹配,1=金额不符,2=本地缺失,3=微信缺失',
+  `handle_status` tinyint(1) NULL DEFAULT 0 COMMENT '0=待处理,1=已处理',
+  `handle_remark` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '处理备注',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`bill_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '对账记录表' ROW_FORMAT = DYNAMIC;
 
-/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
-/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
-/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
-/*!50503 SET NAMES utf8mb4 */;
-/*!40103 SET @OLD_TIME_ZONE=@@TIME_ZONE */;
-/*!40103 SET TIME_ZONE='+00:00' */;
-/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
-/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
-/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
-/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+-- ----------------------------
+-- Records of ds_bill_record
+-- ----------------------------
 
---
--- Table structure for table `sys_oper_log`
---
+-- ----------------------------
+-- Table structure for ds_bom_item
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_bom_item`;
+CREATE TABLE `ds_bom_item`  (
+  `bom_item_id` bigint NOT NULL AUTO_INCREMENT,
+  `order_id` bigint NOT NULL COMMENT '所属订单',
+  `material_id` bigint NOT NULL COMMENT '物料ID',
+  `quantity` decimal(10, 2) NOT NULL COMMENT '实际用量',
+  `material_snapshot` json NULL COMMENT '物料快照(名称、单价)',
+  `is_allocated` tinyint(1) NULL DEFAULT 0 COMMENT '是否已出库',
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  PRIMARY KEY (`bom_item_id`) USING BTREE,
+  INDEX `idx_order`(`order_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单BOM清单表' ROW_FORMAT = DYNAMIC;
 
+-- ----------------------------
+-- Records of ds_bom_item
+-- ----------------------------
+INSERT INTO `ds_bom_item` VALUES (1, 7, 1, 3.50, '{\"sku\": \"FAB-LINEN-001\", \"name\": \"高级亚麻面料（浅米色）\", \"unit\": \"米\", \"unitPrice\": 120.0}', 0, 0);
+INSERT INTO `ds_bom_item` VALUES (2, 7, 6, 2.00, '{\"sku\": \"FAB-COTTON-001\", \"name\": \"纯棉衬里（白色）\", \"unit\": \"米\", \"unitPrice\": 35.0}', 0, 0);
+INSERT INTO `ds_bom_item` VALUES (3, 7, 5, 1.00, '{\"sku\": \"ACC-ZIP-001\", \"name\": \"YKK拉链（20cm）\", \"unit\": \"条\", \"unitPrice\": 8.5}', 0, 0);
+INSERT INTO `ds_bom_item` VALUES (4, 7, 9, 2.00, '{\"sku\": \"HW-SNAP-001\", \"name\": \"暗扣\", \"unit\": \"套\", \"unitPrice\": 3.0}', 0, 0);
+INSERT INTO `ds_bom_item` VALUES (5, 7, 10, 1.00, '{\"sku\": \"PKG-BOX-001\", \"name\": \"包装盒（大号）\", \"unit\": \"个\", \"unitPrice\": 15.0}', 0, 0);
+INSERT INTO `ds_bom_item` VALUES (6, 8, 1, 3.50, '{\"sku\": \"FAB-LINEN-001\", \"name\": \"高级亚麻面料（浅米色）\", \"unit\": \"米\", \"unitPrice\": 120.0}', 1, 0);
+INSERT INTO `ds_bom_item` VALUES (7, 8, 6, 2.00, '{\"sku\": \"FAB-COTTON-001\", \"name\": \"纯棉衬里（白色）\", \"unit\": \"米\", \"unitPrice\": 35.0}', 1, 0);
+INSERT INTO `ds_bom_item` VALUES (8, 8, 5, 1.00, '{\"sku\": \"ACC-ZIP-001\", \"name\": \"YKK拉链（20cm）\", \"unit\": \"条\", \"unitPrice\": 8.5}', 1, 0);
+INSERT INTO `ds_bom_item` VALUES (9, 8, 9, 2.00, '{\"sku\": \"HW-SNAP-001\", \"name\": \"暗扣\", \"unit\": \"套\", \"unitPrice\": 3.0}', 1, 0);
+INSERT INTO `ds_bom_item` VALUES (10, 8, 10, 1.00, '{\"sku\": \"PKG-BOX-001\", \"name\": \"包装盒（大号）\", \"unit\": \"个\", \"unitPrice\": 15.0}', 1, 0);
+
+-- ----------------------------
+-- Table structure for ds_bom_template
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_bom_template`;
+CREATE TABLE `ds_bom_template`  (
+  `template_id` bigint NOT NULL AUTO_INCREMENT,
+  `name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '模板名称',
+  `category_id` bigint NULL DEFAULT NULL COMMENT '关联品类',
+  `remark` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '备注',
+  `create_by` bigint NULL DEFAULT NULL,
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_by` bigint NULL DEFAULT NULL,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  PRIMARY KEY (`template_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = 'BOM模板表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of ds_bom_template
+-- ----------------------------
+INSERT INTO `ds_bom_template` VALUES (1, '旗袍标准BOM', 1, '旗袍类服装的标准物料清单', NULL, '2026-03-17 15:11:05', NULL, '2026-03-17 15:11:05', 0);
+INSERT INTO `ds_bom_template` VALUES (2, '手工钱包BOM', 2, '小型皮具钱包的标准物料清单', NULL, '2026-03-17 15:11:05', NULL, '2026-03-17 15:11:05', 0);
+
+-- ----------------------------
+-- Table structure for ds_bom_template_item
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_bom_template_item`;
+CREATE TABLE `ds_bom_template_item`  (
+  `item_id` bigint NOT NULL AUTO_INCREMENT,
+  `template_id` bigint NOT NULL COMMENT '所属模板',
+  `material_id` bigint NOT NULL COMMENT '物料ID',
+  `quantity` decimal(10, 2) NOT NULL COMMENT '所需数量',
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  PRIMARY KEY (`item_id`) USING BTREE,
+  INDEX `idx_template`(`template_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = 'BOM模板明细表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of ds_bom_template_item
+-- ----------------------------
+INSERT INTO `ds_bom_template_item` VALUES (1, 1, 1, 3.50, 0);
+INSERT INTO `ds_bom_template_item` VALUES (2, 1, 6, 2.00, 0);
+INSERT INTO `ds_bom_template_item` VALUES (3, 1, 5, 1.00, 0);
+INSERT INTO `ds_bom_template_item` VALUES (4, 1, 9, 2.00, 0);
+INSERT INTO `ds_bom_template_item` VALUES (5, 1, 10, 1.00, 0);
+INSERT INTO `ds_bom_template_item` VALUES (6, 2, 3, 0.50, 0);
+INSERT INTO `ds_bom_template_item` VALUES (7, 2, 8, 1.00, 0);
+INSERT INTO `ds_bom_template_item` VALUES (8, 2, 7, 4.00, 0);
+INSERT INTO `ds_bom_template_item` VALUES (9, 2, 9, 1.00, 0);
+INSERT INTO `ds_bom_template_item` VALUES (10, 2, 10, 1.00, 0);
+
+-- ----------------------------
+-- Table structure for ds_category
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_category`;
+CREATE TABLE `ds_category`  (
+  `category_id` bigint NOT NULL AUTO_INCREMENT COMMENT '品类ID',
+  `name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '品类名称',
+  `icon_url` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '图标URL',
+  `is_active` tinyint(1) NULL DEFAULT 1 COMMENT '是否启用',
+  `has_bom` tinyint(1) NULL DEFAULT 0 COMMENT '是否需要BOM',
+  `is_physical` tinyint(1) NULL DEFAULT 1 COMMENT '是否实体产品',
+  `sort_order` int NULL DEFAULT 0 COMMENT '排序',
+  `create_by` bigint NULL DEFAULT NULL COMMENT '创建人',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_by` bigint NULL DEFAULT NULL COMMENT '更新人',
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `del_flag` tinyint(1) NULL DEFAULT 0 COMMENT '逻辑删除',
+  PRIMARY KEY (`category_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '品类表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of ds_category
+-- ----------------------------
+INSERT INTO `ds_category` VALUES (1, '服装定制', NULL, 1, 1, 1, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `ds_category` VALUES (2, '手工皮具', NULL, 1, 1, 1, 2, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `ds_category` VALUES (3, '数字插画', NULL, 1, 0, 0, 3, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+
+-- ----------------------------
+-- Table structure for ds_chat_message
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_chat_message`;
+CREATE TABLE `ds_chat_message`  (
+  `msg_id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NOT NULL COMMENT '所属客户',
+  `sender_type` tinyint(1) NOT NULL COMMENT '0=客户,1=设计师',
+  `sender_id` bigint NULL DEFAULT NULL COMMENT '???ID?AI/?????????0',
+  `content_type` tinyint(1) NULL DEFAULT 0 COMMENT '0=??,1=??,3=??????,4=??????',
+  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '消息内容',
+  `extra_json` json NULL COMMENT '?????????',
+  `is_read` tinyint(1) NULL DEFAULT 0 COMMENT '是否已读',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  `order_id` bigint NULL DEFAULT NULL COMMENT '关联订单ID',
+  PRIMARY KEY (`msg_id`) USING BTREE,
+  INDEX `idx_sender`(`sender_type` ASC, `sender_id` ASC) USING BTREE,
+  INDEX `idx_user`(`user_id` ASC) USING BTREE,
+  INDEX `idx_order`(`order_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 36 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '聊天记录表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of ds_chat_message
+-- ----------------------------
+INSERT INTO `ds_chat_message` VALUES (1, 1, 0, 1, 0, 'hallop', NULL, 1, '2026-04-06 15:09:44', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (2, 1, 1, 2, 0, '1', NULL, 1, '2026-04-06 15:11:24', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (3, 1, 0, 1, 0, '关注', NULL, 1, '2026-04-09 19:56:14', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (4, 1, 0, 1, 0, '你好', NULL, 1, '2026-04-09 21:36:36', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (5, 1, 1, 1, 0, '好', NULL, 1, '2026-04-09 21:36:43', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (6, 1, 0, 1, 0, '订单6的咨询消息', NULL, 1, '2026-04-10 23:52:00', 0, 6);
+INSERT INTO `ds_chat_message` VALUES (7, 1, 1, 2, 0, '好的，我来处理订单6', NULL, 0, '2026-04-10 23:52:00', 0, 6);
+INSERT INTO `ds_chat_message` VALUES (8, 1, 0, 1, 0, '订单7有问题想问', NULL, 1, '2026-04-10 23:52:00', 0, 7);
+INSERT INTO `ds_chat_message` VALUES (9, 1, 1, 1, 0, '订单6的最新进展如何？', NULL, 0, '2026-04-10 23:57:14', 0, 6);
+INSERT INTO `ds_chat_message` VALUES (10, 1, 0, 1, 0, '123', NULL, 1, '2026-04-11 18:00:41', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (11, 5, 0, 5, 0, '你好，测试', NULL, 1, '2026-05-04 16:07:49', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (12, 5, 0, 5, 0, '请你回复', NULL, 1, '2026-05-04 17:55:51', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (13, 5, 2, 0, 0, '你好！欢迎来到 ZeHana 独立设计师工作室，我是你的专属定制管家小Z 😊\n\n请问今天有什么可以帮你的呢？无论你是想了解定制流程、查看订单进度，还是希望我帮你推荐风格方案，都可以告诉我～', NULL, 0, '2026-05-04 17:55:52', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (14, 5, 0, 5, 0, '转人工', NULL, 1, '2026-05-04 17:56:00', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (15, 5, 2, 0, 4, '需要人工帮助吗？', '{\"title\": \"需要人工帮助吗？\", \"cardType\": \"action_card\", \"iconType\": \"service\", \"actionUrl\": \"/pages/chat/index\", \"actionText\": \"联系人工客服\", \"description\": \"你可以直接进入专属沟通页，设计师和客服会看到你的消息上下文。\"}', 0, '2026-05-04 17:56:00', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (16, 5, 2, 0, 0, '好的，我理解你的需求。\n\n不过在你转接人工之前，能否先告诉我你遇到的具体问题是什么？比如：\n\n- 是订单进度需要加急？\n- 还是对设计稿有修改意见？\n- 或者想了解定制方案、付款方式等？\n\n这样我可以先帮你看看系统信息，或者直接引导你联系对应设计师。如果确实需要直接对接人工客服，我也可以帮你转接。\n\n请简单描述一下，我会尽快协助你～', NULL, 0, '2026-05-04 17:56:02', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (17, 5, 0, 5, 4, '用户请求转人工客服，请尽快接入处理。', '{\"title\": \"转人工请求\", \"cardType\": \"handoff_request\", \"description\": \"用户请求转人工客服，请尽快接入处理。\"}', 1, '2026-05-05 00:28:56', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (18, 5, 1, 1, 0, '你好，我是人工客服', NULL, 1, '2026-05-05 00:29:21', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (19, 5, 0, 5, 1, 'http://tmp/KZnG171YWw2L0e7c969469c03aadcdf7958309a6d371.png', NULL, 1, '2026-05-05 00:29:46', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (20, 5, 2, 0, 0, '您好，感谢您提供的图片链接。不过作为文字客服，我这边暂时无法直接查看或解析图片内容。\n\n为了更好地帮助您，请您描述一下图片中显示的内容，例如：\n\n- 是订单截图吗？如果是，可以告诉我订单编号或当前状态。\n- 是设计稿或参考图吗？如果是，请简单描述您希望调整的方向或风格偏好。\n\n我会根据您的描述，结合系统信息，尽快为您处理或转接设计师确认。', NULL, 0, '2026-05-05 00:29:48', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (21, 5, 0, 5, 4, '用户请求转人工客服，请尽快接入处理。', '{\"title\": \"转人工请求\", \"cardType\": \"handoff_request\", \"description\": \"用户请求转人工客服，请尽快接入处理。\"}', 1, '2026-05-05 20:28:15', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (22, 5, 0, 5, 0, '弄好', 'null', 1, '2026-05-05 20:28:20', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (23, 5, 1, 1, 0, '？', NULL, 1, '2026-05-05 20:28:42', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (24, 5, 1, 1, 0, '?', NULL, 1, '2026-05-05 20:28:44', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (25, 5, 1, 1, 4, '人工服务已处理，AI客服已恢复自动接待。', '{\"title\": \"AI客服已恢复\", \"cardType\": \"handoff_resolved\", \"description\": \"人工服务已处理，AI客服已恢复自动接待。\"}', 1, '2026-05-05 20:33:01', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (26, 5, 0, 5, 0, '怎么说', 'null', 1, '2026-05-05 20:33:09', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (27, 5, 2, 0, 0, '抱歉，我理解你可能有些困惑。让我重新梳理一下：\n\n刚才你希望转接人工客服，系统已经为你转接了一次，并由人工客服回应了你发送的图片链接。但由于我这边无法查看图片内容，所以需要你进一步说明具体情况。\n\n请问现在你遇到的问题是：\n\n1. **关于订单进度** — 如果是订单状态、交付时间等，请告诉我订单编号，我可以帮你查看系统信息。\n2. **关于设计修改** — 如果是想调整设计稿，请简单描述修改需求（如颜色、尺寸、元素等），我会记录并转达设计师。\n3. **其他问题** — 比如付款、地址、退款等，也请直接告诉我。\n\n你只需简单说一句，我就能帮你处理或再次转接人工。😊', NULL, 0, '2026-05-05 20:33:12', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (28, 5, 0, 5, 1, '/uploads/chat/2dbe01f4d8fa4ce69f70a977c4432fc1.png', '{\"fileUrl\": \"/uploads/chat/2dbe01f4d8fa4ce69f70a977c4432fc1.png\", \"fileName\": \"wRAe8reV2cCU0e7c969469c03aadcdf7958309a6d371.png\", \"fileSize\": 11784254, \"mimeType\": \"image/*\"}', 1, '2026-05-05 20:33:23', 0, NULL);
+INSERT INTO `ds_chat_message` VALUES (29, 5, 0, 5, 0, '哈喽哈喽', 'null', 1, '2026-05-05 21:08:21', 0, 10);
+INSERT INTO `ds_chat_message` VALUES (30, 5, 2, 0, 0, '你好！看到你发来的图片链接，我这边依然无法直接查看图片内容。不过别担心，我们可以换个方式沟通——\n\n请问这张图片是关于：\n\n1. **订单信息截图** — 如果是订单编号或进度页面，请告诉我截图里的订单号或当前状态，我帮你查看系统记录。\n2. **设计参考图** — 如果是你喜欢的风格、配色或元素，请简单描述一下（例如“简约线条风”、“暖色调花卉”），我会记录并转达给设计师。\n3. **其他需求** — 比如付款问题、交付时间等，直接告诉我，我会尽快协助。\n\n你之前在咨询订单 DS202605052107539606（数字插画，待支付状态），请问和这个订单有关吗？还是新的需求呢？😊', NULL, 0, '2026-05-05 21:08:24', 0, 10);
+INSERT INTO `ds_chat_message` VALUES (31, 5, 0, 5, 4, '用户请求转人工客服，请尽快接入处理。', '{\"title\": \"转人工请求\", \"orderId\": 10, \"cardType\": \"handoff_request\", \"description\": \"用户请求转人工客服，请尽快接入处理。\"}', 1, '2026-05-05 21:08:27', 0, 10);
+INSERT INTO `ds_chat_message` VALUES (32, 5, 1, 1, 0, '来喽', NULL, 0, '2026-05-05 21:08:42', 0, 10);
+INSERT INTO `ds_chat_message` VALUES (33, 5, 0, 5, 0, '好了', 'null', 1, '2026-05-05 21:08:50', 0, 10);
+INSERT INTO `ds_chat_message` VALUES (34, 5, 0, 5, 0, '我付定金了', 'null', 1, '2026-05-05 21:08:57', 0, 10);
+INSERT INTO `ds_chat_message` VALUES (35, 5, 1, 1, 4, '人工服务已处理，AI客服已恢复自动接待。', '{\"title\": \"AI客服已恢复\", \"orderId\": 10, \"cardType\": \"handoff_resolved\", \"description\": \"人工服务已处理，AI客服已恢复自动接待。\"}', 0, '2026-05-05 21:32:59', 0, 10);
+
+-- ----------------------------
+-- Table structure for ds_custom_field
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_custom_field`;
+CREATE TABLE `ds_custom_field`  (
+  `field_id` bigint NOT NULL AUTO_INCREMENT,
+  `category_id` bigint NOT NULL COMMENT '所属品类',
+  `label` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '字段显示名',
+  `field_key` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '字段键名',
+  `field_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '控件类型: text/number/select/date/image',
+  `unit` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '单位',
+  `options` json NULL COMMENT '选项列表(select用)',
+  `placeholder` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '输入提示',
+  `is_required` tinyint(1) NULL DEFAULT 0 COMMENT '是否必填',
+  `sort_order` int NULL DEFAULT 0 COMMENT '排序',
+  `create_by` bigint NULL DEFAULT NULL,
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_by` bigint NULL DEFAULT NULL,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  PRIMARY KEY (`field_id`) USING BTREE,
+  INDEX `idx_category`(`category_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '动态字段定义表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of ds_custom_field
+-- ----------------------------
+INSERT INTO `ds_custom_field` VALUES (1, 1, '胸围', 'chest', 'number', 'cm', NULL, '请输入胸围尺寸', 1, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `ds_custom_field` VALUES (2, 1, '腰围', 'waist', 'number', 'cm', NULL, '请输入腰围尺寸', 1, 2, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `ds_custom_field` VALUES (3, 1, '肩宽', 'shoulder', 'number', 'cm', NULL, '请输入肩宽尺寸', 1, 3, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `ds_custom_field` VALUES (4, 1, '衣长', 'length', 'number', 'cm', NULL, '请输入衣长', 0, 4, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `ds_custom_field` VALUES (5, 1, '面料偏好', 'fabric_type', 'select', NULL, '[\"纯棉\", \"亚麻\", \"丝绸\", \"羊毛\", \"混纺\"]', '请选择面料', 0, 5, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `ds_custom_field` VALUES (6, 2, '皮革类型', 'leather_type', 'select', NULL, '[\"牛皮\", \"羊皮\", \"鳄鱼皮\", \"植鞣革\"]', '请选择皮革', 1, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `ds_custom_field` VALUES (7, 2, '颜色', 'color', 'text', NULL, NULL, '期望的颜色', 1, 2, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `ds_custom_field` VALUES (8, 2, '尺寸规格', 'size_spec', 'text', NULL, NULL, '如：长20cm×宽15cm', 0, 3, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `ds_custom_field` VALUES (9, 3, '画风', 'art_style', 'select', NULL, '[\"日系\", \"欧美\", \"水彩风\", \"扁平化\", \"写实\"]', '请选择画风', 1, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `ds_custom_field` VALUES (10, 3, '分辨率', 'resolution', 'select', NULL, '[\"1080×1080\", \"1920×1080\", \"3000×3000\", \"自定义\"]', '请选择分辨率', 0, 2, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `ds_custom_field` VALUES (11, 3, '用途', 'usage', 'text', NULL, NULL, '如：头像、海报、插图等', 0, 3, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+
+-- ----------------------------
+-- Table structure for ds_designer_category
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_designer_category`;
+CREATE TABLE `ds_designer_category`  (
+  `admin_id` bigint NOT NULL COMMENT '设计师ID',
+  `category_id` bigint NOT NULL COMMENT '品类ID',
+  PRIMARY KEY (`admin_id`, `category_id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '设计师-品类关联表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of ds_designer_category
+-- ----------------------------
+INSERT INTO `ds_designer_category` VALUES (2, 1);
+INSERT INTO `ds_designer_category` VALUES (2, 2);
+INSERT INTO `ds_designer_category` VALUES (3, 2);
+INSERT INTO `ds_designer_category` VALUES (3, 3);
+
+-- ----------------------------
+-- Table structure for ds_material
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_material`;
+CREATE TABLE `ds_material`  (
+  `material_id` bigint NOT NULL AUTO_INCREMENT,
+  `name` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '物料名称',
+  `sku` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '物料编码',
+  `category` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '物料分类(面料/辅料/五金)',
+  `unit` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '单位(米/个/kg)',
+  `unit_price` decimal(10, 2) NULL DEFAULT NULL COMMENT '单价',
+  `stock` decimal(10, 2) NULL DEFAULT 0.00 COMMENT '当前库存',
+  `warning_stock` decimal(10, 2) NULL DEFAULT NULL COMMENT '预警阈值',
+  `image_url` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '物料图片',
+  `remark` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '备注',
+  `version` int NULL DEFAULT 0 COMMENT '版本号(乐观锁)',
+  `create_by` bigint NULL DEFAULT NULL,
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_by` bigint NULL DEFAULT NULL,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  PRIMARY KEY (`material_id`) USING BTREE,
+  UNIQUE INDEX `uk_sku`(`sku` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 16 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '物料表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of ds_material
+-- ----------------------------
+INSERT INTO `ds_material` VALUES (1, '高级亚麻面料（浅米色）', 'FAB-LINEN-001', '面料', '米', 120.00, 56.50, 10.00, NULL, '优质亚麻，适合春夏服装', 4, NULL, '2026-03-17 15:11:05', 1, '2026-03-17 15:11:05', 0);
+INSERT INTO `ds_material` VALUES (2, '真丝面料（香槟色）', 'FAB-SILK-001', '面料', '米', 280.00, 30.00, 5.00, NULL, '100%桑蚕丝', 0, NULL, '2026-03-17 15:11:05', NULL, '2026-03-17 15:11:05', 0);
+INSERT INTO `ds_material` VALUES (3, '植鞣革（棕色）', 'FAB-LEATHER-001', '面料', '张', 350.00, 15.00, 3.00, NULL, '意大利进口植鞣革', 0, NULL, '2026-03-17 15:11:05', NULL, '2026-03-17 15:11:05', 0);
+INSERT INTO `ds_material` VALUES (4, '鳄鱼皮（黑色）', 'FAB-CROC-001', '面料', '张', 1200.00, 2.00, 2.00, NULL, '稀有鳄鱼皮，需进口', 0, NULL, '2026-03-17 15:11:05', NULL, '2026-03-17 15:11:05', 0);
+INSERT INTO `ds_material` VALUES (5, 'YKK拉链（20cm）', 'ACC-ZIP-001', '辅料', '条', 8.50, 199.00, 50.00, NULL, 'YKK金属拉链', 3, NULL, '2026-03-17 15:11:05', 1, '2026-03-17 15:11:05', 0);
+INSERT INTO `ds_material` VALUES (6, '纯棉衬里（白色）', 'FAB-COTTON-001', '面料', '米', 35.00, 98.00, 20.00, NULL, '纯棉里衬', 3, NULL, '2026-03-17 15:11:05', 1, '2026-03-17 15:11:05', 0);
+INSERT INTO `ds_material` VALUES (7, 'D型五金扣', 'HW-DRING-001', '五金件', '个', 5.00, 500.00, 100.00, NULL, '不锈钢D型环', 0, NULL, '2026-03-17 15:11:05', NULL, '2026-03-17 15:11:05', 0);
+INSERT INTO `ds_material` VALUES (8, '手缝蜡线（棕色）', 'ACC-WAX-001', '辅料', '卷', 25.00, 80.00, 20.00, NULL, '手工皮具专用', 0, NULL, '2026-03-17 15:11:05', NULL, '2026-03-17 15:11:05', 0);
+INSERT INTO `ds_material` VALUES (9, '暗扣', 'HW-SNAP-001', '五金件', '套', 3.00, 298.00, 60.00, NULL, '磁吸暗扣', 3, NULL, '2026-03-17 15:11:05', 1, '2026-03-17 15:11:05', 0);
+INSERT INTO `ds_material` VALUES (10, '包装盒（大号）', 'PKG-BOX-001', '辅料', '个', 15.00, 99.00, 20.00, NULL, '高端定制包装盒', 3, NULL, '2026-03-17 15:11:05', 1, '2026-03-17 15:11:05', 0);
+INSERT INTO `ds_material` VALUES (11, '1', '1', '面料', '米', 1.00, 0.00, 1.00, NULL, '1', 0, 1, '2026-05-05 21:33:55', 1, '2026-05-05 21:33:55', 0);
+INSERT INTO `ds_material` VALUES (13, '2', '3', '面料', '米', 4.00, 0.00, 5.00, NULL, '6', 0, 1, '2026-05-05 21:34:17', 1, '2026-05-05 21:34:17', 0);
+INSERT INTO `ds_material` VALUES (14, '5', '6', '面料', '米', 8.00, 0.00, 7.00, NULL, '8', 0, 1, '2026-05-05 21:34:29', 1, '2026-05-05 21:34:29', 0);
+INSERT INTO `ds_material` VALUES (15, '4', '5', '面料', '米', 6.00, 0.00, 7.00, NULL, '8', 0, 1, '2026-05-05 21:34:47', 1, '2026-05-05 21:34:47', 0);
+
+-- ----------------------------
+-- Table structure for ds_notification
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_notification`;
+CREATE TABLE `ds_notification`  (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `user_id` bigint NOT NULL COMMENT '接收用户ID',
+  `title` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '通知标题',
+  `content` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '通知内容',
+  `type` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '通知类型: order_status/payment/workbench/system',
+  `related_id` bigint NULL DEFAULT NULL COMMENT '关联ID，如订单ID',
+  `related_type` varchar(30) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '关联类型: order/request',
+  `is_read` tinyint(1) NULL DEFAULT 0 COMMENT '是否已读 (0=未读, 1=已读)',
+  `create_by` bigint NULL DEFAULT NULL COMMENT '创建人ID',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_by` bigint NULL DEFAULT NULL COMMENT '更新人ID',
+  `update_time` datetime NULL DEFAULT NULL COMMENT '更新时间',
+  `del_flag` tinyint(1) NULL DEFAULT 0 COMMENT '逻辑删除标记',
+  PRIMARY KEY (`id`) USING BTREE,
+  INDEX `idx_notification_user_id`(`user_id` ASC) USING BTREE,
+  INDEX `idx_notification_user_read`(`user_id` ASC, `is_read` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '站内通知表' ROW_FORMAT = Dynamic;
+
+-- ----------------------------
+-- Records of ds_notification
+-- ----------------------------
+INSERT INTO `ds_notification` VALUES (1, 1, '定金支付成功', '您已成功支付定金 ¥10.00，订单正式进入生产', 'payment', 8, 'order', 0, 1, '2026-04-30 13:15:06', 1, '2026-04-30 13:15:06', 0);
+INSERT INTO `ds_notification` VALUES (2, 1, '订单进度更新', '您的订单已推进至新节点：面料采购', 'workbench', 9, 'order', 0, 1, '2026-05-01 14:33:15', 1, '2026-05-01 14:33:15', 0);
+INSERT INTO `ds_notification` VALUES (3, 5, '定金支付成功', '您已成功支付定金 ¥2.00，订单正式进入生产', 'payment', 10, 'order', 0, 5, '2026-05-05 21:09:02', 5, '2026-05-05 21:09:02', 0);
+INSERT INTO `ds_notification` VALUES (4, 5, '订单进度更新', '您的订单已推进至新节点：草稿构图', 'workbench', 10, 'order', 0, 1, '2026-05-05 21:09:40', 1, '2026-05-05 21:09:40', 0);
+INSERT INTO `ds_notification` VALUES (5, 5, '订单进度更新', '您的订单已推进至新节点：线稿细化', 'workbench', 10, 'order', 0, 1, '2026-05-05 21:16:46', 1, '2026-05-05 21:16:46', 0);
+INSERT INTO `ds_notification` VALUES (6, 5, '订单进度更新', '您的订单已推进至新节点：上色完稿', 'workbench', 10, 'order', 0, 1, '2026-05-05 21:17:09', 1, '2026-05-05 21:17:09', 0);
+INSERT INTO `ds_notification` VALUES (7, 5, '订单进度更新', '您的订单已推进至新节点：上色完稿', 'workbench', 10, 'order', 0, 1, '2026-05-05 21:17:50', 1, '2026-05-05 21:17:50', 0);
+INSERT INTO `ds_notification` VALUES (8, 5, '订单进度更新', '您的订单已推进至新节点：客户验收', 'workbench', 10, 'order', 0, 1, '2026-05-05 21:17:56', 1, '2026-05-05 21:17:56', 0);
+INSERT INTO `ds_notification` VALUES (9, 5, '生产完毕通知', '您的订单已生产完毕，请前往支付尾款', 'order_status', 10, 'order', 0, 1, '2026-05-05 21:24:43', 1, '2026-05-05 21:24:43', 0);
+INSERT INTO `ds_notification` VALUES (10, 5, '尾款支付成功', '您已完成尾款支付，订单即将安排发货', 'payment', 10, 'order', 0, 5, '2026-05-05 21:25:25', 5, '2026-05-05 21:25:25', 0);
+
+-- ----------------------------
+-- Table structure for ds_order
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_order`;
+CREATE TABLE `ds_order`  (
+  `order_id` bigint NOT NULL AUTO_INCREMENT,
+  `order_sn` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '订单编号',
+  `user_id` bigint NOT NULL COMMENT '客户ID',
+  `category_id` bigint NOT NULL COMMENT '品类ID',
+  `designer_id` bigint NULL DEFAULT NULL COMMENT '指派的设计师ID',
+  `current_step_id` bigint NULL DEFAULT NULL COMMENT '当前工作流节点',
+  `status` tinyint(1) NULL DEFAULT 0 COMMENT '0=待支付,1=生产中,2=待发货,3=待收货,4=已完成,5=已取消',
+  `custom_data_snapshot` json NULL COMMENT '定制参数快照',
+  `total_amount` decimal(10, 2) NULL DEFAULT NULL COMMENT '总金额',
+  `prepay_amount` decimal(10, 2) NULL DEFAULT NULL COMMENT '预付款',
+  `paid_amount` decimal(10, 2) NULL DEFAULT 0.00 COMMENT '已支付金额',
+  `expected_date` date NULL DEFAULT NULL COMMENT '预计交付日期',
+  `address_snapshot` json NULL COMMENT '收货地址快照',
+  `remark` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '备注',
+  `is_blocked` tinyint(1) NULL DEFAULT 0 COMMENT '是否阻塞',
+  `block_reason` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '阻塞原因',
+  `cancel_reason` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '取消原因',
+  `delay_reason` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '延期原因',
+  `version` int NULL DEFAULT 0 COMMENT '版本号(乐观锁)',
+  `create_by` bigint NULL DEFAULT NULL,
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_by` bigint NULL DEFAULT NULL,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `finish_time` datetime NULL DEFAULT NULL COMMENT '完成时间',
+  `delivery_time` datetime NULL DEFAULT NULL COMMENT '发货时间',
+  `confirm_time` datetime NULL DEFAULT NULL COMMENT '确认完成时间',
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  `bom_template_id` bigint NULL DEFAULT NULL COMMENT '关联BOM模板',
+  `material_cost` decimal(10, 2) NULL DEFAULT 0.00 COMMENT '物料成本',
+  PRIMARY KEY (`order_id`) USING BTREE,
+  UNIQUE INDEX `uk_order_sn`(`order_sn` ASC) USING BTREE,
+  INDEX `idx_user_status`(`user_id` ASC, `status` ASC) USING BTREE,
+  INDEX `idx_designer`(`designer_id` ASC) USING BTREE,
+  INDEX `idx_create_time`(`create_time` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单主表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of ds_order
+-- ----------------------------
+INSERT INTO `ds_order` VALUES (1, 'DS202603081601001', 3, 1, 2, 2, 1, '{\"chest\": \"92\", \"waist\": \"72\", \"length\": \"130\", \"shoulder\": \"40\", \"fabric_type\": \"亚麻\"}', 3500.00, 1750.00, 1750.00, '2026-04-18', NULL, '改良汉服，客户要求宽松版型', 1, '天气原因', NULL, '????????', 11, NULL, '2026-03-08 16:05:00', 1, '2026-04-11 18:05:24', NULL, NULL, NULL, 0, NULL, 0.00);
+INSERT INTO `ds_order` VALUES (2, 'DS202603071102001', 2, 3, 3, 12, 1, '{\"usage\": \"公司品牌Logo\", \"art_style\": \"扁平化\", \"resolution\": \"3000×3000\"}', 800.00, 400.00, 400.00, '2026-03-25', NULL, 'Logo设计，需要三个备选方案', 0, NULL, NULL, NULL, 3, NULL, '2026-03-07 11:05:00', 1, '2026-04-10 11:29:04', NULL, NULL, NULL, 0, NULL, 0.00);
+INSERT INTO `ds_order` VALUES (3, 'DS202603151400001', 1, 2, 2, 8, 4, '{\"color\": \"黑色\", \"size_spec\": \"长25cm×宽15cm\", \"leather_type\": \"鳄鱼皮\"}', 5800.00, 2900.00, 2900.00, '2026-04-20', NULL, '鳄鱼皮手拿包，高端定制', 1, '鳄鱼皮原料缺货，预计3天到货', NULL, NULL, 4, NULL, '2026-03-15 14:00:00', 1, '2026-04-10 21:06:20', '2026-04-10 21:06:20', '2026-04-10 21:04:19', '2026-04-10 21:06:20', 0, NULL, 0.00);
+INSERT INTO `ds_order` VALUES (4, 'DS202602201000001', 1, 3, 3, 16, 4, '{\"usage\": \"个人收藏\", \"art_style\": \"水彩风\", \"resolution\": \"1920×1080\"}', 600.00, 300.00, 600.00, '2026-03-05', NULL, '水彩风景画', 0, NULL, NULL, NULL, 0, NULL, '2026-02-20 10:00:00', NULL, '2026-04-09 21:07:17', '2026-03-03 18:00:00', NULL, NULL, 0, NULL, 0.00);
+INSERT INTO `ds_order` VALUES (5, 'DS202604051756345882', 1, 1, 2, NULL, 1, '{\"chest\": \"1\", \"waist\": \"2\", \"length\": \"4\", \"shoulder\": \"3\"}', 800.00, 300.00, 0.00, '2026-04-29', NULL, '', 0, NULL, NULL, NULL, 0, 1, '2026-04-05 17:56:34', 1, '2026-04-05 17:56:34', NULL, NULL, NULL, 0, NULL, 0.00);
+INSERT INTO `ds_order` VALUES (6, 'DS202604092137346349', 1, 1, 2, 1, 5, '{\"chest\": \"20\", \"waist\": \"30\", \"shoulder\": \"20\"}', 100.00, 10.00, 0.00, '2026-04-09', NULL, '', 0, '13', '??????????', NULL, 5, 1, '2026-04-09 21:37:35', 1, '2026-04-10 21:03:33', '2026-04-10 21:03:33', NULL, NULL, 0, NULL, 0.00);
+INSERT INTO `ds_order` VALUES (7, 'DS202604102239321777', 1, 1, 2, 1, 5, '{\"chest\": \"88\", \"waist\": \"68\", \"length\": \"120\", \"shoulder\": \"38\", \"fabric_type\": \"丝绸\"}', 3500.00, 1500.00, 1500.00, '2026-05-20', NULL, 'BOM测试转单', 0, NULL, '测试取消-归还库存', NULL, 3, 1, '2026-04-10 22:39:33', 1, '2026-04-10 22:57:01', '2026-04-10 22:57:01', NULL, NULL, 0, 1, 519.50);
+INSERT INTO `ds_order` VALUES (8, 'DS202604111743293930', 1, 1, 2, 1, 1, '{\"chest\": \"123\", \"waist\": \"32\", \"length\": \"123\", \"shoulder\": \"45\"}', 100.00, 10.00, 10.00, NULL, NULL, '', 0, NULL, NULL, NULL, 2, 1, '2026-04-11 17:43:29', 1, '2026-04-30 13:15:06', NULL, NULL, NULL, 0, 1, 519.50);
+INSERT INTO `ds_order` VALUES (9, 'DS202604111801332055', 1, 1, 2, 2, 1, '{\"chest\": \"123\", \"waist\": \"12\", \"length\": \"3\", \"shoulder\": \"12\"}', 1000.00, 10.00, 10.00, '2026-04-25', NULL, '', 0, NULL, NULL, NULL, 2, 1, '2026-04-11 18:01:33', 1, '2026-05-01 14:33:15', NULL, NULL, NULL, 0, NULL, 0.00);
+INSERT INTO `ds_order` VALUES (10, 'DS202605052107539606', 5, 3, 3, 16, 4, '{\"usage\": \"海报\", \"art_style\": \"日系\", \"resolution\": \"1920×1080\"}', 3.00, 2.00, 3.00, '2026-05-05', NULL, '', 0, NULL, NULL, NULL, 11, 1, '2026-05-05 21:07:54', 5, '2026-05-05 21:26:53', '2026-05-05 21:26:53', '2026-05-05 21:26:32', '2026-05-05 21:26:53', 0, NULL, 0.00);
+
+-- ----------------------------
+-- Table structure for ds_order_progress
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_order_progress`;
+CREATE TABLE `ds_order_progress`  (
+  `progress_id` bigint NOT NULL AUTO_INCREMENT,
+  `order_id` bigint NOT NULL COMMENT '所属订单',
+  `step_id` bigint NOT NULL COMMENT '对应工作流节点',
+  `description` varchar(1000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '进度描述',
+  `image_urls` json NULL COMMENT '进度图片',
+  `form_data` json NULL COMMENT '节点表单填写数据',
+  `operator_id` bigint NULL DEFAULT NULL COMMENT '操作人ID',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  PRIMARY KEY (`progress_id`) USING BTREE,
+  INDEX `idx_order`(`order_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 61 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单进度表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of ds_order_progress
+-- ----------------------------
+INSERT INTO `ds_order_progress` VALUES (1, 1, 1, '客户需求已确认，改良汉服宽松版型，亚麻面料', NULL, NULL, 2, '2026-03-08 16:10:00', 0);
+INSERT INTO `ds_order_progress` VALUES (2, 1, 2, '特选高品质亚麻面料已采购到位，颜色为浅米色', NULL, NULL, 2, '2026-03-10 09:00:00', 0);
+INSERT INTO `ds_order_progress` VALUES (3, 1, 3, '开始裁剪，按照客户尺寸放样', NULL, NULL, 2, '2026-03-12 14:00:00', 0);
+INSERT INTO `ds_order_progress` VALUES (4, 2, 12, '需求已确认，客户要求扁平化风格Logo', NULL, NULL, 3, '2026-03-07 11:10:00', 0);
+INSERT INTO `ds_order_progress` VALUES (5, 2, 13, '草稿完成，已提交3个备选方案给客户', NULL, NULL, 3, '2026-03-09 16:00:00', 0);
+INSERT INTO `ds_order_progress` VALUES (6, 2, 14, '客户选择方案B，开始线稿细化', NULL, NULL, 3, '2026-03-11 10:00:00', 0);
+INSERT INTO `ds_order_progress` VALUES (7, 4, 12, '需求确认完毕', NULL, NULL, 3, '2026-02-20 10:10:00', 0);
+INSERT INTO `ds_order_progress` VALUES (8, 4, 13, '草稿完成', NULL, NULL, 3, '2026-02-22 15:00:00', 0);
+INSERT INTO `ds_order_progress` VALUES (9, 4, 14, '线稿已定稿', NULL, NULL, 3, '2026-02-25 11:00:00', 0);
+INSERT INTO `ds_order_progress` VALUES (10, 4, 15, '上色完成，最终稿已出', NULL, NULL, 3, '2026-02-28 17:00:00', 0);
+INSERT INTO `ds_order_progress` VALUES (11, 4, 16, '客户验收通过，交付完成', NULL, NULL, 3, '2026-03-03 18:00:00', 0);
+INSERT INTO `ds_order_progress` VALUES (12, 3, 8, '部分', NULL, NULL, 1, '2026-03-17 15:16:03', 0);
+INSERT INTO `ds_order_progress` VALUES (13, 1, 3, '工作台接口联调记录', NULL, NULL, 1, '2026-04-09 21:13:19', 0);
+INSERT INTO `ds_order_progress` VALUES (14, 1, 3, 'upload-ok', '\"/uploads/321f10cac04241249a1c608ce6c9b048.png\"', NULL, 1, '2026-04-09 21:33:42', 0);
+INSERT INTO `ds_order_progress` VALUES (15, 6, 1, '1', NULL, NULL, 1, '2026-04-09 21:37:59', 0);
+INSERT INTO `ds_order_progress` VALUES (16, 6, 1, '订单已阻塞：11', NULL, NULL, 2, '2026-04-09 21:42:51', 0);
+INSERT INTO `ds_order_progress` VALUES (17, 6, 1, '订单已解除阻塞', NULL, NULL, 2, '2026-04-09 21:43:14', 0);
+INSERT INTO `ds_order_progress` VALUES (18, 6, 1, '订单已阻塞：13', NULL, NULL, 2, '2026-04-09 21:43:17', 0);
+INSERT INTO `ds_order_progress` VALUES (19, 6, 1, '订单已解除阻塞', NULL, NULL, 2, '2026-04-09 21:43:22', 0);
+INSERT INTO `ds_order_progress` VALUES (20, 1, 2, 'rollback-api-test', NULL, NULL, 1, '2026-04-10 10:36:27', 0);
+INSERT INTO `ds_order_progress` VALUES (21, 1, 3, 'rollback-restore', NULL, NULL, 1, '2026-04-10 10:36:28', 0);
+INSERT INTO `ds_order_progress` VALUES (22, 1, 2, '退回至节点：面料采购', NULL, NULL, 1, '2026-04-10 10:48:26', 0);
+INSERT INTO `ds_order_progress` VALUES (23, 2, 12, '联调：指定退回到需求确认', NULL, NULL, 1, '2026-04-10 11:26:40', 0);
+INSERT INTO `ds_order_progress` VALUES (24, 2, 13, '联调：推进到草稿构图', NULL, NULL, 1, '2026-04-10 11:29:04', 0);
+INSERT INTO `ds_order_progress` VALUES (25, 2, 12, '联调：退回到需求确认', NULL, NULL, 1, '2026-04-10 11:29:04', 0);
+INSERT INTO `ds_order_progress` VALUES (26, 1, 3, '推进至节点：裁剪', NULL, NULL, 1, '2026-04-10 11:34:08', 0);
+INSERT INTO `ds_order_progress` VALUES (27, 1, 2, '退回至节点：面料采购', NULL, NULL, 1, '2026-04-10 11:34:13', 0);
+INSERT INTO `ds_order_progress` VALUES (28, 1, 1, '退回至节点：需求确认', NULL, NULL, 1, '2026-04-10 11:34:30', 0);
+INSERT INTO `ds_order_progress` VALUES (29, 6, 1, '????????', NULL, '{\"chest\": 88, \"waist\": 66}', 1, '2026-04-10 15:43:40', 0);
+INSERT INTO `ds_order_progress` VALUES (30, 6, 1, '订单已取消：??????????', NULL, NULL, 1, '2026-04-10 21:03:33', 0);
+INSERT INTO `ds_order_progress` VALUES (31, 1, 1, '订单延期至 2026-04-18，原因：????????', NULL, NULL, 1, '2026-04-10 21:03:33', 0);
+INSERT INTO `ds_order_progress` VALUES (32, 3, 8, '??????', NULL, NULL, 1, '2026-04-10 21:04:19', 0);
+INSERT INTO `ds_order_progress` VALUES (33, 3, 8, '客户已确认收货，订单已完成', NULL, NULL, 1, '2026-04-10 21:06:20', 0);
+INSERT INTO `ds_order_progress` VALUES (34, 7, 1, '客户已支付定金：¥1500.00', NULL, NULL, 1, '2026-04-10 22:56:34', 0);
+INSERT INTO `ds_order_progress` VALUES (35, 7, 1, '订单已取消：测试取消-归还库存', NULL, NULL, 1, '2026-04-10 22:57:01', 0);
+INSERT INTO `ds_order_progress` VALUES (36, 1, 2, '推进至节点：面料采购', NULL, '{\"chest\": \"92\", \"waist\": \"72\"}', 1, '2026-04-11 17:17:35', 0);
+INSERT INTO `ds_order_progress` VALUES (37, 1, 1, '退回至节点：需求确认', NULL, NULL, 1, '2026-04-11 18:02:52', 0);
+INSERT INTO `ds_order_progress` VALUES (38, 1, 2, '完成需求', NULL, '{\"chest\": \"92\", \"waist\": \"72\"}', 1, '2026-04-11 18:04:27', 0);
+INSERT INTO `ds_order_progress` VALUES (39, 1, 2, '订单已阻塞：天气原因', NULL, NULL, 1, '2026-04-11 18:05:24', 0);
+INSERT INTO `ds_order_progress` VALUES (40, 9, 1, '客户已支付定金：¥10.00', NULL, NULL, 1, '2026-04-11 18:08:26', 0);
+INSERT INTO `ds_order_progress` VALUES (41, 9, 1, NULL, NULL, '{\"chest\": \"123\", \"waist\": \"12\"}', 1, '2026-04-21 00:28:54', 0);
+INSERT INTO `ds_order_progress` VALUES (42, 9, 1, NULL, NULL, '{\"chest\": \"123\", \"waist\": \"12\"}', 1, '2026-04-21 00:28:56', 0);
+INSERT INTO `ds_order_progress` VALUES (43, 9, 1, NULL, NULL, '{\"chest\": \"123\", \"waist\": \"12\"}', 1, '2026-04-21 00:28:58', 0);
+INSERT INTO `ds_order_progress` VALUES (44, 9, 1, NULL, NULL, '{\"chest\": \"123\", \"waist\": \"12\"}', 1, '2026-04-21 00:29:03', 0);
+INSERT INTO `ds_order_progress` VALUES (45, 9, 1, NULL, NULL, '{\"chest\": \"123\", \"waist\": \"12\"}', 1, '2026-04-21 00:40:00', 0);
+INSERT INTO `ds_order_progress` VALUES (46, 8, 1, '客户已支付定金：¥10.00', NULL, NULL, 1, '2026-04-30 13:15:06', 0);
+INSERT INTO `ds_order_progress` VALUES (47, 9, 1, '尺寸已确认：胸围90cm，腰围75cm，准备进入下一阶段。', NULL, '{\"chest\": 90, \"waist\": 75}', 1, '2026-05-01 14:32:49', 0);
+INSERT INTO `ds_order_progress` VALUES (48, 9, 2, '推进至节点：面料采购', NULL, '{\"chest\": 90, \"waist\": 75}', 1, '2026-05-01 14:33:15', 0);
+INSERT INTO `ds_order_progress` VALUES (49, 10, 12, '客户已支付定金：¥2.00', NULL, NULL, 5, '2026-05-05 21:09:02', 0);
+INSERT INTO `ds_order_progress` VALUES (50, 10, 12, '需求确认完成', NULL, NULL, 1, '2026-05-05 21:09:31', 0);
+INSERT INTO `ds_order_progress` VALUES (51, 10, 13, '完成', NULL, NULL, 1, '2026-05-05 21:09:40', 0);
+INSERT INTO `ds_order_progress` VALUES (52, 10, 14, '继续', '[\"/uploads/images/191879694a184a848aa5ab53c49ba982.png\"]', NULL, 1, '2026-05-05 21:16:46', 0);
+INSERT INTO `ds_order_progress` VALUES (53, 10, 15, '推进至节点：上色完稿', '[\"/uploads/images/bc0df33414d84911aaab39d6ab04e94c.png\"]', NULL, 1, '2026-05-05 21:17:09', 0);
+INSERT INTO `ds_order_progress` VALUES (54, 10, 14, '退回至节点：线稿细化', NULL, NULL, 1, '2026-05-05 21:17:34', 0);
+INSERT INTO `ds_order_progress` VALUES (55, 10, 15, '推进至节点：上色完稿', '[\"/uploads/images/c22dd3574a734330bad9427efe5ec812.png\"]', NULL, 1, '2026-05-05 21:17:50', 0);
+INSERT INTO `ds_order_progress` VALUES (56, 10, 16, '推进至节点：客户验收', '[\"/uploads/images/e209c35d9636423e9d9eeaaba7229b22.png\"]', NULL, 1, '2026-05-05 21:17:56', 0);
+INSERT INTO `ds_order_progress` VALUES (57, 10, 16, '生产完毕，等待客户支付尾款', '[\"/uploads/images/75e02f43a0f8478f84a34137cd3bb461.png\"]', NULL, 1, '2026-05-05 21:24:43', 0);
+INSERT INTO `ds_order_progress` VALUES (58, 10, 16, '客户已支付尾款：¥1.00', NULL, NULL, 5, '2026-05-05 21:25:25', 0);
+INSERT INTO `ds_order_progress` VALUES (59, 10, 16, '订单已发货，等待客户确认收货', NULL, NULL, 1, '2026-05-05 21:26:32', 0);
+INSERT INTO `ds_order_progress` VALUES (60, 10, 16, '客户已确认收货，订单已完成', NULL, NULL, 5, '2026-05-05 21:26:53', 0);
+
+-- ----------------------------
+-- Table structure for ds_order_request
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_order_request`;
+CREATE TABLE `ds_order_request`  (
+  `request_id` bigint NOT NULL AUTO_INCREMENT,
+  `user_id` bigint NOT NULL COMMENT '提交客户',
+  `category_id` bigint NOT NULL COMMENT '定制品类',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '客户文字描述',
+  `image_urls` json NULL COMMENT '参考图片(JSON数组)',
+  `custom_data` json NULL COMMENT '动态表单数据',
+  `status` tinyint(1) NULL DEFAULT 0 COMMENT '0=待处理,1=已转单,2=已关闭',
+  `close_reason` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '关闭原因',
+  `linked_order_id` bigint NULL DEFAULT NULL COMMENT '转化后的订单ID',
+  `create_by` bigint NULL DEFAULT NULL,
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_by` bigint NULL DEFAULT NULL,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  PRIMARY KEY (`request_id`) USING BTREE,
+  INDEX `idx_user`(`user_id` ASC) USING BTREE,
+  INDEX `idx_status`(`status` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 12 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '订单意向表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of ds_order_request
+-- ----------------------------
+INSERT INTO `ds_order_request` VALUES (1, 1, 1, '想定制一件旗袍，用于参加朋友婚礼', NULL, '{\"chest\": \"88\", \"waist\": \"68\", \"length\": \"120\", \"shoulder\": \"38\", \"fabric_type\": \"丝绸\"}', 1, NULL, 7, NULL, '2026-03-10 10:00:00', 1, '2026-03-17 15:11:05', 0);
+INSERT INTO `ds_order_request` VALUES (2, 2, 2, '想做一个手工皮革钱包，送给男朋友做生日礼物', NULL, '{\"color\": \"深棕色\", \"size_spec\": \"长20cm×宽10cm\", \"leather_type\": \"植鞣革\"}', 0, NULL, NULL, NULL, '2026-03-11 14:30:00', NULL, '2026-03-17 15:11:05', 0);
+INSERT INTO `ds_order_request` VALUES (3, 1, 3, '需要一张日系风格的头像插画', NULL, '{\"usage\": \"社交媒体头像\", \"art_style\": \"日系\", \"resolution\": \"1080×1080\"}', 0, NULL, NULL, NULL, '2026-03-12 09:15:00', NULL, '2026-03-17 15:11:05', 0);
+INSERT INTO `ds_order_request` VALUES (4, 3, 1, '需要一套改良汉服', NULL, '{\"chest\": \"92\", \"waist\": \"72\", \"length\": \"130\", \"shoulder\": \"40\", \"fabric_type\": \"亚麻\"}', 1, NULL, 1, NULL, '2026-03-08 16:00:00', NULL, '2026-03-17 15:11:05', 0);
+INSERT INTO `ds_order_request` VALUES (5, 2, 3, '设计公司 Logo 扁平化插画', NULL, '{\"usage\": \"公司品牌Logo\", \"art_style\": \"扁平化\", \"resolution\": \"3000×3000\"}', 1, NULL, 2, NULL, '2026-03-07 11:00:00', NULL, '2026-03-17 15:11:05', 0);
+INSERT INTO `ds_order_request` VALUES (6, 3, 2, '复古风格手提包', NULL, '{\"color\": \"酒红色\", \"size_spec\": \"长30cm×宽20cm×高15cm\", \"leather_type\": \"牛皮\"}', 2, '客户取消，预算不足', NULL, NULL, '2026-03-05 08:45:00', NULL, '2026-03-17 15:11:05', 0);
+INSERT INTO `ds_order_request` VALUES (7, 1, 1, '', '[]', '{\"chest\": \"123\", \"waist\": \"32\", \"length\": \"123\", \"shoulder\": \"45\"}', 1, NULL, 8, 1, '2026-04-05 17:45:08', 1, '2026-04-05 17:45:08', 0);
+INSERT INTO `ds_order_request` VALUES (8, 1, 1, '', '[]', '{\"chest\": \"1\", \"waist\": \"2\", \"length\": \"4\", \"shoulder\": \"3\"}', 1, NULL, 5, 1, '2026-04-05 17:46:11', 1, '2026-04-05 17:46:11', 0);
+INSERT INTO `ds_order_request` VALUES (9, 1, 1, '', '[]', '{\"chest\": \"20\", \"waist\": \"30\", \"shoulder\": \"20\"}', 1, NULL, 6, 1, '2026-04-09 21:37:09', 1, '2026-04-09 21:37:09', 0);
+INSERT INTO `ds_order_request` VALUES (10, 1, 1, '', '[]', '{\"chest\": \"123\", \"waist\": \"12\", \"length\": \"3\", \"shoulder\": \"12\"}', 1, NULL, 9, 1, '2026-04-11 18:01:09', 1, '2026-04-11 18:01:09', 0);
+INSERT INTO `ds_order_request` VALUES (11, 5, 3, '', '[]', '{\"usage\": \"海报\", \"art_style\": \"日系\", \"resolution\": \"1920×1080\"}', 1, NULL, 10, 5, '2026-05-05 21:07:22', 5, '2026-05-05 21:07:22', 0);
+
+-- ----------------------------
+-- Table structure for ds_payment_record
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_payment_record`;
+CREATE TABLE `ds_payment_record`  (
+  `payment_id` bigint NOT NULL AUTO_INCREMENT,
+  `payment_no` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '系统支付流水号',
+  `order_id` bigint NOT NULL COMMENT '关联订单',
+  `user_id` bigint NOT NULL COMMENT '支付用户',
+  `payment_type` tinyint(1) NOT NULL COMMENT '1=预付款,2=尾款',
+  `amount` decimal(10, 2) NOT NULL COMMENT '支付金额',
+  `wx_transaction_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '微信支付交易号',
+  `wx_prepay_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '微信预支付ID',
+  `status` tinyint(1) NULL DEFAULT 0 COMMENT '0=待支付,1=成功,2=失败,3=已关闭',
+  `pay_time` datetime NULL DEFAULT NULL COMMENT '实际支付时间',
+  `expire_time` datetime NULL DEFAULT NULL COMMENT '支付过期时间',
+  `notify_data` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '微信回调原始数据',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  PRIMARY KEY (`payment_id`) USING BTREE,
+  UNIQUE INDEX `uk_payment_no`(`payment_no` ASC) USING BTREE,
+  INDEX `idx_order`(`order_id` ASC) USING BTREE,
+  INDEX `idx_user`(`user_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '支付流水表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of ds_payment_record
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for ds_portfolio
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_portfolio`;
+CREATE TABLE `ds_portfolio`  (
+  `portfolio_id` bigint NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '作品标题',
+  `category_id` bigint NULL DEFAULT NULL COMMENT '关联品类',
+  `cover_url` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '封面图',
+  `image_urls` json NOT NULL COMMENT '图片列表(JSON数组)',
+  `description` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '富文本描述',
+  `status` tinyint(1) NULL DEFAULT 0 COMMENT '0=草稿,1=发布',
+  `view_count` int NULL DEFAULT 0 COMMENT '浏览次数',
+  `sort_order` int NULL DEFAULT 0 COMMENT '排序',
+  `create_by` bigint NULL DEFAULT NULL,
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_by` bigint NULL DEFAULT NULL,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  PRIMARY KEY (`portfolio_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 3 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '作品集表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of ds_portfolio
+-- ----------------------------
+INSERT INTO `ds_portfolio` VALUES (1, '猫', 1, 'https://i0.hdslb.com/bfs/new_dyn/a4833ebe1038fcd60a196da9b53c0e44270317383.jpg@420w_560h_1e_1c.webp', '[\"https://i0.hdslb.com/bfs/new_dyn/a4833ebe1038fcd60a196da9b53c0e44270317383.jpg@420w_560h_1e_1c.webp\", \"https://i0.hdslb.com/bfs/new_dyn/a42924b84d925cfabf5672f8e7373ee6270317383.jpg@264w_264h_1e_1c.webp\"]', '', 1, 6, 1, 1, '2026-04-10 19:53:02', 1, '2026-04-10 19:53:02', 0);
+INSERT INTO `ds_portfolio` VALUES (2, '测试上传作品', 1, 'http://localhost:8081/uploads/fc1a62f7bca648898b01d8239d4fb54b.png', '[]', '', 0, 0, 0, 1, '2026-04-10 20:05:54', 1, '2026-04-10 20:05:54', 0);
+
+-- ----------------------------
+-- Table structure for ds_refund_record
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_refund_record`;
+CREATE TABLE `ds_refund_record`  (
+  `refund_id` bigint NOT NULL AUTO_INCREMENT,
+  `refund_no` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '系统退款流水号',
+  `order_id` bigint NOT NULL COMMENT '关联订单',
+  `payment_id` bigint NULL DEFAULT NULL COMMENT '关联原支付记录',
+  `refund_amount` decimal(10, 2) NOT NULL COMMENT '退款金额',
+  `refund_reason` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '退款原因',
+  `wx_refund_id` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '微信退款单号',
+  `status` tinyint(1) NULL DEFAULT 0 COMMENT '0=处理中,1=退款成功,2=退款失败',
+  `refund_time` datetime NULL DEFAULT NULL COMMENT '实际退款时间',
+  `operator_id` bigint NULL DEFAULT NULL COMMENT '操作人ID',
+  `notify_data` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '微信回调原始数据',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  PRIMARY KEY (`refund_id`) USING BTREE,
+  UNIQUE INDEX `uk_refund_no`(`refund_no` ASC) USING BTREE,
+  INDEX `idx_order`(`order_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '退款记录表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of ds_refund_record
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for ds_user
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_user`;
+CREATE TABLE `ds_user`  (
+  `user_id` bigint NOT NULL AUTO_INCREMENT,
+  `openid` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '微信OpenID',
+  `unionid` varchar(128) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '微信UnionID',
+  `nickname` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '昵称',
+  `avatar_url` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '头像URL',
+  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '手机号',
+  `status` tinyint(1) NULL DEFAULT 1 COMMENT '0=禁用,1=正常',
+  `gender` tinyint(1) NULL DEFAULT NULL COMMENT '性别',
+  `default_address_id` bigint NULL DEFAULT NULL COMMENT '默认地址ID',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
+  `last_login_time` datetime NULL DEFAULT NULL COMMENT '最后登录',
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  `create_by` bigint NULL DEFAULT NULL,
+  `update_by` bigint NULL DEFAULT NULL,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`user_id`) USING BTREE,
+  UNIQUE INDEX `uk_openid`(`openid` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 6 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '小程序用户表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of ds_user
+-- ----------------------------
+INSERT INTO `ds_user` VALUES (1, 'wx_test_openid_001', NULL, '张小姐', NULL, '13900001001', 1, NULL, NULL, '2026-03-17 15:11:05', '2026-04-30 13:04:23', 0, NULL, 5, '2026-03-24 16:43:20');
+INSERT INTO `ds_user` VALUES (2, 'wx_test_openid_002', NULL, '刘先生', NULL, '13900001002', 1, NULL, NULL, '2026-03-17 15:11:05', NULL, 0, NULL, NULL, '2026-03-24 16:43:20');
+INSERT INTO `ds_user` VALUES (3, 'wx_test_openid_003', NULL, '陈女士', NULL, '13900001003', 1, NULL, NULL, '2026-03-17 15:11:05', '2026-04-11 18:03:48', 0, NULL, NULL, '2026-03-24 16:43:20');
+INSERT INTO `ds_user` VALUES (4, 'wx_test_openid_13888888888', NULL, '客户8888', NULL, '13888888888', 1, NULL, NULL, '2026-03-24 16:44:41', '2026-03-25 19:19:38', 0, NULL, 4, '2026-03-24 16:44:41');
+INSERT INTO `ds_user` VALUES (5, 'wx_test_openid_default', NULL, 'ZeHana测试客户', NULL, '13888888888', 1, NULL, NULL, '2026-03-25 19:24:46', '2026-05-05 21:06:47', 0, NULL, 1, '2026-03-25 19:24:46');
+
+-- ----------------------------
+-- Table structure for ds_workflow
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_workflow`;
+CREATE TABLE `ds_workflow`  (
+  `workflow_id` bigint NOT NULL AUTO_INCREMENT,
+  `category_id` bigint NOT NULL COMMENT '关联品类(一对一)',
+  `workflow_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '工作流名称',
+  `create_by` bigint NULL DEFAULT NULL,
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_by` bigint NULL DEFAULT NULL,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  PRIMARY KEY (`workflow_id`) USING BTREE,
+  UNIQUE INDEX `uk_category`(`category_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 4 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '工作流模板表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of ds_workflow
+-- ----------------------------
+INSERT INTO `ds_workflow` VALUES (1, 1, '服装定制流程', NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `ds_workflow` VALUES (2, 2, '皮具制作流程', NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `ds_workflow` VALUES (3, 3, '数字插画流程', NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+
+-- ----------------------------
+-- Table structure for ds_workflow_step
+-- ----------------------------
+DROP TABLE IF EXISTS `ds_workflow_step`;
+CREATE TABLE `ds_workflow_step`  (
+  `step_id` bigint NOT NULL AUTO_INCREMENT,
+  `workflow_id` bigint NOT NULL COMMENT '所属工作流',
+  `step_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '节点名称',
+  `step_order` int NOT NULL DEFAULT 1 COMMENT '节点顺序',
+  `is_start_step` tinyint(1) NULL DEFAULT 0 COMMENT '是否起始节点',
+  `is_end_step` tinyint(1) NULL DEFAULT 0 COMMENT '是否结束节点',
+  `node_description` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '????',
+  `allowed_actions` json NULL COMMENT '????(JSON??)',
+  `need_image_upload` tinyint(1) NULL DEFAULT 0 COMMENT '????????',
+  `visible_to_client` tinyint(1) NULL DEFAULT 1 COMMENT '???????',
+  `expected_duration_days` int NULL DEFAULT NULL COMMENT '??????(?)',
+  `node_form_fields` json NULL COMMENT '节点表单字段键列表',
+  `create_by` bigint NULL DEFAULT NULL,
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_by` bigint NULL DEFAULT NULL,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  PRIMARY KEY (`step_id`) USING BTREE,
+  INDEX `idx_workflow`(`workflow_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 17 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '工作流节点表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of ds_workflow_step
+-- ----------------------------
+INSERT INTO `ds_workflow_step` VALUES (1, 1, '需求确认', 1, 1, 0, '处理节点：需求确认', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 0, 1, 1, '[\"chest\", \"waist\"]', NULL, '2026-03-04 15:06:58', NULL, '2026-04-10 15:43:02', 0);
+INSERT INTO `ds_workflow_step` VALUES (2, 1, '面料采购', 2, 0, 0, '处理节点：面料采购', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 0, 1, 2, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-10 10:33:15', 0);
+INSERT INTO `ds_workflow_step` VALUES (3, 1, '裁剪', 3, 0, 0, '处理节点：裁剪', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 3, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-10 10:33:15', 0);
+INSERT INTO `ds_workflow_step` VALUES (4, 1, '缝制', 4, 0, 0, '处理节点：缝制', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 3, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-10 10:33:15', 0);
+INSERT INTO `ds_workflow_step` VALUES (5, 1, '质检', 5, 0, 0, '处理节点：质检', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 1, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-10 10:33:15', 0);
+INSERT INTO `ds_workflow_step` VALUES (6, 1, '包装发货', 6, 0, 1, '处理节点：包装发货', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 0, 1, 1, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-10 10:33:15', 0);
+INSERT INTO `ds_workflow_step` VALUES (7, 2, '需求确认', 1, 1, 0, '处理节点：需求确认', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 0, 1, 1, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-10 10:33:15', 0);
+INSERT INTO `ds_workflow_step` VALUES (8, 2, '皮料裁切', 2, 0, 0, '处理节点：皮料裁切', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 0, 1, 2, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-10 10:33:15', 0);
+INSERT INTO `ds_workflow_step` VALUES (9, 2, '缝线打磨', 3, 0, 0, '处理节点：缝线打磨', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 3, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-10 10:33:15', 0);
+INSERT INTO `ds_workflow_step` VALUES (10, 2, '上色封边', 4, 0, 0, '处理节点：上色封边', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 3, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-10 10:33:15', 0);
+INSERT INTO `ds_workflow_step` VALUES (11, 2, '质检出货', 5, 0, 1, '处理节点：质检出货', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 1, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-10 10:33:15', 0);
+INSERT INTO `ds_workflow_step` VALUES (12, 3, '需求确认', 1, 1, 0, '处理节点：需求确认', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 0, 1, 1, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-10 10:33:15', 0);
+INSERT INTO `ds_workflow_step` VALUES (13, 3, '草稿构图', 2, 0, 0, '处理节点：草稿构图', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 2, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-10 10:33:15', 0);
+INSERT INTO `ds_workflow_step` VALUES (14, 3, '线稿细化', 3, 0, 0, '处理节点：线稿细化', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 3, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-10 10:33:15', 0);
+INSERT INTO `ds_workflow_step` VALUES (15, 3, '上色完稿', 4, 0, 0, '处理节点：上色完稿', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 3, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-10 10:33:15', 0);
+INSERT INTO `ds_workflow_step` VALUES (16, 3, '客户验收', 5, 0, 1, '处理节点：客户验收', '[\"save\", \"advance\", \"rollback\", \"block\", \"unblock\"]', 1, 1, 1, NULL, NULL, '2026-03-04 15:06:58', NULL, '2026-04-10 10:33:15', 0);
+
+-- ----------------------------
+-- Table structure for sys_admin
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_admin`;
+CREATE TABLE `sys_admin`  (
+  `admin_id` bigint NOT NULL AUTO_INCREMENT,
+  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '登录账号',
+  `password` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '密码(BCrypt)',
+  `nickname` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '昵称',
+  `avatar` varchar(512) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '头像',
+  `phone` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '手机号',
+  `email` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '邮箱',
+  `status` tinyint(1) NULL DEFAULT 1 COMMENT '0=禁用,1=正常',
+  `create_by` bigint NULL DEFAULT NULL,
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_by` bigint NULL DEFAULT NULL,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `last_login_time` datetime NULL DEFAULT NULL COMMENT '最后登录',
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  PRIMARY KEY (`admin_id`) USING BTREE,
+  UNIQUE INDEX `uk_username`(`username` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 8 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '后台用户表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of sys_admin
+-- ----------------------------
+INSERT INTO `sys_admin` VALUES (1, 'admin', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '超级管理员', NULL, NULL, NULL, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', NULL, 0);
+INSERT INTO `sys_admin` VALUES (2, 'designer1', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '李设计师', NULL, '13800001001', NULL, 1, NULL, '2026-03-17 15:11:05', NULL, '2026-03-17 15:11:05', NULL, 0);
+INSERT INTO `sys_admin` VALUES (3, 'designer2', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE8ByOhJIrdAu2', '王设计师', NULL, '13800001002', NULL, 1, NULL, '2026-03-17 15:11:05', 1, '2026-03-17 15:11:05', NULL, 0);
+INSERT INTO `sys_admin` VALUES (4, 'storekeeper', '$2a$10$lquZWWPAEjT1D3Ugbh2NTuZURlkeRF.K3LJcRSDQSTq3ljats0T96', 'storekeeper', NULL, '', NULL, 1, 1, '2026-04-20 00:45:35', 1, '2026-04-20 00:45:35', NULL, 0);
+INSERT INTO `sys_admin` VALUES (5, 'purchaser', '$2a$10$MqEyuumZ9MXB/nmwzeV4euzEhnyxbn1Pvw.8b1S1V.g0BtZBrtgP2', 'purchaser', NULL, '', NULL, 1, 1, '2026-04-20 00:45:44', 1, '2026-04-20 00:45:44', NULL, 0);
+INSERT INTO `sys_admin` VALUES (6, 'finance', '$2a$10$7ahdyzysipm.sGUK/eC5u.kmXmANkbg6oHz/xJVympU3XDVbg1r.a', 'finance', NULL, '', NULL, 1, 1, '2026-04-20 00:45:54', 1, '2026-04-20 00:45:54', NULL, 0);
+INSERT INTO `sys_admin` VALUES (7, 'customer_service', '$2a$10$EI4ij7ybYwOwfck0R9xc7eYthj.vysnH7zYLup406nWkFLxXYqxXO', 'customer_service', NULL, '', NULL, 1, 1, '2026-04-20 00:46:07', 1, '2026-04-20 00:46:07', NULL, 0);
+
+-- ----------------------------
+-- Table structure for sys_admin_role
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_admin_role`;
+CREATE TABLE `sys_admin_role`  (
+  `admin_id` bigint NOT NULL COMMENT '用户ID',
+  `role_id` bigint NOT NULL COMMENT '角色ID',
+  PRIMARY KEY (`admin_id`, `role_id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '用户角色关联表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of sys_admin_role
+-- ----------------------------
+INSERT INTO `sys_admin_role` VALUES (1, 1);
+INSERT INTO `sys_admin_role` VALUES (2, 2);
+INSERT INTO `sys_admin_role` VALUES (3, 2);
+INSERT INTO `sys_admin_role` VALUES (4, 3);
+INSERT INTO `sys_admin_role` VALUES (5, 4);
+INSERT INTO `sys_admin_role` VALUES (6, 5);
+INSERT INTO `sys_admin_role` VALUES (7, 6);
+
+-- ----------------------------
+-- Table structure for sys_api_metrics
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_api_metrics`;
+CREATE TABLE `sys_api_metrics`  (
+  `metric_id` bigint NOT NULL AUTO_INCREMENT,
+  `api_path` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '接口路径',
+  `http_method` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'HTTP方法',
+  `stat_date` date NOT NULL COMMENT '统计日期',
+  `stat_hour` int NULL DEFAULT NULL COMMENT '统计小时(0-23)',
+  `call_count` int NULL DEFAULT 0 COMMENT '调用次数',
+  `success_count` int NULL DEFAULT 0,
+  `fail_count` int NULL DEFAULT 0,
+  `avg_cost_ms` int NULL DEFAULT 0 COMMENT '平均耗时(ms)',
+  `max_cost_ms` int NULL DEFAULT 0,
+  `p99_cost_ms` int NULL DEFAULT 0,
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`metric_id`) USING BTREE,
+  UNIQUE INDEX `uk_api_date_hour`(`api_path` ASC, `stat_date` ASC, `stat_hour` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '接口监控指标表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of sys_api_metrics
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for sys_dict_data
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_dict_data`;
+CREATE TABLE `sys_dict_data`  (
+  `dict_code` bigint NOT NULL AUTO_INCREMENT,
+  `dict_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '字典类型标识',
+  `dict_label` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '字典标签',
+  `dict_value` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '字典值',
+  `sort_order` int NULL DEFAULT 0 COMMENT '排序',
+  `remark` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '备注',
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  PRIMARY KEY (`dict_code`) USING BTREE,
+  INDEX `idx_dict_type`(`dict_type` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 15 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '字典数据表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of sys_dict_data
+-- ----------------------------
+INSERT INTO `sys_dict_data` VALUES (1, 'order_status', '待支付', '0', 0, NULL, 0);
+INSERT INTO `sys_dict_data` VALUES (2, 'order_status', '生产中', '1', 1, NULL, 0);
+INSERT INTO `sys_dict_data` VALUES (3, 'order_status', '待发货', '2', 2, NULL, 0);
+INSERT INTO `sys_dict_data` VALUES (4, 'order_status', '待收货', '3', 3, NULL, 0);
+INSERT INTO `sys_dict_data` VALUES (5, 'order_status', '已完成', '4', 4, NULL, 0);
+INSERT INTO `sys_dict_data` VALUES (6, 'order_status', '已取消', '5', 5, NULL, 0);
+INSERT INTO `sys_dict_data` VALUES (7, 'request_status', '待处理', '0', 0, NULL, 0);
+INSERT INTO `sys_dict_data` VALUES (8, 'request_status', '已转单', '1', 1, NULL, 0);
+INSERT INTO `sys_dict_data` VALUES (9, 'request_status', '已关闭', '2', 2, NULL, 0);
+INSERT INTO `sys_dict_data` VALUES (10, 'payment_type', '预付款', '1', 1, NULL, 0);
+INSERT INTO `sys_dict_data` VALUES (11, 'payment_type', '尾款', '2', 2, NULL, 0);
+INSERT INTO `sys_dict_data` VALUES (12, 'material_category', '面料', 'fabric', 1, NULL, 0);
+INSERT INTO `sys_dict_data` VALUES (13, 'material_category', '辅料', 'accessory', 2, NULL, 0);
+INSERT INTO `sys_dict_data` VALUES (14, 'material_category', '五金件', 'hardware', 3, NULL, 0);
+
+-- ----------------------------
+-- Table structure for sys_dict_type
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_dict_type`;
+CREATE TABLE `sys_dict_type`  (
+  `dict_id` bigint NOT NULL AUTO_INCREMENT,
+  `dict_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '字典名称',
+  `dict_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '字典类型标识',
+  `remark` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '备注',
+  `create_by` bigint NULL DEFAULT NULL,
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_by` bigint NULL DEFAULT NULL,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  PRIMARY KEY (`dict_id`) USING BTREE,
+  UNIQUE INDEX `uk_dict_type`(`dict_type` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 8 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '字典类型表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of sys_dict_type
+-- ----------------------------
+INSERT INTO `sys_dict_type` VALUES (1, '订单状态', 'order_status', '订单生命周期状态', NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_dict_type` VALUES (2, '意向状态', 'request_status', '客户意向状态', NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_dict_type` VALUES (3, '支付类型', 'payment_type', '支付类型', NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_dict_type` VALUES (4, '物料分类', 'material_category', '物料分类', NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_dict_type` VALUES (5, '1', '1', '', NULL, '2026-04-05 14:58:11', NULL, '2026-04-05 15:03:50', 1);
+INSERT INTO `sys_dict_type` VALUES (7, '2', '2', '', NULL, '2026-04-05 15:00:09', NULL, '2026-04-05 15:03:49', 1);
+
+-- ----------------------------
+-- Table structure for sys_exception_log
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_exception_log`;
+CREATE TABLE `sys_exception_log`  (
+  `exception_id` bigint NOT NULL AUTO_INCREMENT,
+  `exception_type` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '异常类型(类名)',
+  `exception_msg` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '异常消息',
+  `stack_trace` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '堆栈信息',
+  `request_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '请求URL',
+  `request_method` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'HTTP方法',
+  `request_param` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '请求参数',
+  `operator_id` bigint NULL DEFAULT NULL COMMENT '操作人ID',
+  `operator_ip` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '操作人IP',
+  `is_handled` tinyint(1) NULL DEFAULT 0 COMMENT '是否已处理',
+  `handle_remark` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '处理备注',
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '发生时间',
+  PRIMARY KEY (`exception_id`) USING BTREE,
+  INDEX `idx_create_time`(`create_time` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '异常日志表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of sys_exception_log
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for sys_login_log
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_login_log`;
+CREATE TABLE `sys_login_log`  (
+  `login_id` bigint NOT NULL AUTO_INCREMENT,
+  `admin_id` bigint NULL DEFAULT NULL COMMENT '登录用户ID',
+  `username` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '登录账号',
+  `login_ip` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '登录IP',
+  `login_location` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '登录地点',
+  `browser` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '浏览器',
+  `os` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '操作系统',
+  `status` tinyint(1) NULL DEFAULT NULL COMMENT '0=成功,1=失败',
+  `msg` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '提示消息',
+  `login_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '登录时间',
+  PRIMARY KEY (`login_id`) USING BTREE,
+  INDEX `idx_admin`(`admin_id` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 1 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '登录日志表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of sys_login_log
+-- ----------------------------
+
+-- ----------------------------
+-- Table structure for sys_menu
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_menu`;
+CREATE TABLE `sys_menu`  (
+  `menu_id` bigint NOT NULL AUTO_INCREMENT,
+  `parent_id` bigint NULL DEFAULT 0 COMMENT '父菜单ID',
+  `menu_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '菜单名称',
+  `menu_type` char(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'M=目录,C=菜单,F=按钮',
+  `path` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '路由地址',
+  `component` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '组件路径',
+  `perms` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '权限标识(如order:list)',
+  `icon` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '图标',
+  `sort_order` int NULL DEFAULT 0 COMMENT '排序',
+  `visible` tinyint(1) NULL DEFAULT 1 COMMENT '是否可见',
+  `create_by` bigint NULL DEFAULT NULL,
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_by` bigint NULL DEFAULT NULL,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  PRIMARY KEY (`menu_id`) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 34 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '菜单权限表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of sys_menu
+-- ----------------------------
+INSERT INTO `sys_menu` VALUES (1, 0, '订单管理', 'M', '/order', NULL, NULL, 'ShoppingCart', 3, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-04-11 14:05:26', 0);
+INSERT INTO `sys_menu` VALUES (2, 0, '意向管理', 'M', '/request', NULL, NULL, 'Mail', 4, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-04-11 14:05:26', 0);
+INSERT INTO `sys_menu` VALUES (3, 0, '配置中心', 'M', '/config', NULL, NULL, 'Settings', 8, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-04-11 14:05:26', 0);
+INSERT INTO `sys_menu` VALUES (4, 0, '供应链', 'M', '/supply', NULL, NULL, 'Package', 6, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-04-11 14:05:26', 0);
+INSERT INTO `sys_menu` VALUES (5, 0, '作品集', 'M', '/portfolio', NULL, NULL, 'Image', 5, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_menu` VALUES (6, 0, '数据分析', 'M', '/statistics', NULL, NULL, 'TrendingUp', 7, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-04-11 14:05:26', 0);
+INSERT INTO `sys_menu` VALUES (7, 0, '系统管理', 'M', '/system', NULL, NULL, 'Tool', 9, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-04-11 14:05:26', 0);
+INSERT INTO `sys_menu` VALUES (8, 1, '订单看板', 'C', '/order/kanban', NULL, 'order:kanban', NULL, 1, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_menu` VALUES (9, 1, '订单列表', 'C', '/order/list', NULL, 'order:list', NULL, 2, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_menu` VALUES (10, 2, '意向池', 'C', '/request/list', NULL, 'request:list', NULL, 1, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_menu` VALUES (11, 3, '品类管理', 'C', '/config/category', NULL, 'category:list', NULL, 1, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_menu` VALUES (12, 3, '动态字段', 'C', '/config/field', NULL, 'field:list', NULL, 2, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_menu` VALUES (13, 3, '工作流管理', 'C', '/config/workflow', NULL, 'workflow:list', NULL, 3, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_menu` VALUES (14, 4, '物料管理', 'C', '/supply/material', NULL, 'material:list', NULL, 1, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_menu` VALUES (15, 4, 'BOM模板', 'C', '/supply/bom', NULL, 'bom:list', NULL, 2, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_menu` VALUES (16, 5, '作品管理', 'C', '/portfolio/list', NULL, 'portfolio:list', NULL, 1, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_menu` VALUES (17, 6, '经营看板', 'C', '/statistics/dashboard', NULL, 'statistics:dashboard', NULL, 1, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_menu` VALUES (18, 7, '用户管理', 'C', '/system/admin', NULL, 'admin:list', NULL, 1, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_menu` VALUES (19, 7, '角色管理', 'C', '/system/role', NULL, 'role:list', NULL, 2, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_menu` VALUES (20, 7, '菜单管理', 'C', '/system/menu', NULL, 'menu:list', NULL, 3, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_menu` VALUES (21, 7, '字典管理', 'C', '/system/dict', NULL, 'dict:list', NULL, 4, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_menu` VALUES (22, 7, '操作日志', 'C', '/system/log', NULL, 'log:list', NULL, 5, 1, NULL, '2026-03-04 15:06:58', NULL, '2026-03-04 15:06:58', 0);
+INSERT INTO `sys_menu` VALUES (23, 0, '消息中心', 'M', '/chat', NULL, NULL, 'ChatboxEllipsesOutline', 2, 1, NULL, '2026-03-25 19:24:46', NULL, '2026-04-11 14:05:26', 0);
+INSERT INTO `sys_menu` VALUES (24, 23, '在线沟通', 'C', '/chat/index', NULL, 'chat:list', NULL, 1, 1, NULL, '2026-03-25 19:24:46', NULL, '2026-03-25 19:24:46', 0);
+INSERT INTO `sys_menu` VALUES (25, 0, '节点工作台', 'M', '/workbench', 'LAYOUT', NULL, 'AppstoreOutlined', 1, 1, NULL, '2026-04-09 20:59:05', NULL, '2026-04-11 14:05:26', 0);
+INSERT INTO `sys_menu` VALUES (26, 25, '节点工作台', 'C', 'nodes', '/order/workbench', 'workbench:list', NULL, 1, 1, NULL, '2026-04-09 20:59:05', NULL, '2026-04-09 21:04:12', 0);
+INSERT INTO `sys_menu` VALUES (27, 4, '库存管理', 'C', '/supply/inventory', NULL, 'inventory:list', 'CubeOutline', 3, 1, NULL, '2026-04-14 22:09:37', NULL, '2026-04-14 22:09:37', 0);
+INSERT INTO `sys_menu` VALUES (28, 4, '库存记录', 'C', '/supply/inventory/record', NULL, 'inventory:record', 'ListOutline', 4, 1, NULL, '2026-04-14 22:09:37', NULL, '2026-04-14 22:09:37', 0);
+INSERT INTO `sys_menu` VALUES (29, 0, '客户管理', 'M', '/customer', NULL, NULL, 'PeopleOutline', 9, 1, NULL, '2026-04-14 22:09:37', NULL, '2026-04-14 22:09:37', 0);
+INSERT INTO `sys_menu` VALUES (30, 29, '客户列表', 'C', '/customer/list', NULL, 'customer:list', NULL, 1, 1, NULL, '2026-04-14 22:09:37', NULL, '2026-04-14 22:09:37', 0);
+INSERT INTO `sys_menu` VALUES (31, 29, '地址管理', 'C', '/customer/address', NULL, 'customer:address', NULL, 2, 1, NULL, '2026-04-14 22:09:37', NULL, '2026-04-14 22:09:37', 0);
+INSERT INTO `sys_menu` VALUES (32, 3, '轮播图管理', 'C', '/config/banner', NULL, 'banner:list', 'ImagesOutline', 4, 1, NULL, '2026-04-14 22:09:37', NULL, '2026-04-14 22:09:37', 0);
+INSERT INTO `sys_menu` VALUES (33, 3, 'AI配置', 'C', '/config/ai', NULL, 'ai:config', 'HardwareChipOutline', 5, 1, NULL, '2026-04-20 01:01:17', NULL, '2026-04-20 01:01:17', 0);
+
+-- ----------------------------
+-- Table structure for sys_oper_log
+-- ----------------------------
 DROP TABLE IF EXISTS `sys_oper_log`;
-/*!40101 SET @saved_cs_client     = @@character_set_client */;
-/*!50503 SET character_set_client = utf8mb4 */;
-CREATE TABLE `sys_oper_log` (
+CREATE TABLE `sys_oper_log`  (
   `log_id` bigint NOT NULL AUTO_INCREMENT,
-  `title` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鎿嶄綔妯″潡',
-  `method` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '璇锋眰鏂规硶',
-  `request_method` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'HTTP鏂规硶',
-  `operator_id` bigint DEFAULT NULL COMMENT '鎿嶄綔浜篒D',
-  `operator_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '鎿嶄綔浜鸿处鍙?,
-  `oper_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '璇锋眰URL',
-  `oper_ip` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '璇锋眰IP',
-  `oper_param` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT '璇锋眰鍙傛暟',
-  `json_result` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT '杩斿洖缁撴灉',
-  `status` tinyint(1) DEFAULT NULL COMMENT '0=鎴愬姛,1=澶辫触',
-  `error_msg` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci COMMENT '閿欒淇℃伅',
-  `oper_time` datetime DEFAULT CURRENT_TIMESTAMP COMMENT '鎿嶄綔鏃堕棿',
+  `title` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '操作模块',
+  `method` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '请求方法',
+  `request_method` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT 'HTTP方法',
+  `operator_id` bigint NULL DEFAULT NULL COMMENT '操作人ID',
+  `operator_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '操作人账号',
+  `oper_url` varchar(500) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '请求URL',
+  `oper_ip` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '请求IP',
+  `oper_param` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '请求参数',
+  `json_result` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '返回结果',
+  `status` tinyint(1) NULL DEFAULT NULL COMMENT '0=成功,1=失败',
+  `error_msg` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL COMMENT '错误信息',
+  `oper_time` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '操作时间',
   PRIMARY KEY (`log_id`) USING BTREE,
-  KEY `idx_operator` (`operator_id`) USING BTREE,
-  KEY `idx_oper_time` (`oper_time`) USING BTREE
-) ENGINE=InnoDB AUTO_INCREMENT=219 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC COMMENT='鎿嶄綔鏃ュ織琛?;
-/*!40101 SET character_set_client = @saved_cs_client */;
-/*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
+  INDEX `idx_operator`(`operator_id` ASC) USING BTREE,
+  INDEX `idx_oper_time`(`oper_time` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 238 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '操作日志表' ROW_FORMAT = DYNAMIC;
 
-/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
-/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
-/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
-/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
-/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
-/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
+-- ----------------------------
+-- Records of sys_oper_log
+-- ----------------------------
+INSERT INTO `sys_oper_log` VALUES (1, '新增字典类型', 'com.designstudio.system.controller.DictController.addType', 'POST', 1, 'admin', '/api/v1/admin/dict/types', '0:0:0:0:0:0:0:1', '[{\"dictName\":\"1\",\"dictType\":\"1\",\"remark\":\"\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-05 14:58:12');
+INSERT INTO `sys_oper_log` VALUES (2, '新增字典类型', 'com.designstudio.system.controller.DictController.addType', 'POST', 1, 'admin', '/api/v1/admin/dict/types', '0:0:0:0:0:0:0:1', '[{\"dictName\":\"1\",\"dictType\":\"1\",\"remark\":\"\"}]', NULL, 1, '\r\n### Error updating database.  Cause: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry \'1\' for key \'sys_dict_type.uk_dict_type\'\r\n### The error may exist in com/designstudio/system/mapper/SysDictTypeMapper.java (best guess)\r\n### The error may involve com.designstudio.system.mapper.SysDictTypeMapper.insert-Inline\r\n### The error occurred while setting parameters\r\n### SQL: INSERT INTO sys_dict_type  ( dict_name, dict_type, remark )  VALUES (  ?, ?, ?  )\r\n### Cause: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry \'1\' for key \'sys_dict_type.uk_dict_type\'\n; Duplicate entry \'1\' for key \'sys_dict_type.uk_dict_type\'', '2026-04-05 14:58:49');
+INSERT INTO `sys_oper_log` VALUES (3, '新增字典类型', 'com.designstudio.system.controller.DictController.addType', 'POST', 1, 'admin', '/api/v1/admin/dict/types', '0:0:0:0:0:0:0:1', '[{\"dictName\":\"2\",\"dictType\":\"2\",\"remark\":\"\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-05 15:00:10');
+INSERT INTO `sys_oper_log` VALUES (4, '删除字典类型', 'com.designstudio.system.controller.DictController.deleteType', 'DELETE', 1, 'admin', '/api/v1/admin/dict/types/7', '0:0:0:0:0:0:0:1', '[7]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-05 15:03:49');
+INSERT INTO `sys_oper_log` VALUES (5, '删除字典类型', 'com.designstudio.system.controller.DictController.deleteType', 'DELETE', 1, 'admin', '/api/v1/admin/dict/types/5', '0:0:0:0:0:0:0:1', '[5]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-05 15:03:51');
+INSERT INTO `sys_oper_log` VALUES (6, '意向转订单', 'com.designstudio.order.controller.RequestController.convert', 'POST', 1, 'admin', '/api/v1/admin/requests/8/convert', '0:0:0:0:0:0:0:1', '[8,{\"designerId\":2,\"totalAmount\":800,\"prepayAmount\":300,\"expectedDate\":1777392000000,\"remark\":\"\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"orderId\":5,\"orderSn\":\"DS202604051756345882\",\"userId\":1,\"categoryId\":1,\"designerId\":2,\"status\":1,\"customDataSnapshot\":\"{\\\"chest\\\": \\\"1\\\", \\\"waist\\\": \\\"2\\\", \\\"length\\\": \\\"4\\\", \\\"shoulder\\\": \\\"3\\\"}\",\"totalAmount\":800,\"prepayAmount\":300,\"paidAmount\":0,\"expectedDate\":1777392000000,\"remark\":\"\",\"isBlocked\":0,\"createBy\":1,\"createTime\":1775382994117,\"updateBy\":1,\"updateTime\":1775382994117}}', 0, NULL, '2026-04-05 17:56:34');
+INSERT INTO `sys_oper_log` VALUES (7, '后台登出', 'com.designstudio.system.controller.AuthController.logout', 'POST', 1, 'admin', '/api/v1/auth/logout', '0:0:0:0:0:0:0:1', '[\"Bearer eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1MzY3NjYwLCJleHAiOjE3NzU5NzI0NjB9.xD0w5V2WavGQSG0iQ8e-GptXBPXdSS47YpfDg_6IrlfXPwzwH1A5GeXDAkS-puOcl5Uo2exnjKEfN_XxPyR7eQ\"]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-06 14:02:28');
+INSERT INTO `sys_oper_log` VALUES (8, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"designer1\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6IuadjuiuvuiuoeW4iCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjIsInVzZXJuYW1lIjoiZGVzaWduZXIxIiwic3ViIjoiMiIsImlhdCI6MTc3NTQ1NTM2NiwiZXhwIjoxNzc2MDYwMTY2fQ.O7hst5s6eidB-C7Ezti2Jo5PNdhP23yz_2_Cw2GolgSm2NWe4izW9EAxTz_e55wiIPkorOBTfAylgkneAJyT3w\",\"adminId\":2,\"username\":\"designer1\",\"nickname\":\"李设计师\"}}', 0, NULL, '2026-04-06 14:02:46');
+INSERT INTO `sys_oper_log` VALUES (9, '后台登出', 'com.designstudio.system.controller.AuthController.logout', 'POST', 2, 'designer1', '/api/v1/auth/logout', '0:0:0:0:0:0:0:1', '[\"Bearer eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6IuadjuiuvuiuoeW4iCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjIsInVzZXJuYW1lIjoiZGVzaWduZXIxIiwic3ViIjoiMiIsImlhdCI6MTc3NTQ1NTM2NiwiZXhwIjoxNzc2MDYwMTY2fQ.O7hst5s6eidB-C7Ezti2Jo5PNdhP23yz_2_Cw2GolgSm2NWe4izW9EAxTz_e55wiIPkorOBTfAylgkneAJyT3w\"]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-08 13:09:34');
+INSERT INTO `sys_oper_log` VALUES (10, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NjI0OTc2LCJleHAiOjE3NzYyMjk3NzZ9.ow98OIBRP7JaIF5SLJqo2hlUn1YQ9STuZCimnK4E07JhogjBxoX0OLXZlBPXQYdjSUNpn1anS9eM1SRidh26EQ\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-08 13:09:37');
+INSERT INTO `sys_oper_log` VALUES (11, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NjMwNDg5LCJleHAiOjE3NzYyMzUyODl9.Ulw1Fn9jAx9raAPkieMqaQdNwvL8OJwGfrSYhkeUVNPHsMZSqFTjDmkTQzINI3uQx7YSMwfHipawshgsD12A1A\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-08 14:41:29');
+INSERT INTO `sys_oper_log` VALUES (12, '物料入库', 'com.designstudio.supply.controller.MaterialController.stockIn', 'POST', 1, 'admin', '/api/v1/admin/materials/1/stock-in', '0:0:0:0:0:0:0:1', '[1,{\"quantity\":10}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-08 14:49:05');
+INSERT INTO `sys_oper_log` VALUES (13, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NjM2NDEzLCJleHAiOjE3NzYyNDEyMTN9.Pn3vQmwErKw8ZvW5pUt8Blbkzzu2QHm_SqTe_hy3TQ5_trkOtSjcCo5XhipHJ83Un6xMaJQDjR_MkM-N-2XL2Q\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-08 16:20:13');
+INSERT INTO `sys_oper_log` VALUES (14, '编辑后台用户', 'com.designstudio.system.controller.SysAdminController.update', 'PUT', 1, 'admin', '/api/v1/admin/users/3', '0:0:0:0:0:0:0:1', '[3,{\"username\":\"designer2\",\"password\":\"\",\"nickname\":\"王设计师\",\"phone\":\"13800001002\",\"status\":1,\"roleIds\":[2]}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-09 19:08:28');
+INSERT INTO `sys_oper_log` VALUES (15, '设置设计师品类', 'com.designstudio.system.controller.SysAdminController.updateCategories', 'PUT', 1, 'admin', '/api/v1/admin/users/3/categories', '0:0:0:0:0:0:0:1', '[3,[3,2]]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-09 19:08:28');
+INSERT INTO `sys_oper_log` VALUES (16, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzM5OTQ5LCJleHAiOjE3NzYzNDQ3NDl9.xyE9LWy6GPLU4M1FJC388Q0Nf20nmEOPrLOZbPhrgIeESmOKt2MFsGMNDxsEbFaylOcxYqUXvoX-ImynWLhJOw\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-09 21:05:48');
+INSERT INTO `sys_oper_log` VALUES (17, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzM5OTYyLCJleHAiOjE3NzYzNDQ3NjJ9.qCjC6k94_T31d7uJIRrgb85pkAMD2zaBmDfWdin0E4ymRieHlgdz80rNTryZYOFBODzFIXsWXpEcmF8MMgKS7A\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-09 21:06:02');
+INSERT INTO `sys_oper_log` VALUES (18, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzM5OTYyLCJleHAiOjE3NzYzNDQ3NjJ9.qCjC6k94_T31d7uJIRrgb85pkAMD2zaBmDfWdin0E4ymRieHlgdz80rNTryZYOFBODzFIXsWXpEcmF8MMgKS7A\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-09 21:06:03');
+INSERT INTO `sys_oper_log` VALUES (19, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzQwMTU5LCJleHAiOjE3NzYzNDQ5NTl9.3_Wh1nNmCJ2tuYk8qQvpCjq2Siojc7sHPpZpzzj4YI95Clk3Gq-NTeyZJz6VrrAeZcffGqAngFOW6JcTDC_toA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-09 21:09:18');
+INSERT INTO `sys_oper_log` VALUES (20, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzQwMTU5LCJleHAiOjE3NzYzNDQ5NTl9.3_Wh1nNmCJ2tuYk8qQvpCjq2Siojc7sHPpZpzzj4YI95Clk3Gq-NTeyZJz6VrrAeZcffGqAngFOW6JcTDC_toA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-09 21:09:18');
+INSERT INTO `sys_oper_log` VALUES (21, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzQwMTg3LCJleHAiOjE3NzYzNDQ5ODd9.aTz8pn9T05i3x_w0264D4jw022N7EoRhPiNhs-HJufMA54O9sqmtjzjquAFN_bwKNk5vMC5v23bAdXnoJBw0Rg\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-09 21:09:48');
+INSERT INTO `sys_oper_log` VALUES (22, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzQwMTg3LCJleHAiOjE3NzYzNDQ5ODd9.aTz8pn9T05i3x_w0264D4jw022N7EoRhPiNhs-HJufMA54O9sqmtjzjquAFN_bwKNk5vMC5v23bAdXnoJBw0Rg\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-09 21:09:48');
+INSERT INTO `sys_oper_log` VALUES (23, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/1/action', '0:0:0:0:0:0:0:1', '[1,{\"action\":\"save\",\"description\":\"?????????\",\"imageUrls\":\"\",\"blockReason\":\"\"}]', '{\"code\":500,\"msg\":\"\\r\\n### Error updating database.  Cause: com.mysql.cj.jdbc.exceptions.MysqlDataTruncation: Data truncation: Invalid JSON text: \\\"The document is empty.\\\" at position 0 in value for column \'ds_order_progress.image_urls\'.\\r\\n### The error may exist in com/designstudio/order/mapper/DsOrderProgressMapper.java (best guess)\\r\\n### The error may involve com.designstudio.order.mapper.DsOrderProgressMapper.insert-Inline\\r\\n### The error occurred while setting parameters\\r\\n### SQL: INSERT INTO ds_order_progress  ( order_id, step_id, description, image_urls, operator_id, create_time, del_flag )  VALUES (  ?, ?, ?, ?, ?, ?, ?  )\\r\\n### Cause: com.mysql.cj.jdbc.exceptions.MysqlDataTruncation: Data truncation: Invalid JSON text: \\\"The document is empty.\\\" at position 0 in value for column \'ds_order_progress.image_urls\'.\\n; Data truncation: Invalid JSON text: \\\"The document is empty.\\\" at position 0 in value for column \'ds_order_progress.image_urls\'.\"}', 0, NULL, '2026-04-09 21:09:48');
+INSERT INTO `sys_oper_log` VALUES (24, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzQwMzk3LCJleHAiOjE3NzYzNDUxOTd9.KpYbUbwI_NSR8--FUFwJdtPyHNqIgOYIq1woEMYhSinoKT9M_9c2JHtl1J7nUAcqsT-STsC9ZSVUJZW0q0IAhA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-09 21:13:16');
+INSERT INTO `sys_oper_log` VALUES (25, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/1/action', '0:0:0:0:0:0:0:1', '[1,{\"action\":\"save\",\"description\":\"?????????\",\"imageUrls\":\"\",\"blockReason\":\"\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-09 21:13:19');
+INSERT INTO `sys_oper_log` VALUES (26, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzQxNTY1LCJleHAiOjE3NzYzNDYzNjV9.WvvxUhGjsDmvcYVN3SKiXibImknU8NDiLky0hr8D510vS6QHuH4e-sjNuteDjh4PSFvERdVymhNrEdFCPkutlg\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-09 21:32:45');
+INSERT INTO `sys_oper_log` VALUES (27, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzQxNTgyLCJleHAiOjE3NzYzNDYzODJ9.N5lgBiGewEWHxITV4sQsZj6YLFzDk_najMXqtMLRjWsyNgUc1ISPp2wBwOgpnqxxzSZGP-gJ4Z4Pu693ITWyPA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-09 21:33:02');
+INSERT INTO `sys_oper_log` VALUES (28, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/1/action', '0:0:0:0:0:0:0:1', '[1,{\"action\":\"save\",\"description\":\"no-image-check\"}]', '{\"code\":500,\"msg\":\"当前节点要求上传图片\"}', 0, NULL, '2026-04-09 21:33:02');
+INSERT INTO `sys_oper_log` VALUES (29, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzQxNjAzLCJleHAiOjE3NzYzNDY0MDN9.UHP_EtmrFxs3SyD48OYEON1IgJ1ufC_W3Y0na8MXLfDvG1nZCoj9Ta4ogwPBR-rfXwBgP2v6fio3aV-cczwq6w\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-09 21:33:23');
+INSERT INTO `sys_oper_log` VALUES (30, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzQxNjIwLCJleHAiOjE3NzYzNDY0MjB9.-TxfGCn_DiKNccma1fxlFJqcXEc6xyacd0egO7m-xv5uURIuLKhyEe_ZaLN3zwAIPuqtF8rMkkrxqIRZtSYTJg\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-09 21:33:41');
+INSERT INTO `sys_oper_log` VALUES (31, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/1/action', '0:0:0:0:0:0:0:1', '[1,{\"action\":\"save\",\"description\":\"no-image-check\"}]', '{\"code\":500,\"msg\":\"当前节点要求上传图片\"}', 0, NULL, '2026-04-09 21:33:41');
+INSERT INTO `sys_oper_log` VALUES (32, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/1/action', '0:0:0:0:0:0:0:1', '[1,{\"action\":\"save\",\"description\":\"upload-ok\",\"imageUrls\":\"\\\"/uploads/321f10cac04241249a1c608ce6c9b048.png\\\"\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-09 21:33:42');
+INSERT INTO `sys_oper_log` VALUES (33, '后台登出', 'com.designstudio.system.controller.AuthController.logout', 'POST', 1, 'admin', '/api/v1/auth/logout', '0:0:0:0:0:0:0:1', '[\"Bearer eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NjM2NDEzLCJleHAiOjE3NzYyNDEyMTN9.Pn3vQmwErKw8ZvW5pUt8Blbkzzu2QHm_SqTe_hy3TQ5_trkOtSjcCo5XhipHJ83Un6xMaJQDjR_MkM-N-2XL2Q\"]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-09 21:36:01');
+INSERT INTO `sys_oper_log` VALUES (34, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzQxNzY2LCJleHAiOjE3NzYzNDY1NjZ9.4i4jizppUdqkp_4GjOBdD-NQvkOZSAEaexXWlO1y7i9vOZCrjQuHa1aA02XxGMfzt-Fya80h-Zuk-mUHj-fQpQ\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-09 21:36:06');
+INSERT INTO `sys_oper_log` VALUES (35, '意向转订单', 'com.designstudio.order.controller.RequestController.convert', 'POST', 1, 'admin', '/api/v1/admin/requests/9/convert', '0:0:0:0:0:0:0:1', '[9,{\"designerId\":2,\"totalAmount\":100,\"prepayAmount\":10,\"expectedDate\":1775664000000,\"remark\":\"\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"orderId\":6,\"orderSn\":\"DS202604092137346349\",\"userId\":1,\"categoryId\":1,\"designerId\":2,\"currentStepId\":1,\"status\":0,\"customDataSnapshot\":\"{\\\"chest\\\": \\\"20\\\", \\\"waist\\\": \\\"30\\\", \\\"shoulder\\\": \\\"20\\\"}\",\"totalAmount\":100,\"prepayAmount\":10,\"paidAmount\":0,\"expectedDate\":1775664000000,\"remark\":\"\",\"isBlocked\":0,\"createBy\":1,\"createTime\":1775741854582,\"updateBy\":1,\"updateTime\":1775741854582}}', 0, NULL, '2026-04-09 21:37:35');
+INSERT INTO `sys_oper_log` VALUES (36, '添加订单进度', 'com.designstudio.order.controller.OrderController.addProgress', 'POST', 1, 'admin', '/api/v1/admin/orders/6/progress', '0:0:0:0:0:0:0:1', '[6,{\"description\":\"1\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-09 21:37:59');
+INSERT INTO `sys_oper_log` VALUES (37, '后台登出', 'com.designstudio.system.controller.AuthController.logout', 'POST', 1, 'admin', '/api/v1/auth/logout', '0:0:0:0:0:0:0:1', '[\"Bearer eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzQxNzY2LCJleHAiOjE3NzYzNDY1NjZ9.4i4jizppUdqkp_4GjOBdD-NQvkOZSAEaexXWlO1y7i9vOZCrjQuHa1aA02XxGMfzt-Fya80h-Zuk-mUHj-fQpQ\"]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-09 21:41:36');
+INSERT INTO `sys_oper_log` VALUES (38, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"desgner1\",\"password\":\"admin123\"}]', NULL, 1, '用户名或密码错误', '2026-04-09 21:41:43');
+INSERT INTO `sys_oper_log` VALUES (39, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"desgner1\",\"password\":\"123456\"}]', NULL, 1, '用户名或密码错误', '2026-04-09 21:41:55');
+INSERT INTO `sys_oper_log` VALUES (40, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"designer1\",\"password\":\"123456\"}]', NULL, 1, '用户名或密码错误', '2026-04-09 21:41:59');
+INSERT INTO `sys_oper_log` VALUES (41, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"designer1\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6IuadjuiuvuiuoeW4iCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjIsInVzZXJuYW1lIjoiZGVzaWduZXIxIiwic3ViIjoiMiIsImlhdCI6MTc3NTc0MjEyNCwiZXhwIjoxNzc2MzQ2OTI0fQ.miry4jcJs-O166Y5ErHq8CYUph0fAJ2Obz682ejbl1eHdtB1Knly2mgZnrUMnTOjI-UnU4xOJ6Odo6fdjuHguA\",\"adminId\":2,\"username\":\"designer1\",\"nickname\":\"李设计师\"}}', 0, NULL, '2026-04-09 21:42:04');
+INSERT INTO `sys_oper_log` VALUES (42, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 2, 'designer1', '/api/v1/admin/workbench/orders/6/action', '0:0:0:0:0:0:0:1', '[6,{\"action\":\"block\",\"blockReason\":\"11\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-09 21:42:51');
+INSERT INTO `sys_oper_log` VALUES (43, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 2, 'designer1', '/api/v1/admin/workbench/orders/6/action', '0:0:0:0:0:0:0:1', '[6,{\"action\":\"unblock\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-09 21:43:14');
+INSERT INTO `sys_oper_log` VALUES (44, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 2, 'designer1', '/api/v1/admin/workbench/orders/6/action', '0:0:0:0:0:0:0:1', '[6,{\"action\":\"block\",\"blockReason\":\"13\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-09 21:43:17');
+INSERT INTO `sys_oper_log` VALUES (45, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 2, 'designer1', '/api/v1/admin/workbench/orders/6/action', '0:0:0:0:0:0:0:1', '[6,{\"action\":\"unblock\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-09 21:43:22');
+INSERT INTO `sys_oper_log` VALUES (46, '后台登出', 'com.designstudio.system.controller.AuthController.logout', 'POST', 2, 'designer1', '/api/v1/auth/logout', '0:0:0:0:0:0:0:1', '[\"Bearer eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6IuadjuiuvuiuoeW4iCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjIsInVzZXJuYW1lIjoiZGVzaWduZXIxIiwic3ViIjoiMiIsImlhdCI6MTc3NTc0MjEyNCwiZXhwIjoxNzc2MzQ2OTI0fQ.miry4jcJs-O166Y5ErHq8CYUph0fAJ2Obz682ejbl1eHdtB1Knly2mgZnrUMnTOjI-UnU4xOJ6Odo6fdjuHguA\"]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-09 21:48:11');
+INSERT INTO `sys_oper_log` VALUES (47, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzQyNDkyLCJleHAiOjE3NzYzNDcyOTJ9.WxezeHqI19aA5zCUmTxqMTpSVJKtE7sOTlalE36ZFKuyhRdxhupmTk5WPvjQFgNPYhVXJdNY-NKXyk6F6zj2Rg\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-09 21:48:13');
+INSERT INTO `sys_oper_log` VALUES (48, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzQyNzQyLCJleHAiOjE3NzYzNDc1NDJ9.e-NMGP95iT9AKDx4MXMcnm9x0bu2jfIpUVKarHSNu92HGHZsL13-PhIBC-iCTXfCk4y4JRqbh_Ie9jMGwdWHTw\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-09 21:52:22');
+INSERT INTO `sys_oper_log` VALUES (49, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1Nzg4NDQyLCJleHAiOjE3NzYzOTMyNDJ9.VJ2GTCqr_Qz8RWz2AXeFObQi3r-b5SjgBLHTvb4EXXomOEIbVsLSTJO9zN_rDOYJnUwTyr9M2a4Lw15ZmY_Mtw\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 10:34:02');
+INSERT INTO `sys_oper_log` VALUES (50, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1Nzg4NDUxLCJleHAiOjE3NzYzOTMyNTF9.X7KyYIG6JTIPLB-Q21XNXBJTGH2nvxFdlJzOm2IQzeQnpaYTUl4WoLEEGogSseS0_qzz_Md_AjZvCPX47Ix9PQ\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 10:34:12');
+INSERT INTO `sys_oper_log` VALUES (51, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1Nzg4NDYxLCJleHAiOjE3NzYzOTMyNjF9.cc5VHXDqglC887KQG9cYF7FshOPY5dgUwMpf53kKspJAMj5PYeoVLaov_JMstKNMaQX2L_I0stFVqjST18AH4A\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 10:34:21');
+INSERT INTO `sys_oper_log` VALUES (52, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1Nzg4NDY4LCJleHAiOjE3NzYzOTMyNjh9.Ya7tN-PFdam-QETlKLcN04EQqrdn1ZuR26k-ruTtmNJBhwWB_jyBlVv6oR73yFOemwcY0DYXc-1-FNJnnDYOTw\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 10:34:28');
+INSERT INTO `sys_oper_log` VALUES (53, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1Nzg4NTcyLCJleHAiOjE3NzYzOTMzNzJ9.nm9oHs1fOFGGMerJtW_DyZKtNqHUzd4IxFQsAPyvrIxLGQF7fXGonrDghXVBki-NjQd7VDuD3MnO02rx0xHwbw\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 10:36:12');
+INSERT INTO `sys_oper_log` VALUES (54, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1Nzg4NTg3LCJleHAiOjE3NzYzOTMzODd9.hnNZWvYNUip_BMbEh1m2SBjfL0rOOdXzRbpUGGSVsdcoXOovU8aYYn_nGPYrvNFYfTqnZ2wuKsIGKujeP3sdng\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 10:36:27');
+INSERT INTO `sys_oper_log` VALUES (55, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/1/action', '0:0:0:0:0:0:0:1', '[1,{\"action\":\"rollback\",\"description\":\"rollback-api-test\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-10 10:36:27');
+INSERT INTO `sys_oper_log` VALUES (56, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/1/action', '0:0:0:0:0:0:0:1', '[1,{\"action\":\"advance\",\"description\":\"rollback-restore\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-10 10:36:28');
+INSERT INTO `sys_oper_log` VALUES (57, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/1/action', '0:0:0:0:0:0:0:1', '[1,{\"action\":\"rollback\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-10 10:48:26');
+INSERT INTO `sys_oper_log` VALUES (58, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1Nzg5NTcyLCJleHAiOjE3NzYzOTQzNzJ9.QjxO0pg3TAZg_2h3-aBoaBVcSzk0zaAOBm24UUp1vCPgl0tW_OOeskIyknQ_dYnXpO25QxFihLgBFvT8-9NpzA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 10:52:51');
+INSERT INTO `sys_oper_log` VALUES (59, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1Nzg5NTg0LCJleHAiOjE3NzYzOTQzODR9.WLEC_wTgnvYi0d7HD6Slnv_IIOscUb4BaDC2_Ig4dRru0TBz2Wnr2PBa0EpGIjE0TS8D6g3_KOmMs3zMSXNnMA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 10:53:05');
+INSERT INTO `sys_oper_log` VALUES (60, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzkxNTQzLCJleHAiOjE3NzYzOTYzNDN9.E3XHc_tjMke3oDqk1qNCKR7AucVFZj-PcYq1_0TP8jDWYB1nF0ZEKpMWISTcuNBhHDh48LbHzejHpFikaW2ERA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 11:25:43');
+INSERT INTO `sys_oper_log` VALUES (61, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzkxNTUzLCJleHAiOjE3NzYzOTYzNTN9.A4z6oVfa383_xcHxBmYmVeWNqF7cmiKpOFPZ3rIQeaFKuOl5IuKdrZFUKDaUuH6hYiC_HHzD97X4PqWCjqdswg\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 11:25:53');
+INSERT INTO `sys_oper_log` VALUES (62, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzkxNTcxLCJleHAiOjE3NzYzOTYzNzF9.LzDWjZugJaatsLlub-_xxVXUXS4OPNH6Ual_NV6MSVqDd8cpUJn2_MGI-pXJipMyPKZbnS2EJvo_3FYMNxx3VQ\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 11:26:11');
+INSERT INTO `sys_oper_log` VALUES (63, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzkxNTgxLCJleHAiOjE3NzYzOTYzODF9.SdM4nqDOUzblF1p48LYSg_yVrBk8rHu6G8tkqoTeir-JsgdCEQhm6SUuXm04Hj-PwstaOU3CMYAUGzDz1vrXeA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 11:26:21');
+INSERT INTO `sys_oper_log` VALUES (64, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzkxNTk5LCJleHAiOjE3NzYzOTYzOTl9.dRHs4Wy2tDwGI6PKAqY2Q8CAbDvYyyq2NLpAvycsC6zFZZcQSV6WENTltf_F7cNTCKAJ3GRRbUETnp5NmzlxbA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 11:26:39');
+INSERT INTO `sys_oper_log` VALUES (65, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/2/action', '0:0:0:0:0:0:0:1', '[2,{\"action\":\"rollback\",\"description\":\"??:?????????\",\"rollbackTargetStepId\":12}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-10 11:26:39');
+INSERT INTO `sys_oper_log` VALUES (66, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzkxNzQzLCJleHAiOjE3NzYzOTY1NDN9.Zzokx1VgeoT2walWRuyq6QonNG3v-l0Di7wSKmamU4W1y18h7LONT9Rr3z9z7IE7HbiKKOCh-FQoo85yd0RUHg\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 11:29:03');
+INSERT INTO `sys_oper_log` VALUES (67, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/2/action', '0:0:0:0:0:0:0:1', '[2,{\"action\":\"advance\",\"description\":\"??:???????\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-10 11:29:04');
+INSERT INTO `sys_oper_log` VALUES (68, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/2/action', '0:0:0:0:0:0:0:1', '[2,{\"action\":\"rollback\",\"description\":\"??:???????\",\"rollbackTargetStepId\":12}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-10 11:29:04');
+INSERT INTO `sys_oper_log` VALUES (69, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/1/action', '0:0:0:0:0:0:0:1', '[1,{\"action\":\"advance\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-10 11:34:07');
+INSERT INTO `sys_oper_log` VALUES (70, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/1/action', '0:0:0:0:0:0:0:1', '[1,{\"action\":\"rollback\",\"rollbackTargetStepId\":2}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-10 11:34:13');
+INSERT INTO `sys_oper_log` VALUES (71, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/1/action', '0:0:0:0:0:0:0:1', '[1,{\"action\":\"rollback\",\"rollbackTargetStepId\":1}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-10 11:34:30');
+INSERT INTO `sys_oper_log` VALUES (72, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzkyNzU3LCJleHAiOjE3NzYzOTc1NTd9.7JyQP_51vXDgnFAb5edcfXXms4aS-khCA7m-_XlqDRzn6bjllHrWlbMaHWs0bvpsY_Fi6-u0o6YgfYBgJg04aA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 11:45:56');
+INSERT INTO `sys_oper_log` VALUES (73, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzkyNzU3LCJleHAiOjE3NzYzOTc1NTd9.7JyQP_51vXDgnFAb5edcfXXms4aS-khCA7m-_XlqDRzn6bjllHrWlbMaHWs0bvpsY_Fi6-u0o6YgfYBgJg04aA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 11:45:56');
+INSERT INTO `sys_oper_log` VALUES (74, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODA2OTU1LCJleHAiOjE3NzY0MTE3NTV9.-traSvkg25Gm9IfkLqGp4DWLgJncdKVWMseSUQWTwK7C7-9GrHn1pSVDP8j7qhqFeTLeYWR_pSPjlaPmRzzBzw\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 15:42:35');
+INSERT INTO `sys_oper_log` VALUES (75, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODA2OTY4LCJleHAiOjE3NzY0MTE3Njh9.Nqvdu6N9q1hpm3BRTEzvPfN0FVCkGby9GMONBbxx8dtWBP8DXnQtxBQmLxIAGUvflTGeg6iR2BvTDTyxr8jfxQ\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 15:42:49');
+INSERT INTO `sys_oper_log` VALUES (76, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODA2OTk1LCJleHAiOjE3NzY0MTE3OTV9.nEdhShZjg9AsgXqcccyOsMfkq144N3WVrRxwFqlQAz-pOuX26_6pngm4zaXgDoRcNlUt2F7kAhVXfocfCz1IqA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 15:43:15');
+INSERT INTO `sys_oper_log` VALUES (77, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODA2OTk1LCJleHAiOjE3NzY0MTE3OTV9.nEdhShZjg9AsgXqcccyOsMfkq144N3WVrRxwFqlQAz-pOuX26_6pngm4zaXgDoRcNlUt2F7kAhVXfocfCz1IqA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 15:43:15');
+INSERT INTO `sys_oper_log` VALUES (78, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODA3MDE5LCJleHAiOjE3NzY0MTE4MTl9.N93_wOMypXAE0KAntC9oBtNLZDHjcb01gpilKjTSYvYamG-UfmA_Sr_pxyqkfEVXxSrTkCm_NQ79UUFs7oTfZQ\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 15:43:39');
+INSERT INTO `sys_oper_log` VALUES (79, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODA3MDE5LCJleHAiOjE3NzY0MTE4MTl9.N93_wOMypXAE0KAntC9oBtNLZDHjcb01gpilKjTSYvYamG-UfmA_Sr_pxyqkfEVXxSrTkCm_NQ79UUFs7oTfZQ\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 15:43:39');
+INSERT INTO `sys_oper_log` VALUES (80, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/6/action', '0:0:0:0:0:0:0:1', '[6,{\"action\":\"save\",\"description\":\"????????\",\"formData\":\"{}\"}]', '{\"code\":500,\"msg\":\"请填写当前节点的必填字段\"}', 0, NULL, '2026-04-10 15:43:40');
+INSERT INTO `sys_oper_log` VALUES (81, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/6/action', '0:0:0:0:0:0:0:1', '[6,{\"action\":\"save\",\"description\":\"????????\",\"formData\":\"{\\\"chest\\\":88,\\\"waist\\\":66}\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-10 15:43:40');
+INSERT INTO `sys_oper_log` VALUES (82, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"adminadmin\",\"password\":\"admin123admin123\"}]', NULL, 1, '用户名或密码错误', '2026-04-10 15:53:50');
+INSERT INTO `sys_oper_log` VALUES (83, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODA3NjQ1LCJleHAiOjE3NzY0MTI0NDV9.LgTLshwNDNY9PDRWlOTJA9xC3amklFlt_BRKkKRtDsNqgXFlRyXh9ebKSVVa1zQJH1EnZRQ4ldpv12fJvw8MBA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 15:54:06');
+INSERT INTO `sys_oper_log` VALUES (84, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODA3NjUzLCJleHAiOjE3NzY0MTI0NTN9.644qLEu05SfuavGjwk4LPnPuq_PqbEGQKXGy8wdiux_JBabpQxieDF8ksBMj6PNDtkt17_wQ-oMrk_DXTJ2-tw\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 15:54:14');
+INSERT INTO `sys_oper_log` VALUES (85, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODA5NzE1LCJleHAiOjE3NzY0MTQ1MTV9.3Ts1RwKORykUNt9djRgIXnj86817qwIYaYR5oD4tZeIdg3Fav7LfgngXlMSyqd6MknPhfuvl7DWqm1jEQxJvxQ\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 16:28:35');
+INSERT INTO `sys_oper_log` VALUES (86, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODA5NzQyLCJleHAiOjE3NzY0MTQ1NDJ9.AdgR7a2vZEuH8ZVn7aJ2znVUhc7BLX6wYODwXRiOe5jervQNIKpYR_vgvuIHcHRZBLi8UQlZSML76dGrdhAF9A\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 16:29:02');
+INSERT INTO `sys_oper_log` VALUES (87, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODE4NzY3LCJleHAiOjE3NzY0MjM1Njd9.x3-Gtg4RvMyo0-kpwox5WoYqBOW2EZNO972_-vluKGDcfchsPZnJRbV6B_E7m_zOPkVLFyGlXj-g6_D3XKlc1Q\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 18:59:27');
+INSERT INTO `sys_oper_log` VALUES (88, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODE4Nzg1LCJleHAiOjE3NzY0MjM1ODV9.RIqNb1USvI6_Bs4f2iW4789OlwGvl_csYQ2UIBAO9WNFcbw8BMuz2U58N6dNCG94FBHz-nxeZXhy4d_3fE3XGA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 18:59:46');
+INSERT INTO `sys_oper_log` VALUES (89, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODE4ODU2LCJleHAiOjE3NzY0MjM2NTZ9.277DxiDyp0Zcs52NyP6b-8gKCM98UO2oXgtWciRBf-p1pECVdv5DFb75RXy2Ug9phZUHVb87I_QSuqDrdr84sg\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 19:00:56');
+INSERT INTO `sys_oper_log` VALUES (90, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODE5MTE1LCJleHAiOjE3NzY0MjM5MTV9.Z_nJ3SMbXNYiKxI-kzWmAMPUL3mrEP2zCAQ_EWVQHPLKztuaDjq5dxJ3TiXZNkMeVDo9avIdmanrXgNsJqpjoQ\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 19:05:16');
+INSERT INTO `sys_oper_log` VALUES (91, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODE5MTQyLCJleHAiOjE3NzY0MjM5NDJ9.RB9kXJuE_IoKiBtZ6XWKYehXWsRbIGGziZo7QRLMDm7kZ_Txg6ZPh7GYJ7eywsd6IlwpHqwb8hIbOKGwXGmnyw\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 19:05:43');
+INSERT INTO `sys_oper_log` VALUES (92, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODE5MTY0LCJleHAiOjE3NzY0MjM5NjR9.H8_cgRLRrjBILK1pJswc5KYFXqpNyeiha1Kyh6Tg8PMEjD6SL0etQHBQbLhALMCFhgxv-0n0sdQqlPMTZIZ3RA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 19:06:05');
+INSERT INTO `sys_oper_log` VALUES (93, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODE5MjY0LCJleHAiOjE3NzY0MjQwNjR9.SIWDXdjz_t6ptFe4QZkbvG3gkbw9iH7RiGEIBw03--qnAXxI4HOznB5uoSpXh2ImITBrBW-w8malzRC1MoTcyw\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 19:07:44');
+INSERT INTO `sys_oper_log` VALUES (94, '新增作品集', 'com.designstudio.portfolio.controller.PortfolioController.add', 'POST', 1, 'admin', '/api/v1/admin/portfolios', '0:0:0:0:0:0:0:1', '[{\"title\":\"猫\",\"categoryId\":1,\"coverUrl\":\"https://i0.hdslb.com/bfs/new_dyn/a4833ebe1038fcd60a196da9b53c0e44270317383.jpg@420w_560h_1e_1c.webp\",\"imageUrls\":[\"https://i0.hdslb.com/bfs/new_dyn/a4833ebe1038fcd60a196da9b53c0e44270317383.jpg@420w_560h_1e_1c.webp\",\"https://i0.hdslb.com/bfs/new_dyn/a42924b84d925cfabf5672f8e7373ee6270317383.jpg@264w_264h_1e_1c.webp\"],\"description\":\"\",\"status\":1,\"sortOrder\":1}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-10 19:53:02');
+INSERT INTO `sys_oper_log` VALUES (95, '新增作品集', 'com.designstudio.portfolio.controller.PortfolioController.add', 'POST', 1, 'admin', '/api/v1/admin/portfolios', '0:0:0:0:0:0:0:1', '[{\"title\":\"测试上传作品\",\"categoryId\":1,\"coverUrl\":\"/uploads/8962029f590c4d449c1b3e1afdf2391e.png\",\"imageUrls\":[],\"description\":\"\",\"status\":0,\"sortOrder\":0}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-10 20:05:54');
+INSERT INTO `sys_oper_log` VALUES (96, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODI2MTgxLCJleHAiOjE3NzY0MzA5ODF9.fcd8-5q4HfDVeJDsZ4QZ_8YABfI2Cse85jF3AQY5Z7DMT1oa01N7VuTeZOBvsdvOLveaeTxXGpLe18FhYIos-Q\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 21:03:01');
+INSERT INTO `sys_oper_log` VALUES (97, '取消订单', 'com.designstudio.order.controller.OrderController.cancel', 'POST', 1, 'admin', '/api/v1/admin/orders/6/cancel', '0:0:0:0:0:0:0:1', '[6,{\"cancelReason\":\"??????????\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-10 21:03:33');
+INSERT INTO `sys_oper_log` VALUES (98, '订单延期', 'com.designstudio.order.controller.OrderController.delay', 'POST', 1, 'admin', '/api/v1/admin/orders/1/delay', '0:0:0:0:0:0:0:1', '[1,{\"delayReason\":\"????????\",\"expectedDate\":1776441600000}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-10 21:03:33');
+INSERT INTO `sys_oper_log` VALUES (99, '订单发货', 'com.designstudio.order.controller.OrderController.ship', 'POST', 1, 'admin', '/api/v1/admin/orders/3/ship', '0:0:0:0:0:0:0:1', '[3,{\"description\":\"??????\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-10 21:04:19');
+INSERT INTO `sys_oper_log` VALUES (100, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODI3OTEyLCJleHAiOjE3NzY0MzI3MTJ9.lAArOhBc9Wt2v21BcdrST7qiE42rKbkoGjTY1PxViS3qRcWNmlwLGaRrS7B_yGjnE8A1hmNS6LVnuGabn42edA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 21:31:52');
+INSERT INTO `sys_oper_log` VALUES (101, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODI3OTEyLCJleHAiOjE3NzY0MzI3MTJ9.lAArOhBc9Wt2v21BcdrST7qiE42rKbkoGjTY1PxViS3qRcWNmlwLGaRrS7B_yGjnE8A1hmNS6LVnuGabn42edA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 21:31:52');
+INSERT INTO `sys_oper_log` VALUES (102, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODI3OTk5LCJleHAiOjE3NzY0MzI3OTl9.jWePAJYskiV2QPMhjACmVm98rsipfK0TKLbrxgLi_g3XrZRjVy8vyG3_JTFvBu73PVWoG_doNVqknw_97BnrWQ\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 21:33:19');
+INSERT INTO `sys_oper_log` VALUES (103, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODI3OTk5LCJleHAiOjE3NzY0MzI3OTl9.jWePAJYskiV2QPMhjACmVm98rsipfK0TKLbrxgLi_g3XrZRjVy8vyG3_JTFvBu73PVWoG_doNVqknw_97BnrWQ\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 21:33:19');
+INSERT INTO `sys_oper_log` VALUES (104, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"adminadmin\",\"password\":\"admin123admin123\"}]', NULL, 1, '用户名或密码错误', '2026-04-10 21:34:15');
+INSERT INTO `sys_oper_log` VALUES (105, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"adminadmin\",\"password\":\"admin123admin123\"}]', NULL, 1, '用户名或密码错误', '2026-04-10 21:34:32');
+INSERT INTO `sys_oper_log` VALUES (106, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODI4MTU1LCJleHAiOjE3NzY0MzI5NTV9.17vIkgK4clDDuvgeyLlwPX3Ns50MU3l_SwBRJo7BJnQUQUjxrCD1mU6FKxGV37M_bJeRIuwfbMj26wWSihRXNg\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 21:35:55');
+INSERT INTO `sys_oper_log` VALUES (107, '意向转订单', 'com.designstudio.order.controller.RequestController.convert', 'POST', 1, 'admin', '/api/v1/admin/requests/1/convert', '0:0:0:0:0:0:0:1', '[1,{\"designerId\":2,\"totalAmount\":3500,\"prepayAmount\":1500,\"expectedDate\":1779206400000,\"remark\":\"BOM测试转单\",\"bomTemplateId\":1}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"orderId\":7,\"orderSn\":\"DS202604102239321777\",\"userId\":1,\"categoryId\":1,\"designerId\":2,\"currentStepId\":1,\"status\":0,\"customDataSnapshot\":\"{\\\"chest\\\": \\\"88\\\", \\\"waist\\\": \\\"68\\\", \\\"length\\\": \\\"120\\\", \\\"shoulder\\\": \\\"38\\\", \\\"fabric_type\\\": \\\"丝绸\\\"}\",\"totalAmount\":3500,\"prepayAmount\":1500,\"paidAmount\":0,\"bomTemplateId\":1,\"expectedDate\":1779206400000,\"remark\":\"BOM测试转单\",\"isBlocked\":0,\"createBy\":1,\"createTime\":1775831972555,\"updateBy\":1,\"updateTime\":1775831972557}}', 0, NULL, '2026-04-10 22:39:32');
+INSERT INTO `sys_oper_log` VALUES (108, '取消订单', 'com.designstudio.order.controller.OrderController.cancel', 'POST', 1, 'admin', '/api/v1/admin/orders/7/cancel', '0:0:0:0:0:0:0:1', '[7,{\"cancelReason\":\"测试取消-归还库存\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-10 22:57:01');
+INSERT INTO `sys_oper_log` VALUES (109, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODM2MzI5LCJleHAiOjE3NzY0NDExMjl9._k25kKU70Z2OWduBHIHKzQzecyLJHo4f4cZeHvhE5GxNo9NxlFgtVSuxXmO2tEPZAmufF2U4-shnTtgIiqHBXA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-10 23:52:09');
+INSERT INTO `sys_oper_log` VALUES (110, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODgzOTM1LCJleHAiOjE3NzY0ODg3MzV9.PX_TRRLEqBn53yp9o5rMfAYXXn7SVwNF9j01xahwIlFOm1UOI8wJao7VtgKhSvT8L1ejZnD1xsfbzx0LdBA89w\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-11 13:05:34');
+INSERT INTO `sys_oper_log` VALUES (111, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODgzOTM1LCJleHAiOjE3NzY0ODg3MzV9.PX_TRRLEqBn53yp9o5rMfAYXXn7SVwNF9j01xahwIlFOm1UOI8wJao7VtgKhSvT8L1ejZnD1xsfbzx0LdBA89w\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-11 13:05:34');
+INSERT INTO `sys_oper_log` VALUES (112, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODgzOTkzLCJleHAiOjE3NzY0ODg3OTN9.IPTNb-Wyi8psr7b9RBRbRsjTsYnLDPG-Ipr9OeT_Iath5wo5t1gCxysmhB5Nk4I0CCq2YNSY9-BaAhWh0Jokqw\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-11 13:06:33');
+INSERT INTO `sys_oper_log` VALUES (113, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODgzOTkzLCJleHAiOjE3NzY0ODg3OTN9.IPTNb-Wyi8psr7b9RBRbRsjTsYnLDPG-Ipr9OeT_Iath5wo5t1gCxysmhB5Nk4I0CCq2YNSY9-BaAhWh0Jokqw\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-11 13:06:33');
+INSERT INTO `sys_oper_log` VALUES (114, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODg0MDA1LCJleHAiOjE3NzY0ODg4MDV9.7TUbkDwuTZA-rt4GBx6k3r03SslcCG_nU11baEwWkpR8BPV26Z1uKJJ3xMRMgWHb-CDct_S50UqvUWVF5bsS7w\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-11 13:06:46');
+INSERT INTO `sys_oper_log` VALUES (115, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODg0MDE1LCJleHAiOjE3NzY0ODg4MTV9.aGT_h5Dp1yyZvvAjZZIJkD7LWt0S-ISHU9bm4xpAHwdGJ0o9xyNKUqTHb_PxUmUYLPB7nqCSQeetXoTiQ4g9sg\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-11 13:06:55');
+INSERT INTO `sys_oper_log` VALUES (116, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1ODg0MDM4LCJleHAiOjE3NzY0ODg4Mzh9.AjlDI2_qxuPWXqY4IbYHFB0qtMWyhr5tNmWoswuztclsKHdEElSrOMG35ySDip8N5iI4OtNRsuFnJMs6_Yw6mg\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-11 13:07:18');
+INSERT INTO `sys_oper_log` VALUES (117, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/1/action', '0:0:0:0:0:0:0:1', '[1,{\"action\":\"advance\",\"formData\":\"{\\\"chest\\\":\\\"92\\\",\\\"waist\\\":\\\"72\\\"}\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-11 17:17:35');
+INSERT INTO `sys_oper_log` VALUES (118, '意向转订单', 'com.designstudio.order.controller.RequestController.convert', 'POST', 1, 'admin', '/api/v1/admin/requests/7/convert', '0:0:0:0:0:0:0:1', '[7,{\"designerId\":2,\"totalAmount\":100,\"prepayAmount\":10,\"remark\":\"\",\"bomTemplateId\":1}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"orderId\":8,\"orderSn\":\"DS202604111743293930\",\"userId\":1,\"categoryId\":1,\"designerId\":2,\"currentStepId\":1,\"status\":0,\"customDataSnapshot\":\"{\\\"chest\\\": \\\"123\\\", \\\"waist\\\": \\\"32\\\", \\\"length\\\": \\\"123\\\", \\\"shoulder\\\": \\\"45\\\"}\",\"totalAmount\":100,\"prepayAmount\":10,\"paidAmount\":0,\"bomTemplateId\":1,\"remark\":\"\",\"isBlocked\":0,\"createBy\":1,\"createTime\":1775900609225,\"updateBy\":1,\"updateTime\":1775900609230}}', 0, NULL, '2026-04-11 17:43:29');
+INSERT INTO `sys_oper_log` VALUES (119, '后台登出', 'com.designstudio.system.controller.AuthController.logout', 'POST', 1, 'admin', '/api/v1/auth/logout', '0:0:0:0:0:0:0:1', '[\"Bearer eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1NzQyNzQyLCJleHAiOjE3NzYzNDc1NDJ9.e-NMGP95iT9AKDx4MXMcnm9x0bu2jfIpUVKarHSNu92HGHZsL13-PhIBC-iCTXfCk4y4JRqbh_Ie9jMGwdWHTw\"]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-11 17:43:59');
+INSERT INTO `sys_oper_log` VALUES (120, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"designer1\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6IuadjuiuvuiuoeW4iCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjIsInVzZXJuYW1lIjoiZGVzaWduZXIxIiwic3ViIjoiMiIsImlhdCI6MTc3NTkwMDY0NywiZXhwIjoxNzc2NTA1NDQ3fQ.OVxmd4Rb8-qpW9u7uO1Sq80W-itSymWd1Df7EREgqIbz0f-tmI8NiJktU7CqnHARtF07keO1UPP2jOlghgk33g\",\"adminId\":2,\"username\":\"designer1\",\"nickname\":\"李设计师\"}}', 0, NULL, '2026-04-11 17:44:07');
+INSERT INTO `sys_oper_log` VALUES (121, '后台登出', 'com.designstudio.system.controller.AuthController.logout', 'POST', 2, 'designer1', '/api/v1/auth/logout', '0:0:0:0:0:0:0:1', '[\"Bearer eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6IuadjuiuvuiuoeW4iCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjIsInVzZXJuYW1lIjoiZGVzaWduZXIxIiwic3ViIjoiMiIsImlhdCI6MTc3NTkwMDY0NywiZXhwIjoxNzc2NTA1NDQ3fQ.OVxmd4Rb8-qpW9u7uO1Sq80W-itSymWd1Df7EREgqIbz0f-tmI8NiJktU7CqnHARtF07keO1UPP2jOlghgk33g\"]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-11 17:44:23');
+INSERT INTO `sys_oper_log` VALUES (122, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1OTAwNjY0LCJleHAiOjE3NzY1MDU0NjR9.b84kHO7L6x43LekjxwnHJF2f71_eUqUSZO24amYy3IOmdm5QOnZZ_TXqntCO_bxcztSFS94a7X4cxI_tWR5Kag\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-11 17:44:24');
+INSERT INTO `sys_oper_log` VALUES (123, '意向转订单', 'com.designstudio.order.controller.RequestController.convert', 'POST', 1, 'admin', '/api/v1/admin/requests/10/convert', '0:0:0:0:0:0:0:1', '[10,{\"designerId\":2,\"totalAmount\":1000,\"prepayAmount\":10,\"expectedDate\":1777046400000,\"remark\":\"\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"orderId\":9,\"orderSn\":\"DS202604111801332055\",\"userId\":1,\"categoryId\":1,\"designerId\":2,\"currentStepId\":1,\"status\":0,\"customDataSnapshot\":\"{\\\"chest\\\": \\\"123\\\", \\\"waist\\\": \\\"12\\\", \\\"length\\\": \\\"3\\\", \\\"shoulder\\\": \\\"12\\\"}\",\"totalAmount\":1000,\"prepayAmount\":10,\"paidAmount\":0,\"expectedDate\":1777046400000,\"remark\":\"\",\"isBlocked\":0,\"createBy\":1,\"createTime\":1775901693230,\"updateBy\":1,\"updateTime\":1775901693231}}', 0, NULL, '2026-04-11 18:01:33');
+INSERT INTO `sys_oper_log` VALUES (124, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/1/action', '0:0:0:0:0:0:0:1', '[1,{\"action\":\"rollback\",\"rollbackTargetStepId\":1}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-11 18:02:52');
+INSERT INTO `sys_oper_log` VALUES (125, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/9/action', '0:0:0:0:0:0:0:1', '[9,{\"action\":\"advance\",\"formData\":\"{\\\"chest\\\":\\\"123\\\",\\\"waist\\\":\\\"12\\\"}\"}]', '{\"code\":500,\"msg\":\"只有生产中的订单才能推进\"}', 0, NULL, '2026-04-11 18:03:14');
+INSERT INTO `sys_oper_log` VALUES (126, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/8/action', '0:0:0:0:0:0:0:1', '[8,{\"action\":\"advance\",\"formData\":\"{\\\"chest\\\":\\\"123\\\",\\\"waist\\\":\\\"32\\\"}\"}]', '{\"code\":500,\"msg\":\"只有生产中的订单才能推进\"}', 0, NULL, '2026-04-11 18:03:19');
+INSERT INTO `sys_oper_log` VALUES (127, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/1/action', '0:0:0:0:0:0:0:1', '[1,{\"action\":\"advance\",\"description\":\"完成需求\",\"formData\":\"{\\\"chest\\\":\\\"92\\\",\\\"waist\\\":\\\"72\\\"}\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-11 18:04:27');
+INSERT INTO `sys_oper_log` VALUES (128, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/1/action', '0:0:0:0:0:0:0:1', '[1,{\"action\":\"block\",\"blockReason\":\"天气原因\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-11 18:05:24');
+INSERT INTO `sys_oper_log` VALUES (129, '后台登出', 'com.designstudio.system.controller.AuthController.logout', 'POST', 1, 'admin', '/api/v1/auth/logout', '0:0:0:0:0:0:0:1', '[\"Bearer eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1OTAwNjY0LCJleHAiOjE3NzY1MDU0NjR9.b84kHO7L6x43LekjxwnHJF2f71_eUqUSZO24amYy3IOmdm5QOnZZ_TXqntCO_bxcztSFS94a7X4cxI_tWR5Kag\"]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-11 18:14:11');
+INSERT INTO `sys_oper_log` VALUES (130, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"designer\",\"password\":\"admin123\"}]', NULL, 1, '用户名或密码错误', '2026-04-11 18:14:17');
+INSERT INTO `sys_oper_log` VALUES (131, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"designer1\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6IuadjuiuvuiuoeW4iCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjIsInVzZXJuYW1lIjoiZGVzaWduZXIxIiwic3ViIjoiMiIsImlhdCI6MTc3NTkwMjQ1OSwiZXhwIjoxNzc2NTA3MjU5fQ.ZmjF6CZel3VDPROPPhlDyRZAG9i9m8P9kuajf_QVFs3Kxi2usXLnKfWZZj7TCbTqLQDQKfAJyn07s8J5teb0hQ\",\"adminId\":2,\"username\":\"designer1\",\"nickname\":\"李设计师\"}}', 0, NULL, '2026-04-11 18:14:20');
+INSERT INTO `sys_oper_log` VALUES (132, '后台登出', 'com.designstudio.system.controller.AuthController.logout', 'POST', 2, 'designer1', '/api/v1/auth/logout', '0:0:0:0:0:0:0:1', '[\"Bearer eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6IuadjuiuvuiuoeW4iCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjIsInVzZXJuYW1lIjoiZGVzaWduZXIxIiwic3ViIjoiMiIsImlhdCI6MTc3NTkwMjQ1OSwiZXhwIjoxNzc2NTA3MjU5fQ.ZmjF6CZel3VDPROPPhlDyRZAG9i9m8P9kuajf_QVFs3Kxi2usXLnKfWZZj7TCbTqLQDQKfAJyn07s8J5teb0hQ\"]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-11 18:19:07');
+INSERT INTO `sys_oper_log` VALUES (133, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc1OTAyNzQ5LCJleHAiOjE3NzY1MDc1NDl9.8FQd-h8M5zOumyqX62Bt7wyDWBytNZuzXkqk2Ube8wWsrrvIMhS7015s-SDreGWcWvPoa81X8t5x5IGVFCN13g\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-11 18:19:09');
+INSERT INTO `sys_oper_log` VALUES (134, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc2MDYwNDQ5LCJleHAiOjE3NzY2NjUyNDl9.HWi3dIAY75iUTZZk7dpgtq5Ua0jILREbrDHjHOkmf35y-fM2MAIFXHgafHSfqpB26izFk8z9K-JDtYr5uYAdVg\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-13 14:07:29');
+INSERT INTO `sys_oper_log` VALUES (135, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123admin123\"}]', NULL, 1, '用户名或密码错误', '2026-04-14 21:50:49');
+INSERT INTO `sys_oper_log` VALUES (136, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc2MTc0ODE3LCJleHAiOjE3NzY3Nzk2MTd9.aOLNnviFrJe3UHTcqSQoD6xS7QyHT440ean9aWKaLxGfd57GmWf8KsJydbLMT4ot8K061JfWdJmz02cErWSofg\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-14 21:53:37');
+INSERT INTO `sys_oper_log` VALUES (137, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc2MTc1MTQzLCJleHAiOjE3NzY3Nzk5NDN9.XZYiL2mIW7fj7r3bJQtA6yojwhfr90gV70Lee0vgwFrcPscVZY6cToFn8fk-fetqgyHNOxF9Km7zsoZHeY54Ng\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-14 21:59:03');
+INSERT INTO `sys_oper_log` VALUES (138, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc2MTc1ODM1LCJleHAiOjE3NzY3ODA2MzV9.UiccuGcXJULX967BbsIjDh-5M8JoP-u44frKOsAOVPcRAHQoSbBxckr5Xr6G1dhst9JKtkVTWqFNikFti72RXw\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-14 22:10:36');
+INSERT INTO `sys_oper_log` VALUES (139, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc2MTc1ODk5LCJleHAiOjE3NzY3ODA2OTl9.ZtQkOsltghq4Y3UKMqU6D_wKx671r5k5l_iuXnLJH0roGAwjnt85ig6pe57U0b5SRicFU0D0xW-JokgKha_ksQ\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-14 22:11:39');
+INSERT INTO `sys_oper_log` VALUES (140, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc2MTc1OTI0LCJleHAiOjE3NzY3ODA3MjR9.fmSBy8obn7umLGCOEzsAMl8HAvf3G4LvCvLO8vsTkoYpHiZGdDkVtmFQhuiRWH_lH048R3RZ44dqo9duKmbdaA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-14 22:12:04');
+INSERT INTO `sys_oper_log` VALUES (141, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc2MjQ1NjM0LCJleHAiOjE3NzY4NTA0MzR9.NeudHAdPDHBpCLcRCwMzvdud940xvbp4BBoVyOt_Q_zxJyFIQGfl1cEaQCSkHHgVc_CrcNjdUmt-qXn-inNd7Q\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-15 17:33:54');
+INSERT INTO `sys_oper_log` VALUES (142, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123admin123\"}]', NULL, 1, '用户名或密码错误', '2026-04-15 17:34:11');
+INSERT INTO `sys_oper_log` VALUES (143, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123admin123\"}]', NULL, 1, '用户名或密码错误', '2026-04-15 17:35:38');
+INSERT INTO `sys_oper_log` VALUES (144, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc2MjQ1NzQzLCJleHAiOjE3NzY4NTA1NDN9.eexSdczI6CIhCawWWYvPkdiQg5Nc_WqChAGeE8PE3wtPJXH3WUEyqD-DNSI7cKbFszkIfKfmR2QY3TB4DqJ88g\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-15 17:35:43');
+INSERT INTO `sys_oper_log` VALUES (145, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc2MjQ2MTYyLCJleHAiOjE3NzY4NTA5NjJ9.BaRRXiZBa7Hpf-EMpwwYTwTRO0qkMgYwqGhFYX-iLzFFaBanTgCnFO2c_0mt6Umo06Gtl1cSF17Dl2ITnaoqIA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-15 17:42:43');
+INSERT INTO `sys_oper_log` VALUES (146, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc2MjQ2MTcwLCJleHAiOjE3NzY4NTA5NzB9.gPYu0y9-9Ex1WoTNEegmpjy6Usp8nFdlW6dp3czsBMTKA16soLm8fmkeSrTPEA46EVPg1-4MyWbLnRmAeTZBWQ\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-15 17:42:51');
+INSERT INTO `sys_oper_log` VALUES (147, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc2MjQ2ODEyLCJleHAiOjE3NzY4NTE2MTJ9.S5GBGH5ATXs02l-d7KHFIbvYNlUvTYIscFkVIg3-1eMMHSAiwRAObhsLC5xcCu9ZJz4eC8B27sicLyeebF62yw\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-15 17:53:33');
+INSERT INTO `sys_oper_log` VALUES (148, '新增后台用户', 'com.designstudio.system.controller.SysAdminController.add', 'POST', 1, 'admin', '/api/v1/admin/users', '0:0:0:0:0:0:0:1', '[{\"username\":\"storekeeper\",\"password\":\"\",\"nickname\":\"storekeeper\",\"phone\":\"\",\"status\":1,\"roleIds\":[3]}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-20 00:45:35');
+INSERT INTO `sys_oper_log` VALUES (149, '新增后台用户', 'com.designstudio.system.controller.SysAdminController.add', 'POST', 1, 'admin', '/api/v1/admin/users', '0:0:0:0:0:0:0:1', '[{\"username\":\"purchaser\",\"password\":\"\",\"nickname\":\"purchaser\",\"phone\":\"\",\"status\":1,\"roleIds\":[4]}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-20 00:45:44');
+INSERT INTO `sys_oper_log` VALUES (150, '新增后台用户', 'com.designstudio.system.controller.SysAdminController.add', 'POST', 1, 'admin', '/api/v1/admin/users', '0:0:0:0:0:0:0:1', '[{\"username\":\"finance\",\"password\":\"\",\"nickname\":\"finance\",\"phone\":\"\",\"status\":1,\"roleIds\":[5]}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-20 00:45:54');
+INSERT INTO `sys_oper_log` VALUES (151, '新增后台用户', 'com.designstudio.system.controller.SysAdminController.add', 'POST', 1, 'admin', '/api/v1/admin/users', '0:0:0:0:0:0:0:1', '[{\"username\":\"customer_service\",\"password\":\"\",\"nickname\":\"customer_service\",\"phone\":\"\",\"status\":1,\"roleIds\":[6]}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-20 00:46:07');
+INSERT INTO `sys_oper_log` VALUES (152, '后台登出', 'com.designstudio.system.controller.AuthController.logout', 'POST', 1, 'admin', '/api/v1/auth/logout', '0:0:0:0:0:0:0:1', '[\"Bearer eyJhbGciOiJIUzUxMiJ9.eyJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc2MDYwNDQ5LCJleHAiOjE3NzY2NjUyNDl9.HWi3dIAY75iUTZZk7dpgtq5Ua0jILREbrDHjHOkmf35y-fM2MAIFXHgafHSfqpB26izFk8z9K-JDtYr5uYAdVg\"]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-20 00:46:17');
+INSERT INTO `sys_oper_log` VALUES (153, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"storekeeper\",\"password\":\"123456\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJzdG9yZWtlZXBlciJdLCJuaWNrbmFtZSI6InN0b3Jla2VlcGVyIiwidXNlclR5cGUiOiJhZG1pbiIsInVzZXJJZCI6NCwidXNlcm5hbWUiOiJzdG9yZWtlZXBlciIsInN1YiI6IjQiLCJpYXQiOjE3NzY2MTcxOTMsImV4cCI6MTc3NzIyMTk5M30.Qn5kLCSGri45SwHpyViBqHtAnM-Mcnp8XmuYRQ9UhwBz5BL8jX9wWt6nkk48EoOiK9yYiFaWEmpl7t8KEVNluw\",\"adminId\":4,\"username\":\"storekeeper\",\"nickname\":\"storekeeper\"}}', 0, NULL, '2026-04-20 00:46:34');
+INSERT INTO `sys_oper_log` VALUES (154, '后台登出', 'com.designstudio.system.controller.AuthController.logout', 'POST', 4, 'storekeeper', '/api/v1/auth/logout', '0:0:0:0:0:0:0:1', '[\"Bearer eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJzdG9yZWtlZXBlciJdLCJuaWNrbmFtZSI6InN0b3Jla2VlcGVyIiwidXNlclR5cGUiOiJhZG1pbiIsInVzZXJJZCI6NCwidXNlcm5hbWUiOiJzdG9yZWtlZXBlciIsInN1YiI6IjQiLCJpYXQiOjE3NzY2MTcxOTMsImV4cCI6MTc3NzIyMTk5M30.Qn5kLCSGri45SwHpyViBqHtAnM-Mcnp8XmuYRQ9UhwBz5BL8jX9wWt6nkk48EoOiK9yYiFaWEmpl7t8KEVNluw\"]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-20 00:47:03');
+INSERT INTO `sys_oper_log` VALUES (155, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"purchaser\",\"password\":\"123456\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJwdXJjaGFzZXIiXSwibmlja25hbWUiOiJwdXJjaGFzZXIiLCJ1c2VyVHlwZSI6ImFkbWluIiwidXNlcklkIjo1LCJ1c2VybmFtZSI6InB1cmNoYXNlciIsInN1YiI6IjUiLCJpYXQiOjE3NzY2MTcyMjYsImV4cCI6MTc3NzIyMjAyNn0.-qnfwur4dIrCQ1MqNT3-4lXoeTZLRMvgBnbmOxhkudEstiGE85jftozq5Ko5q10OvupI1bTkE3Ak67kY-cGTCQ\",\"adminId\":5,\"username\":\"purchaser\",\"nickname\":\"purchaser\"}}', 0, NULL, '2026-04-20 00:47:06');
+INSERT INTO `sys_oper_log` VALUES (156, '后台登出', 'com.designstudio.system.controller.AuthController.logout', 'POST', 5, 'purchaser', '/api/v1/auth/logout', '0:0:0:0:0:0:0:1', '[\"Bearer eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJwdXJjaGFzZXIiXSwibmlja25hbWUiOiJwdXJjaGFzZXIiLCJ1c2VyVHlwZSI6ImFkbWluIiwidXNlcklkIjo1LCJ1c2VybmFtZSI6InB1cmNoYXNlciIsInN1YiI6IjUiLCJpYXQiOjE3NzY2MTcyMjYsImV4cCI6MTc3NzIyMjAyNn0.-qnfwur4dIrCQ1MqNT3-4lXoeTZLRMvgBnbmOxhkudEstiGE85jftozq5Ko5q10OvupI1bTkE3Ak67kY-cGTCQ\"]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-20 00:47:32');
+INSERT INTO `sys_oper_log` VALUES (157, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"finance\",\"password\":\"12346\"}]', NULL, 1, '用户名或密码错误', '2026-04-20 00:47:42');
+INSERT INTO `sys_oper_log` VALUES (158, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"finance\",\"password\":\"123456\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJmaW5hbmNlIl0sIm5pY2tuYW1lIjoiZmluYW5jZSIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjYsInVzZXJuYW1lIjoiZmluYW5jZSIsInN1YiI6IjYiLCJpYXQiOjE3NzY2MTcyNjUsImV4cCI6MTc3NzIyMjA2NX0.OeFEJD7qo-GDrg4qb7KzQyJMMO0YsPNYLx3EBZIrKsUs6cnDALONKF3kLT7On8oolF8QNMWLpeHDvRhbq5p5EQ\",\"adminId\":6,\"username\":\"finance\",\"nickname\":\"finance\"}}', 0, NULL, '2026-04-20 00:47:46');
+INSERT INTO `sys_oper_log` VALUES (159, '后台登出', 'com.designstudio.system.controller.AuthController.logout', 'POST', 6, 'finance', '/api/v1/auth/logout', '0:0:0:0:0:0:0:1', '[\"Bearer eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJmaW5hbmNlIl0sIm5pY2tuYW1lIjoiZmluYW5jZSIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjYsInVzZXJuYW1lIjoiZmluYW5jZSIsInN1YiI6IjYiLCJpYXQiOjE3NzY2MTcyNjUsImV4cCI6MTc3NzIyMjA2NX0.OeFEJD7qo-GDrg4qb7KzQyJMMO0YsPNYLx3EBZIrKsUs6cnDALONKF3kLT7On8oolF8QNMWLpeHDvRhbq5p5EQ\"]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-20 00:47:54');
+INSERT INTO `sys_oper_log` VALUES (160, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"customer_service\",\"password\":\"123456\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJjdXN0b21lcl9zZXJ2aWNlIl0sIm5pY2tuYW1lIjoiY3VzdG9tZXJfc2VydmljZSIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjcsInVzZXJuYW1lIjoiY3VzdG9tZXJfc2VydmljZSIsInN1YiI6IjciLCJpYXQiOjE3NzY2MTcyODUsImV4cCI6MTc3NzIyMjA4NX0.ifSyKjSJUiTwDle1BxaYRf_q70-gvwXvab8LKGtKhzSsrxc1PsDLpdxyF2iTNSc6Oah-2wqg-4ud452TS3Pl-g\",\"adminId\":7,\"username\":\"customer_service\",\"nickname\":\"customer_service\"}}', 0, NULL, '2026-04-20 00:48:05');
+INSERT INTO `sys_oper_log` VALUES (161, '后台登出', 'com.designstudio.system.controller.AuthController.logout', 'POST', 7, 'customer_service', '/api/v1/auth/logout', '0:0:0:0:0:0:0:1', '[\"Bearer eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJjdXN0b21lcl9zZXJ2aWNlIl0sIm5pY2tuYW1lIjoiY3VzdG9tZXJfc2VydmljZSIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjcsInVzZXJuYW1lIjoiY3VzdG9tZXJfc2VydmljZSIsInN1YiI6IjciLCJpYXQiOjE3NzY2MTcyODUsImV4cCI6MTc3NzIyMjA4NX0.ifSyKjSJUiTwDle1BxaYRf_q70-gvwXvab8LKGtKhzSsrxc1PsDLpdxyF2iTNSc6Oah-2wqg-4ud452TS3Pl-g\"]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-20 23:33:35');
+INSERT INTO `sys_oper_log` VALUES (162, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJhZG1pbiJdLCJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc2Njk5MjE1LCJleHAiOjE3NzczMDQwMTV9.kQaACO1texG8Y4bqUzW_msMUcxUcegeypTmJCwyUlTvLWSFuHtOvj3-fH8bm02BybkBMYcH2JDdHgtx0nXdVkQ\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-20 23:33:36');
+INSERT INTO `sys_oper_log` VALUES (163, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/9/action', '0:0:0:0:0:0:0:1', '[9,{\"action\":\"save\",\"formData\":\"{\\\"chest\\\":\\\"123\\\",\\\"waist\\\":\\\"12\\\"}\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-21 00:28:54');
+INSERT INTO `sys_oper_log` VALUES (164, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/9/action', '0:0:0:0:0:0:0:1', '[9,{\"action\":\"save\",\"formData\":\"{\\\"chest\\\":\\\"123\\\",\\\"waist\\\":\\\"12\\\"}\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-21 00:28:56');
+INSERT INTO `sys_oper_log` VALUES (165, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/9/action', '0:0:0:0:0:0:0:1', '[9,{\"action\":\"save\",\"formData\":\"{\\\"chest\\\":\\\"123\\\",\\\"waist\\\":\\\"12\\\"}\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-21 00:28:58');
+INSERT INTO `sys_oper_log` VALUES (166, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/9/action', '0:0:0:0:0:0:0:1', '[9,{\"action\":\"save\",\"formData\":\"{\\\"chest\\\":\\\"123\\\",\\\"waist\\\":\\\"12\\\"}\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-21 00:29:03');
+INSERT INTO `sys_oper_log` VALUES (167, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/9/action', '0:0:0:0:0:0:0:1', '[9,{\"action\":\"save\",\"formData\":\"{\\\"chest\\\":\\\"123\\\",\\\"waist\\\":\\\"12\\\"}\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-04-21 00:40:00');
+INSERT INTO `sys_oper_log` VALUES (168, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJhZG1pbiJdLCJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc3MzA3Mjc4LCJleHAiOjE3Nzc5MTIwNzh9._Z8vfKZ6TMRez39v-2M0Rn7UtDMKENNHDQsjER0M1mg0_hZ84r1N7OzfjkPy-H5mJeZMna1EWmR0UAKm7l0QGQ\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-28 00:27:58');
+INSERT INTO `sys_oper_log` VALUES (169, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJhZG1pbiJdLCJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc3NDY4NDY2LCJleHAiOjE3NzgwNzMyNjZ9.jOydZCnQc7XZx7fCz4XPzthQWU1anLvb5QzmAbe0oKxbBuTrKyATGwSNXXnJkN0q5ae4nN80jJUf5-e5prrqYA\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-29 21:14:26');
+INSERT INTO `sys_oper_log` VALUES (170, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"designer1\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJkZXNpZ25lciJdLCJuaWNrbmFtZSI6IuadjuiuvuiuoeW4iCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjIsInVzZXJuYW1lIjoiZGVzaWduZXIxIiwic3ViIjoiMiIsImlhdCI6MTc3NzQ2ODQ4NCwiZXhwIjoxNzc4MDczMjg0fQ.AUoAt-dXDIIj7cGe3wlbH0U_U0eShLWZTbCyIPUFZTYBzCK_nlLZ_r0zJ0zDCz_1B61EeEijHu2fEX08YY-urw\",\"adminId\":2,\"username\":\"designer1\",\"nickname\":\"李设计师\"}}', 0, NULL, '2026-04-29 21:14:45');
+INSERT INTO `sys_oper_log` VALUES (171, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"designer2\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJkZXNpZ25lciJdLCJuaWNrbmFtZSI6IueOi-iuvuiuoeW4iCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjMsInVzZXJuYW1lIjoiZGVzaWduZXIyIiwic3ViIjoiMyIsImlhdCI6MTc3NzQ2ODQ4NCwiZXhwIjoxNzc4MDczMjg0fQ.RZOQoOT1NcoeN1pj9VUuHIy5WHt-eFP9AUF_WUI4mU3QDRdwPdBaumZbOyCNTzMFQ6x8LtcEZPCq7Et9RzLWCw\",\"adminId\":3,\"username\":\"designer2\",\"nickname\":\"王设计师\"}}', 0, NULL, '2026-04-29 21:14:45');
+INSERT INTO `sys_oper_log` VALUES (172, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"finance\",\"password\":\"admin123\"}]', NULL, 1, '用户名或密码错误', '2026-04-29 21:14:45');
+INSERT INTO `sys_oper_log` VALUES (173, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"purchaser\",\"password\":\"admin123\"}]', NULL, 1, '用户名或密码错误', '2026-04-29 21:14:45');
+INSERT INTO `sys_oper_log` VALUES (174, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"storekeeper\",\"password\":\"admin123\"}]', NULL, 1, '用户名或密码错误', '2026-04-29 21:14:45');
+INSERT INTO `sys_oper_log` VALUES (175, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"customer_service\",\"password\":\"admin123\"}]', NULL, 1, '用户名或密码错误', '2026-04-29 21:14:45');
+INSERT INTO `sys_oper_log` VALUES (176, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJhZG1pbiJdLCJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc3NDY4OTUzLCJleHAiOjE3NzgwNzM3NTN9.GeqUh-n7cmp9K344J5ZjqBjBTKYdeVOm92Jt59E-9ucL_qgEnY2BNsAbzqmHMTOhMU1zDCe-hc3s0bueK9YlJQ\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-04-29 21:22:34');
+INSERT INTO `sys_oper_log` VALUES (177, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123admin123\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 14:21:48');
+INSERT INTO `sys_oper_log` VALUES (178, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJhZG1pbiJdLCJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc3NjE2NjE5LCJleHAiOjE3NzgyMjE0MTl9.8JQbk3eBbnItVBpLXZbtLuKU2hf2SgcGYUPadAPXZkpU-f-2PViJ5zfWDpY6l3Ui3paWaWyERyqFPwHii6LWaw\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-05-01 14:23:40');
+INSERT INTO `sys_oper_log` VALUES (179, '保存AI配置', 'com.designstudio.config.controller.AiConfigController.saveConfig', 'PUT', 1, 'admin', '/api/v1/admin/ai-config', '0:0:0:0:0:0:0:1', '[{\"providerName\":\"OpenAI Compatible\",\"enabled\":1,\"apiUrl\":\"https://ark.cn-beijing.volces.com/api/v3/bots/your-bot-id/completionshttps://api.deepseek.comhttps://api.deepseek.com\",\"apiKey\":\"your-api-keysk-1c7d99a3c7a34728bcbb6679450f21c4\",\"model\":\"your-model-namedeepseek-chat\",\"systemPrompt\":\"你是ZeHana独立设计师工作室的智能客服，名为小Z。熟悉定制家具、软装设计、生产流程等问题。请用专业、友好的语气回复客户，长度适中。如遇到无法回答的问题，请引导客户联系人工客服。\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"configId\":1,\"providerName\":\"OpenAI Compatible\",\"enabled\":1,\"apiUrl\":\"https://ark.cn-beijing.volces.com/api/v3/bots/your-bot-id/completionshttps://api.deepseek.comhttps://api.deepseek.com\",\"apiKey\":\"your-api-keysk-1c7d99a3c7a34728bcbb6679450f21c4\",\"model\":\"your-model-namedeepseek-chat\",\"systemPrompt\":\"你是ZeHana独立设计师工作室的智能客服，名为小Z。熟悉定制家具、软装设计、生产流程等问题。请用专业、友好的语气回复客户，长度适中。如遇到无法回答的问题，请引导客户联系人工客服。\",\"createBy\":1,\"createTime\":1777617124932,\"updateBy\":1,\"updateTime\":1777617124933}}', 0, NULL, '2026-05-01 14:32:05');
+INSERT INTO `sys_oper_log` VALUES (180, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/9/action', '0:0:0:0:0:0:0:1', '[9,{\"action\":\"save\",\"description\":\"尺寸已确认：胸围90cm，腰围75cm，准备进入下一阶段。\",\"formData\":\"{\\\"chest\\\":90,\\\"waist\\\":75}\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-05-01 14:32:49');
+INSERT INTO `sys_oper_log` VALUES (181, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/9/action', '0:0:0:0:0:0:0:1', '[9,{\"action\":\"advance\",\"formData\":\"{\\\"chest\\\":90,\\\"waist\\\":75}\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-05-01 14:33:15');
+INSERT INTO `sys_oper_log` VALUES (182, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"designer1\",\"password\":\"admin123admin123\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 14:33:46');
+INSERT INTO `sys_oper_log` VALUES (183, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"designer1\",\"password\":\"admin123admin123\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 14:35:49');
+INSERT INTO `sys_oper_log` VALUES (184, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"designer1\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJkZXNpZ25lciJdLCJuaWNrbmFtZSI6IuadjuiuvuiuoeW4iCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjIsInVzZXJuYW1lIjoiZGVzaWduZXIxIiwic3ViIjoiMiIsImlhdCI6MTc3NzYxNzYyMiwiZXhwIjoxNzc4MjIyNDIyfQ.uGLjqGVGh2dHSd4o7p0W04pi8eSQGnqBrICuOIihKW7OT2rJ-HUqQdpUVmvXJwQdwZ5fyue1oSQRWOljMhMZ_A\",\"adminId\":2,\"username\":\"designer1\",\"nickname\":\"李设计师\"}}', 0, NULL, '2026-05-01 14:40:23');
+INSERT INTO `sys_oper_log` VALUES (185, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"designer1\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJkZXNpZ25lciJdLCJuaWNrbmFtZSI6IuadjuiuvuiuoeW4iCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjIsInVzZXJuYW1lIjoiZGVzaWduZXIxIiwic3ViIjoiMiIsImlhdCI6MTc3NzYxODAxMCwiZXhwIjoxNzc4MjIyODEwfQ.m8Yx2wy2Q302ijSphb-AA6cjK3Yk2UYtUi85Imtrj9aSmTmd5cCZoX0iQjO4iF_QWDaZ4LxpF5F0vEyTMvuO-w\",\"adminId\":2,\"username\":\"designer1\",\"nickname\":\"李设计师\"}}', 0, NULL, '2026-05-01 14:46:51');
+INSERT INTO `sys_oper_log` VALUES (186, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"storekeeper\",\"password\":\"admin123\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 14:55:09');
+INSERT INTO `sys_oper_log` VALUES (187, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"storekeeper\",\"password\":\"admin123\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 14:55:23');
+INSERT INTO `sys_oper_log` VALUES (188, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"purchaser\",\"password\":\"admin123\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 14:55:23');
+INSERT INTO `sys_oper_log` VALUES (189, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"finance\",\"password\":\"admin123\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 14:55:24');
+INSERT INTO `sys_oper_log` VALUES (190, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"customer_service\",\"password\":\"admin123\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 14:55:24');
+INSERT INTO `sys_oper_log` VALUES (191, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"storekeeper\",\"password\":\"admin123\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 14:58:43');
+INSERT INTO `sys_oper_log` VALUES (192, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"storekeeper\",\"password\":\"admin123\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 14:59:53');
+INSERT INTO `sys_oper_log` VALUES (193, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"finance\",\"password\":\"admin123\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 15:02:31');
+INSERT INTO `sys_oper_log` VALUES (194, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"storekeeper\",\"password\":\"storekeeper123\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 15:03:36');
+INSERT INTO `sys_oper_log` VALUES (195, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"purchaser\",\"password\":\"purchaser123\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 15:04:53');
+INSERT INTO `sys_oper_log` VALUES (196, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"finance\",\"password\":\"finance123\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 15:05:21');
+INSERT INTO `sys_oper_log` VALUES (197, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"customer_service\",\"password\":\"service123\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 15:05:33');
+INSERT INTO `sys_oper_log` VALUES (198, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"storekeeper\",\"password\":\"storekeeper\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 15:06:04');
+INSERT INTO `sys_oper_log` VALUES (199, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"purchaser\",\"password\":\"purchaser\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 15:06:42');
+INSERT INTO `sys_oper_log` VALUES (200, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"finance\",\"password\":\"finance\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 15:06:44');
+INSERT INTO `sys_oper_log` VALUES (201, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"customer_service\",\"password\":\"service\"}]', NULL, 1, '用户名或密码错误', '2026-05-01 15:06:45');
+INSERT INTO `sys_oper_log` VALUES (202, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"storekeeper\",\"password\":\"123456\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJzdG9yZWtlZXBlciJdLCJuaWNrbmFtZSI6InN0b3Jla2VlcGVyIiwidXNlclR5cGUiOiJhZG1pbiIsInVzZXJJZCI6NCwidXNlcm5hbWUiOiJzdG9yZWtlZXBlciIsInN1YiI6IjQiLCJpYXQiOjE3Nzc2MTkyMTYsImV4cCI6MTc3ODIyNDAxNn0.8Ox42ztuCJRVCdU2UeRa2wBU7abNNGydAA_V2N0TGl7qlzwcDD7R-YaSC7mO7EugpLlyE_vVykCJ1wMhVAY34g\",\"adminId\":4,\"username\":\"storekeeper\",\"nickname\":\"storekeeper\"}}', 0, NULL, '2026-05-01 15:06:56');
+INSERT INTO `sys_oper_log` VALUES (203, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"purchaser\",\"password\":\"123456\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJwdXJjaGFzZXIiXSwibmlja25hbWUiOiJwdXJjaGFzZXIiLCJ1c2VyVHlwZSI6ImFkbWluIiwidXNlcklkIjo1LCJ1c2VybmFtZSI6InB1cmNoYXNlciIsInN1YiI6IjUiLCJpYXQiOjE3Nzc2MTkyMTcsImV4cCI6MTc3ODIyNDAxN30.RXT5263-LnEDhpW-xGyOXw-uwCBoGGjAxpm6X8ST2ZnA9miwiKvruT06GxIEPqk_2HcJCoWmxA0acY-SRZnfAg\",\"adminId\":5,\"username\":\"purchaser\",\"nickname\":\"purchaser\"}}', 0, NULL, '2026-05-01 15:06:58');
+INSERT INTO `sys_oper_log` VALUES (204, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"finance\",\"password\":\"123456\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJmaW5hbmNlIl0sIm5pY2tuYW1lIjoiZmluYW5jZSIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjYsInVzZXJuYW1lIjoiZmluYW5jZSIsInN1YiI6IjYiLCJpYXQiOjE3Nzc2MTkyMTksImV4cCI6MTc3ODIyNDAxOX0.t0zGMt6y5BIMDTQoGCPEAg0jQLfyy1d8BgIpjARm2zJqxxJv_divwXhDAZ7b1ZtkzJDwXc0MftTJnBNtiuDByQ\",\"adminId\":6,\"username\":\"finance\",\"nickname\":\"finance\"}}', 0, NULL, '2026-05-01 15:06:59');
+INSERT INTO `sys_oper_log` VALUES (205, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"customer_service\",\"password\":\"123456\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJjdXN0b21lcl9zZXJ2aWNlIl0sIm5pY2tuYW1lIjoiY3VzdG9tZXJfc2VydmljZSIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjcsInVzZXJuYW1lIjoiY3VzdG9tZXJfc2VydmljZSIsInN1YiI6IjciLCJpYXQiOjE3Nzc2MTkyMjAsImV4cCI6MTc3ODIyNDAyMH0.KokVlZsAQTB3hCiMDU9DOLRSeVtsocr9HUxVsmRtOI8xhPL2zR-kbQ3sCX4c3OXoEwvtjELaQ60cF2rsBt0tag\",\"adminId\":7,\"username\":\"customer_service\",\"nickname\":\"customer_service\"}}', 0, NULL, '2026-05-01 15:07:00');
+INSERT INTO `sys_oper_log` VALUES (206, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"storekeeper\",\"password\":\"123456\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJzdG9yZWtlZXBlciJdLCJuaWNrbmFtZSI6InN0b3Jla2VlcGVyIiwidXNlclR5cGUiOiJhZG1pbiIsInVzZXJJZCI6NCwidXNlcm5hbWUiOiJzdG9yZWtlZXBlciIsInN1YiI6IjQiLCJpYXQiOjE3Nzc2MTk1MTgsImV4cCI6MTc3ODIyNDMxOH0.Yn27inUO_PjvanIgtCMjXu3QLJrFLJIDQeapP4AU4DA9uTgysq_sTW9LS7BI-K3yHuyc7V8fM4_9VKNhI8-ILA\",\"adminId\":4,\"username\":\"storekeeper\",\"nickname\":\"storekeeper\"}}', 0, NULL, '2026-05-01 15:11:59');
+INSERT INTO `sys_oper_log` VALUES (207, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"purchaser\",\"password\":\"123456\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJwdXJjaGFzZXIiXSwibmlja25hbWUiOiJwdXJjaGFzZXIiLCJ1c2VyVHlwZSI6ImFkbWluIiwidXNlcklkIjo1LCJ1c2VybmFtZSI6InB1cmNoYXNlciIsInN1YiI6IjUiLCJpYXQiOjE3Nzc2MTk3MzgsImV4cCI6MTc3ODIyNDUzOH0.YfxN7FcQ23KKd7LyQBoCYJFXAtFgkZvgev4TrONmlAaY1ROz2cCp9hIZbSzoeRGZAF-CeJnKEsshTWAfS9RFig\",\"adminId\":5,\"username\":\"purchaser\",\"nickname\":\"purchaser\"}}', 0, NULL, '2026-05-01 15:15:38');
+INSERT INTO `sys_oper_log` VALUES (208, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"customer_service\",\"password\":\"123456\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJjdXN0b21lcl9zZXJ2aWNlIl0sIm5pY2tuYW1lIjoiY3VzdG9tZXJfc2VydmljZSIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjcsInVzZXJuYW1lIjoiY3VzdG9tZXJfc2VydmljZSIsInN1YiI6IjciLCJpYXQiOjE3Nzc2MTk4MzgsImV4cCI6MTc3ODIyNDYzOH0.IRWBoI7TsO05oAd-9vgoaXeP9PRa0N2A9oNlhDxJAUpbF4_L3zuuKR5t47o4FBXJ2t0PR01mNNtQ22nJxwV83w\",\"adminId\":7,\"username\":\"customer_service\",\"nickname\":\"customer_service\"}}', 0, NULL, '2026-05-01 15:17:19');
+INSERT INTO `sys_oper_log` VALUES (209, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"storekeeper\",\"password\":\"123456\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJzdG9yZWtlZXBlciJdLCJuaWNrbmFtZSI6InN0b3Jla2VlcGVyIiwidXNlclR5cGUiOiJhZG1pbiIsInVzZXJJZCI6NCwidXNlcm5hbWUiOiJzdG9yZWtlZXBlciIsInN1YiI6IjQiLCJpYXQiOjE3Nzc2MTk4ODUsImV4cCI6MTc3ODIyNDY4NX0.j1-HH2wfB0uTTWBGB4yeEtqkrgOWbkbh4xxjm70AS_Y8UwZS0g-V0hYORaEDEd5ryxzcJ8FSezOVy02mK1SE6A\",\"adminId\":4,\"username\":\"storekeeper\",\"nickname\":\"storekeeper\"}}', 0, NULL, '2026-05-01 15:18:06');
+INSERT INTO `sys_oper_log` VALUES (210, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"finance\",\"password\":\"123456\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJmaW5hbmNlIl0sIm5pY2tuYW1lIjoiZmluYW5jZSIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjYsInVzZXJuYW1lIjoiZmluYW5jZSIsInN1YiI6IjYiLCJpYXQiOjE3Nzc2MTk5ODMsImV4cCI6MTc3ODIyNDc4M30.-CeFldN5sSAfLS8kpS7V3LQSbSE7IUYFp5B1uJH8qo10cSozSJrUyYRrPIxpxr2X4bY4DRcqPvVRA7ONYBwtwA\",\"adminId\":6,\"username\":\"finance\",\"nickname\":\"finance\"}}', 0, NULL, '2026-05-01 15:19:43');
+INSERT INTO `sys_oper_log` VALUES (211, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"customer_service\",\"password\":\"123456\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJjdXN0b21lcl9zZXJ2aWNlIl0sIm5pY2tuYW1lIjoiY3VzdG9tZXJfc2VydmljZSIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjcsInVzZXJuYW1lIjoiY3VzdG9tZXJfc2VydmljZSIsInN1YiI6IjciLCJpYXQiOjE3Nzc2MTk5OTcsImV4cCI6MTc3ODIyNDc5N30.n7MbAMpQAV6X5p246hgurdNOI2vdyHvxbRiuHrbQ7Li8EvdjpXJlTFJoFRCe7lktv9yBeK_r0ltR2kpkxcHr_g\",\"adminId\":7,\"username\":\"customer_service\",\"nickname\":\"customer_service\"}}', 0, NULL, '2026-05-01 15:19:58');
+INSERT INTO `sys_oper_log` VALUES (212, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"purchaser\",\"password\":\"123456\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJwdXJjaGFzZXIiXSwibmlja25hbWUiOiJwdXJjaGFzZXIiLCJ1c2VyVHlwZSI6ImFkbWluIiwidXNlcklkIjo1LCJ1c2VybmFtZSI6InB1cmNoYXNlciIsInN1YiI6IjUiLCJpYXQiOjE3Nzc2MjAwMTcsImV4cCI6MTc3ODIyNDgxN30.8ptz2fU8CSZ6NkbvzqCfDa47i7NceQ9X1dY_E2lndlRvLlcWiXX3B1QBVST8kyctPo03nqNjVClAPRrTtefiig\",\"adminId\":5,\"username\":\"purchaser\",\"nickname\":\"purchaser\"}}', 0, NULL, '2026-05-01 15:20:18');
+INSERT INTO `sys_oper_log` VALUES (213, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJhZG1pbiJdLCJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc3ODAyODY0LCJleHAiOjE3Nzg0MDc2NjR9.HP-wCk_xiZU9jmHRTxe5xmxiCqNg5yWdm070ATTZsQx9NbSLMUBIY6tE-l8HCiVv_wbbCHoHgHWg7-1mYJwueg\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-05-03 18:07:44');
+INSERT INTO `sys_oper_log` VALUES (214, '修改作品集', 'com.designstudio.portfolio.controller.PortfolioController.update', 'PUT', 1, 'admin', '/api/v1/admin/portfolios/2', '0:0:0:0:0:0:0:1', '[2,{\"portfolioId\":2,\"title\":\"测试上传作品\",\"categoryId\":1,\"coverUrl\":\"http://localhost:8081/uploads/fc1a62f7bca648898b01d8239d4fb54b.png\",\"imageUrls\":[],\"description\":\"\",\"status\":0,\"viewCount\":0,\"sortOrder\":0,\"createBy\":1,\"createTime\":1775822754000,\"updateBy\":1,\"updateTime\":1775822754000,\"delFlag\":0}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-05-03 18:55:57');
+INSERT INTO `sys_oper_log` VALUES (215, '后台登出', 'com.designstudio.system.controller.AuthController.logout', 'POST', 1, 'admin', '/api/v1/auth/logout', '0:0:0:0:0:0:0:1', '[\"Bearer eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJhZG1pbiJdLCJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc3ODAyODY0LCJleHAiOjE3Nzg0MDc2NjR9.HP-wCk_xiZU9jmHRTxe5xmxiCqNg5yWdm070ATTZsQx9NbSLMUBIY6tE-l8HCiVv_wbbCHoHgHWg7-1mYJwueg\"]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-05-03 19:40:46');
+INSERT INTO `sys_oper_log` VALUES (216, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"designer1\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJkZXNpZ25lciJdLCJuaWNrbmFtZSI6IuadjuiuvuiuoeW4iCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjIsInVzZXJuYW1lIjoiZGVzaWduZXIxIiwic3ViIjoiMiIsImlhdCI6MTc3NzgwODQ1MSwiZXhwIjoxNzc4NDEzMjUxfQ.EJRJZ-Fg6YB65a14m91L9NXVdOppYAAmayPVLk6T5opBv7MzFuEL4NLF6Uxc5VzSqJwPMW-rCs5Yv5yzrpZuOA\",\"adminId\":2,\"username\":\"designer1\",\"nickname\":\"李设计师\"}}', 0, NULL, '2026-05-03 19:40:51');
+INSERT INTO `sys_oper_log` VALUES (217, '后台登出', 'com.designstudio.system.controller.AuthController.logout', 'POST', 2, 'designer1', '/api/v1/auth/logout', '0:0:0:0:0:0:0:1', '[\"Bearer eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJkZXNpZ25lciJdLCJuaWNrbmFtZSI6IuadjuiuvuiuoeW4iCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjIsInVzZXJuYW1lIjoiZGVzaWduZXIxIiwic3ViIjoiMiIsImlhdCI6MTc3NzgwODQ1MSwiZXhwIjoxNzc4NDEzMjUxfQ.EJRJZ-Fg6YB65a14m91L9NXVdOppYAAmayPVLk6T5opBv7MzFuEL4NLF6Uxc5VzSqJwPMW-rCs5Yv5yzrpZuOA\"]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-05-03 19:52:04');
+INSERT INTO `sys_oper_log` VALUES (218, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJhZG1pbiJdLCJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc3ODA5MTI1LCJleHAiOjE3Nzg0MTM5MjV9.QUrUhzbJIFyu27uBpGn10pBQgD_Km7_ufR7Mi21PI6Z0wBSdv0FVBwMIXqao1OL0nHuNO4CldwCELEo3x6GPEg\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-05-03 19:52:05');
+INSERT INTO `sys_oper_log` VALUES (219, '意向转订单', 'com.designstudio.order.controller.RequestController.convert', 'POST', 1, 'admin', '/api/v1/admin/requests/11/convert', '0:0:0:0:0:0:0:1', '[11,{\"designerId\":3,\"totalAmount\":3,\"prepayAmount\":2,\"expectedDate\":1777910400000,\"remark\":\"\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"orderId\":10,\"orderSn\":\"DS202605052107539606\",\"userId\":5,\"categoryId\":3,\"designerId\":3,\"currentStepId\":12,\"status\":0,\"customDataSnapshot\":\"{\\\"usage\\\": \\\"海报\\\", \\\"art_style\\\": \\\"日系\\\", \\\"resolution\\\": \\\"1920×1080\\\"}\",\"totalAmount\":3,\"prepayAmount\":2,\"paidAmount\":0,\"expectedDate\":1777910400000,\"remark\":\"\",\"isBlocked\":0,\"createBy\":1,\"createTime\":1777986473820,\"updateBy\":1,\"updateTime\":1777986473820}}', 0, NULL, '2026-05-05 21:07:54');
+INSERT INTO `sys_oper_log` VALUES (220, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/10/action', '0:0:0:0:0:0:0:1', '[10,{\"action\":\"save\",\"description\":\"需求确认完成\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-05-05 21:09:31');
+INSERT INTO `sys_oper_log` VALUES (221, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/10/action', '0:0:0:0:0:0:0:1', '[10,{\"action\":\"advance\",\"description\":\"完成\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-05-05 21:09:40');
+INSERT INTO `sys_oper_log` VALUES (222, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/10/action', '0:0:0:0:0:0:0:1', '[10,{\"action\":\"advance\",\"description\":\"继续\",\"imageUrls\":\"[\\\"/uploads/images/191879694a184a848aa5ab53c49ba982.png\\\"]\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-05-05 21:16:46');
+INSERT INTO `sys_oper_log` VALUES (223, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/10/action', '0:0:0:0:0:0:0:1', '[10,{\"action\":\"advance\",\"imageUrls\":\"[\\\"/uploads/images/bc0df33414d84911aaab39d6ab04e94c.png\\\"]\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-05-05 21:17:09');
+INSERT INTO `sys_oper_log` VALUES (224, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/10/action', '0:0:0:0:0:0:0:1', '[10,{\"action\":\"rollback\",\"blockReason\":\"有问题\",\"rollbackTargetStepId\":14}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-05-05 21:17:34');
+INSERT INTO `sys_oper_log` VALUES (225, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/10/action', '0:0:0:0:0:0:0:1', '[10,{\"action\":\"advance\",\"imageUrls\":\"[\\\"/uploads/images/c22dd3574a734330bad9427efe5ec812.png\\\"]\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-05-05 21:17:50');
+INSERT INTO `sys_oper_log` VALUES (226, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/10/action', '0:0:0:0:0:0:0:1', '[10,{\"action\":\"advance\",\"imageUrls\":\"[\\\"/uploads/images/e209c35d9636423e9d9eeaaba7229b22.png\\\"]\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-05-05 21:17:56');
+INSERT INTO `sys_oper_log` VALUES (227, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/10/action', '0:0:0:0:0:0:0:1', '[10,{\"action\":\"advance\",\"imageUrls\":\"[\\\"/uploads/images/75e02f43a0f8478f84a34137cd3bb461.png\\\"]\"}]', '{\"code\":500,\"msg\":\"\\r\\n### Error updating database.  Cause: java.sql.SQLException: Field \'step_id\' doesn\'t have a default value\\r\\n### The error may exist in com/designstudio/order/mapper/DsOrderProgressMapper.java (best guess)\\r\\n### The error may involve com.designstudio.order.mapper.DsOrderProgressMapper.insert-Inline\\r\\n### The error occurred while setting parameters\\r\\n### SQL: INSERT INTO ds_order_progress  ( order_id,  description,    create_time )  VALUES (  ?,  ?,    ?  )\\r\\n### Cause: java.sql.SQLException: Field \'step_id\' doesn\'t have a default value\\n; Field \'step_id\' doesn\'t have a default value\"}', 0, NULL, '2026-05-05 21:18:04');
+INSERT INTO `sys_oper_log` VALUES (228, '执行节点工作台动作', 'com.designstudio.order.controller.WorkbenchController.action', 'POST', 1, 'admin', '/api/v1/admin/workbench/orders/10/action', '0:0:0:0:0:0:0:1', '[10,{\"action\":\"advance\",\"imageUrls\":\"[\\\"/uploads/images/75e02f43a0f8478f84a34137cd3bb461.png\\\"]\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-05-05 21:24:43');
+INSERT INTO `sys_oper_log` VALUES (229, '订单发货', 'com.designstudio.order.controller.OrderController.ship', 'POST', 1, 'admin', '/api/v1/admin/orders/10/ship', '0:0:0:0:0:0:0:1', '[10,{}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-05-05 21:26:32');
+INSERT INTO `sys_oper_log` VALUES (230, '新增物料', 'com.designstudio.supply.controller.MaterialController.add', 'POST', 1, 'admin', '/api/v1/admin/materials', '0:0:0:0:0:0:0:1', '[{\"name\":\"1\",\"sku\":\"1\",\"category\":\"面料\",\"unit\":\"米\",\"unitPrice\":1,\"warningStock\":1,\"remark\":\"1\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-05-05 21:33:55');
+INSERT INTO `sys_oper_log` VALUES (231, '新增物料', 'com.designstudio.supply.controller.MaterialController.add', 'POST', 1, 'admin', '/api/v1/admin/materials', '0:0:0:0:0:0:0:1', '[{\"name\":\"1\",\"sku\":\"1\",\"category\":\"面料\",\"unit\":\"米\",\"unitPrice\":1,\"warningStock\":1,\"remark\":\"1\"}]', NULL, 1, '\r\n### Error updating database.  Cause: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry \'1\' for key \'ds_material.uk_sku\'\r\n### The error may exist in com/designstudio/supply/mapper/DsMaterialMapper.java (best guess)\r\n### The error may involve com.designstudio.supply.mapper.DsMaterialMapper.insert-Inline\r\n### The error occurred while setting parameters\r\n### SQL: INSERT INTO ds_material  ( name, sku, category, unit, unit_price,  warning_stock,  remark,  create_by, create_time, update_by, update_time )  VALUES (  ?, ?, ?, ?, ?,  ?,  ?,  ?, ?, ?, ?  )\r\n### Cause: java.sql.SQLIntegrityConstraintViolationException: Duplicate entry \'1\' for key \'ds_material.uk_sku\'\n; Duplicate entry \'1\' for key \'ds_material.uk_sku\'', '2026-05-05 21:34:07');
+INSERT INTO `sys_oper_log` VALUES (232, '新增物料', 'com.designstudio.supply.controller.MaterialController.add', 'POST', 1, 'admin', '/api/v1/admin/materials', '0:0:0:0:0:0:0:1', '[{\"name\":\"2\",\"sku\":\"3\",\"category\":\"面料\",\"unit\":\"米\",\"unitPrice\":4,\"warningStock\":5,\"remark\":\"6\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-05-05 21:34:17');
+INSERT INTO `sys_oper_log` VALUES (233, '新增物料', 'com.designstudio.supply.controller.MaterialController.add', 'POST', 1, 'admin', '/api/v1/admin/materials', '0:0:0:0:0:0:0:1', '[{\"name\":\"5\",\"sku\":\"6\",\"category\":\"面料\",\"unit\":\"米\",\"unitPrice\":8,\"warningStock\":7,\"remark\":\"8\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-05-05 21:34:29');
+INSERT INTO `sys_oper_log` VALUES (234, '新增物料', 'com.designstudio.supply.controller.MaterialController.add', 'POST', 1, 'admin', '/api/v1/admin/materials', '0:0:0:0:0:0:0:1', '[{\"name\":\"4\",\"sku\":\"5\",\"category\":\"面料\",\"unit\":\"米\",\"unitPrice\":6,\"warningStock\":7,\"remark\":\"8\"}]', '{\"code\":200,\"msg\":\"success\"}', 0, NULL, '2026-05-05 21:34:47');
+INSERT INTO `sys_oper_log` VALUES (235, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJhZG1pbiJdLCJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc3OTkzNjE4LCJleHAiOjE3Nzg1OTg0MTh9.ELkl85Jsz5Ma_CC3mPiqMKVc1v3EyLs_vFGM2enmtcqHxQm7ztPesswTUQQCsQXRLhVPlFN1UduKzhzy4u2obg\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-05-05 23:06:58');
+INSERT INTO `sys_oper_log` VALUES (236, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJhZG1pbiJdLCJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc3OTkzNjQ1LCJleHAiOjE3Nzg1OTg0NDV9.vFkyShzbdceHA-hMsNpfNuT2Z_pSd7QSPtTG7QtzPDkYE2ijV9zmGFRWYGeDTqNszSiQBqZm1OdtyJkvF_cmyw\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-05-05 23:07:25');
+INSERT INTO `sys_oper_log` VALUES (237, '后台登录', 'com.designstudio.system.controller.AuthController.login', 'POST', NULL, NULL, '/api/v1/auth/login', '0:0:0:0:0:0:0:1', '[{\"username\":\"admin\",\"password\":\"admin123\"}]', '{\"code\":200,\"msg\":\"success\",\"data\":{\"token\":\"eyJhbGciOiJIUzUxMiJ9.eyJyb2xlcyI6WyJhZG1pbiJdLCJuaWNrbmFtZSI6Iui2hee6p-euoeeQhuWRmCIsInVzZXJUeXBlIjoiYWRtaW4iLCJ1c2VySWQiOjEsInVzZXJuYW1lIjoiYWRtaW4iLCJzdWIiOiIxIiwiaWF0IjoxNzc3OTkzOTc5LCJleHAiOjE3Nzg1OTg3Nzl9.aYnutqKswxCjTbcsmK9oL5Dv3MizC64mOkO12HkDVKJ-6N5853jVpX3fLodI7967LZ_1eKYFSjy0B3810tyasQ\",\"adminId\":1,\"username\":\"admin\",\"nickname\":\"超级管理员\"}}', 0, NULL, '2026-05-05 23:13:00');
 
--- Dump completed
+-- ----------------------------
+-- Table structure for sys_role
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_role`;
+CREATE TABLE `sys_role`  (
+  `role_id` bigint NOT NULL AUTO_INCREMENT,
+  `role_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '角色名称',
+  `role_key` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '角色标识(admin/designer)',
+  `role_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '角色类型: admin/designer/storekeeper/purchaser/finance/customer_service',
+  `remark` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '备注',
+  `create_by` bigint NULL DEFAULT NULL,
+  `create_time` datetime NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_by` bigint NULL DEFAULT NULL,
+  `update_time` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `del_flag` tinyint(1) NULL DEFAULT 0,
+  PRIMARY KEY (`role_id`) USING BTREE,
+  UNIQUE INDEX `uk_role_key`(`role_key` ASC) USING BTREE
+) ENGINE = InnoDB AUTO_INCREMENT = 7 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色表' ROW_FORMAT = DYNAMIC;
 
+-- ----------------------------
+-- Records of sys_role
+-- ----------------------------
+INSERT INTO `sys_role` VALUES (1, '管理员', 'admin', 'admin', 'Full backend access', NULL, '2026-03-04 15:06:58', NULL, '2026-04-14 22:09:37', 0);
+INSERT INTO `sys_role` VALUES (2, '设计师', 'designer', 'designer', 'Order execution, request handling, portfolio and chat access', NULL, '2026-03-04 15:06:58', NULL, '2026-04-14 22:09:37', 0);
+INSERT INTO `sys_role` VALUES (3, '库管', 'storekeeper', 'storekeeper', '负责物料管理和库存查看', NULL, '2026-04-14 22:09:37', NULL, '2026-04-14 22:09:37', 0);
+INSERT INTO `sys_role` VALUES (4, '采购', 'purchaser', 'purchaser', '负责物料采购和库存管理', NULL, '2026-04-14 22:09:37', NULL, '2026-04-14 22:09:37', 0);
+INSERT INTO `sys_role` VALUES (5, '财务', 'finance', 'finance', '负责订单收款和财务报表', NULL, '2026-04-14 22:09:37', NULL, '2026-04-14 22:09:37', 0);
+INSERT INTO `sys_role` VALUES (6, '客服', 'customer_service', 'customer_service', '负责客户沟通和在线答疑', NULL, '2026-04-14 22:09:37', NULL, '2026-04-14 22:09:37', 0);
+
+-- ----------------------------
+-- Table structure for sys_role_menu
+-- ----------------------------
+DROP TABLE IF EXISTS `sys_role_menu`;
+CREATE TABLE `sys_role_menu`  (
+  `role_id` bigint NOT NULL COMMENT '角色ID',
+  `menu_id` bigint NOT NULL COMMENT '菜单ID',
+  PRIMARY KEY (`role_id`, `menu_id`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '角色菜单关联表' ROW_FORMAT = DYNAMIC;
+
+-- ----------------------------
+-- Records of sys_role_menu
+-- ----------------------------
+INSERT INTO `sys_role_menu` VALUES (1, 1);
+INSERT INTO `sys_role_menu` VALUES (1, 2);
+INSERT INTO `sys_role_menu` VALUES (1, 3);
+INSERT INTO `sys_role_menu` VALUES (1, 4);
+INSERT INTO `sys_role_menu` VALUES (1, 5);
+INSERT INTO `sys_role_menu` VALUES (1, 6);
+INSERT INTO `sys_role_menu` VALUES (1, 7);
+INSERT INTO `sys_role_menu` VALUES (1, 8);
+INSERT INTO `sys_role_menu` VALUES (1, 9);
+INSERT INTO `sys_role_menu` VALUES (1, 10);
+INSERT INTO `sys_role_menu` VALUES (1, 11);
+INSERT INTO `sys_role_menu` VALUES (1, 12);
+INSERT INTO `sys_role_menu` VALUES (1, 13);
+INSERT INTO `sys_role_menu` VALUES (1, 14);
+INSERT INTO `sys_role_menu` VALUES (1, 15);
+INSERT INTO `sys_role_menu` VALUES (1, 16);
+INSERT INTO `sys_role_menu` VALUES (1, 17);
+INSERT INTO `sys_role_menu` VALUES (1, 18);
+INSERT INTO `sys_role_menu` VALUES (1, 19);
+INSERT INTO `sys_role_menu` VALUES (1, 20);
+INSERT INTO `sys_role_menu` VALUES (1, 21);
+INSERT INTO `sys_role_menu` VALUES (1, 22);
+INSERT INTO `sys_role_menu` VALUES (1, 23);
+INSERT INTO `sys_role_menu` VALUES (1, 24);
+INSERT INTO `sys_role_menu` VALUES (1, 25);
+INSERT INTO `sys_role_menu` VALUES (1, 26);
+INSERT INTO `sys_role_menu` VALUES (1, 27);
+INSERT INTO `sys_role_menu` VALUES (1, 28);
+INSERT INTO `sys_role_menu` VALUES (1, 29);
+INSERT INTO `sys_role_menu` VALUES (1, 30);
+INSERT INTO `sys_role_menu` VALUES (1, 31);
+INSERT INTO `sys_role_menu` VALUES (1, 32);
+INSERT INTO `sys_role_menu` VALUES (1, 33);
+INSERT INTO `sys_role_menu` VALUES (2, 1);
+INSERT INTO `sys_role_menu` VALUES (2, 2);
+INSERT INTO `sys_role_menu` VALUES (2, 5);
+INSERT INTO `sys_role_menu` VALUES (2, 6);
+INSERT INTO `sys_role_menu` VALUES (2, 8);
+INSERT INTO `sys_role_menu` VALUES (2, 9);
+INSERT INTO `sys_role_menu` VALUES (2, 10);
+INSERT INTO `sys_role_menu` VALUES (2, 16);
+INSERT INTO `sys_role_menu` VALUES (2, 17);
+INSERT INTO `sys_role_menu` VALUES (2, 23);
+INSERT INTO `sys_role_menu` VALUES (2, 24);
+INSERT INTO `sys_role_menu` VALUES (2, 25);
+INSERT INTO `sys_role_menu` VALUES (2, 26);
+INSERT INTO `sys_role_menu` VALUES (3, 4);
+INSERT INTO `sys_role_menu` VALUES (3, 14);
+INSERT INTO `sys_role_menu` VALUES (3, 27);
+INSERT INTO `sys_role_menu` VALUES (3, 28);
+INSERT INTO `sys_role_menu` VALUES (4, 4);
+INSERT INTO `sys_role_menu` VALUES (4, 14);
+INSERT INTO `sys_role_menu` VALUES (4, 27);
+INSERT INTO `sys_role_menu` VALUES (4, 28);
+INSERT INTO `sys_role_menu` VALUES (5, 1);
+INSERT INTO `sys_role_menu` VALUES (5, 6);
+INSERT INTO `sys_role_menu` VALUES (5, 9);
+INSERT INTO `sys_role_menu` VALUES (5, 17);
+INSERT INTO `sys_role_menu` VALUES (6, 23);
+INSERT INTO `sys_role_menu` VALUES (6, 24);
+INSERT INTO `sys_role_menu` VALUES (6, 29);
+INSERT INTO `sys_role_menu` VALUES (6, 30);
+INSERT INTO `sys_role_menu` VALUES (6, 31);
+
+SET FOREIGN_KEY_CHECKS = 1;
