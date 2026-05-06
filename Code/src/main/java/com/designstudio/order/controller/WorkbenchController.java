@@ -51,6 +51,7 @@ public class WorkbenchController {
     @Data
     public static class WorkbenchActionDTO {
         private String action;
+        private Long expectedCurrentStepId;
         private String description;
         private String imageUrls;
         private String formData;

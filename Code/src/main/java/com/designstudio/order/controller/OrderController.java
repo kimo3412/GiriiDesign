@@ -180,6 +180,7 @@ public class OrderController {
 
     @Data
     public static class AdvanceDTO {
+        private Long expectedCurrentStepId;
         private String description;
         private String imageUrls;
         private String formData;

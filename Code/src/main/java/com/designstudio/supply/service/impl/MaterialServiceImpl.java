@@ -83,7 +83,7 @@ public class MaterialServiceImpl implements MaterialService {
         material.setWarningStock(dto.getWarningStock());
         material.setImageUrl(dto.getImageUrl());
         material.setRemark(dto.getRemark());
-        materialMapper.updateById(material);
+        updateMaterialOrThrow(material);
     }
 
     @Override
@@ -98,7 +98,7 @@ public class MaterialServiceImpl implements MaterialService {
         if (material == null) throw new RuntimeException("物料不存在");
 
         material.setStock(material.getStock().add(quantity));
-        materialMapper.updateById(material);
+        updateMaterialOrThrow(material);
     }
 
     @Override
@@ -112,7 +112,7 @@ public class MaterialServiceImpl implements MaterialService {
         }
 
         material.setStock(material.getStock().subtract(quantity));
-        materialMapper.updateById(material);
+        updateMaterialOrThrow(material);
     }
 
     @Override
@@ -121,5 +121,11 @@ public class MaterialServiceImpl implements MaterialService {
                 new LambdaQueryWrapper<DsMaterial>()
                         .isNotNull(DsMaterial::getWarningStock)
                         .apply("stock <= warning_stock"));
+    }
+
+    private void updateMaterialOrThrow(DsMaterial material) {
+        if (materialMapper.updateById(material) != 1) {
+            throw new RuntimeException("物料库存已变化，请刷新后重试");
+        }
     }
 }

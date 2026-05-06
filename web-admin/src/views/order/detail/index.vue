@@ -399,7 +399,10 @@ function formatTime(time?: string) {
 }
 
 async function handleAdvance() {
-  await advanceOrder(detail.value.order.orderId, { description: advanceDesc.value || null });
+  await advanceOrder(detail.value.order.orderId, {
+    expectedCurrentStepId: detail.value.order.currentStepId || null,
+    description: advanceDesc.value || null,
+  });
   message.success('订单已推进');
   showAdvanceModal.value = false;
   advanceDesc.value = '';

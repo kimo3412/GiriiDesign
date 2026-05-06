@@ -1,6 +1,7 @@
 package com.designstudio.order.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.designstudio.config.domain.DsWorkflow;
@@ -117,7 +118,15 @@ public class RequestServiceImpl implements RequestService {
 
         request.setStatus(1);
         request.setLinkedOrderId(order.getOrderId());
-        requestMapper.updateById(request);
+        int updated = requestMapper.update(null,
+                new LambdaUpdateWrapper<DsOrderRequest>()
+                        .eq(DsOrderRequest::getRequestId, requestId)
+                        .eq(DsOrderRequest::getStatus, 0)
+                        .set(DsOrderRequest::getStatus, 1)
+                        .set(DsOrderRequest::getLinkedOrderId, order.getOrderId()));
+        if (updated != 1) {
+            throw new RuntimeException("意向状态已变化，请刷新后重试");
+        }
 
         return order;
     }
@@ -130,7 +139,15 @@ public class RequestServiceImpl implements RequestService {
 
         request.setStatus(2);
         request.setCloseReason(closeReason);
-        requestMapper.updateById(request);
+        int updated = requestMapper.update(null,
+                new LambdaUpdateWrapper<DsOrderRequest>()
+                        .eq(DsOrderRequest::getRequestId, requestId)
+                        .eq(DsOrderRequest::getStatus, 0)
+                        .set(DsOrderRequest::getStatus, 2)
+                        .set(DsOrderRequest::getCloseReason, closeReason));
+        if (updated != 1) {
+            throw new RuntimeException("意向状态已变化，请刷新后重试");
+        }
     }
 
     @Override

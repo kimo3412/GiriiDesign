@@ -148,6 +148,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(rollbackFor = Exception.class)
     public void advance(Long orderId, OrderController.AdvanceDTO dto) {
         DsOrder order = requireOrder(orderId);
+        assertExpectedCurrentStep(order, dto != null ? dto.getExpectedCurrentStepId() : null);
         if (order.getStatus() != 1) {
             throw new RuntimeException("只有生产中的订单才能推进");
         }
@@ -164,7 +165,7 @@ public class OrderServiceImpl implements OrderService {
 
         order.setCurrentStepId(nextStep.getStepId());
         touchOrderForUpdate(order);
-        orderMapper.updateById(order);
+        updateOrderOrThrow(order);
 
         LoginUser loginUser = LoginHelper.getLoginUser();
         DsOrderProgress progress = new DsOrderProgress();
@@ -195,7 +196,7 @@ public class OrderServiceImpl implements OrderService {
         order.setIsBlocked(1);
         order.setBlockReason(blockReason);
         touchOrderForUpdate(order);
-        orderMapper.updateById(order);
+        updateOrderOrThrow(order);
 
         if (order.getUserId() != null) {
             notificationService.sendToUser(order.getUserId(),
@@ -211,7 +212,7 @@ public class OrderServiceImpl implements OrderService {
         order.setIsBlocked(0);
         order.setBlockReason(null);
         touchOrderForUpdate(order);
-        orderMapper.updateById(order);
+        updateOrderOrThrow(order);
 
         if (order.getUserId() != null) {
             notificationService.sendToUser(order.getUserId(),
@@ -258,7 +259,7 @@ public class OrderServiceImpl implements OrderService {
             order.setStatus(1);
             order.setPaidAmount(order.getPrepayAmount());
             touchOrderForUpdate(order);
-            orderMapper.updateById(order);
+            updateOrderOrThrow(order);
 
             recordProgress(orderId, order.getCurrentStepId(), "客户已支付定金：¥" + order.getPrepayAmount(), null, null);
 
@@ -276,7 +277,7 @@ public class OrderServiceImpl implements OrderService {
             order.setStatus(2);
             order.setPaidAmount(order.getTotalAmount());
             touchOrderForUpdate(order);
-            orderMapper.updateById(order);
+            updateOrderOrThrow(order);
 
             recordProgress(orderId, order.getCurrentStepId(), "客户已支付尾款：¥"
                     + order.getTotalAmount().subtract(order.getPrepayAmount()), null, null);
@@ -306,7 +307,7 @@ public class OrderServiceImpl implements OrderService {
         order.setConfirmTime(LocalDateTime.now());
         order.setFinishTime(LocalDateTime.now());
         touchOrderForUpdate(order);
-        orderMapper.updateById(order);
+        updateOrderOrThrow(order);
         recordProgress(orderId, order.getCurrentStepId(), "客户已确认收货，订单已完成", null, null);
     }
 
@@ -327,7 +328,7 @@ public class OrderServiceImpl implements OrderService {
         order.setBlockReason(null);
         order.setFinishTime(LocalDateTime.now());
         touchOrderForUpdate(order);
-        orderMapper.updateById(order);
+        updateOrderOrThrow(order);
         recordProgress(orderId, order.getCurrentStepId(), "订单已取消：" + cancelReason, null, null);
 
         // 归还已扣减的库存
@@ -351,7 +352,7 @@ public class OrderServiceImpl implements OrderService {
         order.setExpectedDate(dto.getExpectedDate());
         order.setDelayReason(dto.getDelayReason());
         touchOrderForUpdate(order);
-        orderMapper.updateById(order);
+        updateOrderOrThrow(order);
         String description = StringUtils.hasText(dto.getDescription())
                 ? dto.getDescription()
                 : "订单延期至 " + dto.getExpectedDate() + "，原因：" + dto.getDelayReason();
@@ -369,7 +370,7 @@ public class OrderServiceImpl implements OrderService {
         order.setStatus(3);
         order.setDeliveryTime(LocalDateTime.now());
         touchOrderForUpdate(order);
-        orderMapper.updateById(order);
+        updateOrderOrThrow(order);
         recordProgress(orderId, order.getCurrentStepId(),
                 StringUtils.hasText(description) ? description : "订单已发货，等待客户确认收货",
                 null,
@@ -435,6 +436,7 @@ public class OrderServiceImpl implements OrderService {
     @Transactional(rollbackFor = Exception.class)
     public void handleWorkbenchAction(Long orderId, WorkbenchController.WorkbenchActionDTO dto) {
         DsOrder order = requireOrder(orderId);
+        assertExpectedCurrentStep(order, dto != null ? dto.getExpectedCurrentStepId() : null);
         String action = dto.getAction();
         DsWorkflowStep currentStep = resolveCurrentStep(order);
 
@@ -451,6 +453,7 @@ public class OrderServiceImpl implements OrderService {
 
         if ("advance".equals(action)) {
             OrderController.AdvanceDTO advanceDTO = new OrderController.AdvanceDTO();
+            advanceDTO.setExpectedCurrentStepId(dto.getExpectedCurrentStepId());
             advanceDTO.setDescription(dto.getDescription());
             advanceDTO.setImageUrls(dto.getImageUrls());
             advanceDTO.setFormData(dto.getFormData());
@@ -665,7 +668,7 @@ public class OrderServiceImpl implements OrderService {
         }
         order.setFinishTime(LocalDateTime.now());
         touchOrderForUpdate(order);
-        orderMapper.updateById(order);
+        updateOrderOrThrow(order);
         DsOrderProgress progress = new DsOrderProgress();
         progress.setOrderId(order.getOrderId());
         progress.setStepId(resolveProgressStepId(order));
@@ -1081,6 +1084,18 @@ public class OrderServiceImpl implements OrderService {
         order.setUpdateBy(loginUser != null ? loginUser.getAdminId() : null);
     }
 
+    private void assertExpectedCurrentStep(DsOrder order, Long expectedCurrentStepId) {
+        if (!Objects.equals(order.getCurrentStepId(), expectedCurrentStepId)) {
+            throw new RuntimeException("订单节点已变化，请刷新后重试");
+        }
+    }
+
+    private void updateOrderOrThrow(DsOrder order) {
+        if (orderMapper.updateById(order) != 1) {
+            throw new RuntimeException("订单状态已变化，请刷新后重试");
+        }
+    }
+
     private void rollback(DsOrder order, WorkbenchController.WorkbenchActionDTO dto) {
         if (order.getIsBlocked() != null && order.getIsBlocked() == 1) {
             throw new RuntimeException("订单已阻塞，请先解除阻塞后再退回");
@@ -1099,7 +1114,7 @@ public class OrderServiceImpl implements OrderService {
         }
         order.setFinishTime(null);
         touchOrderForUpdate(order);
-        orderMapper.updateById(order);
+        updateOrderOrThrow(order);
 
         String description = StringUtils.hasText(dto.getDescription())
                 ? dto.getDescription()
@@ -1278,7 +1293,7 @@ public class OrderServiceImpl implements OrderService {
         for (DsBomItem item : bomItems) {
             DsMaterial material = materialMapper.selectById(item.getMaterialId());
             material.setStock(material.getStock().subtract(item.getQuantity()));
-            materialMapper.updateById(material);
+            updateMaterialOrThrow(material);
 
             item.setIsAllocated(1);
             bomItemMapper.updateById(item);
@@ -1297,10 +1312,16 @@ public class OrderServiceImpl implements OrderService {
             DsMaterial material = materialMapper.selectById(item.getMaterialId());
             if (material != null) {
                 material.setStock(material.getStock().add(item.getQuantity()));
-                materialMapper.updateById(material);
+                updateMaterialOrThrow(material);
             }
             item.setIsAllocated(0);
             bomItemMapper.updateById(item);
+        }
+    }
+
+    private void updateMaterialOrThrow(DsMaterial material) {
+        if (materialMapper.updateById(material) != 1) {
+            throw new RuntimeException("物料库存已变化，请刷新后重试");
         }
     }
 }

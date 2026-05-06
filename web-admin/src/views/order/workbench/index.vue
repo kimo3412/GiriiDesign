@@ -740,6 +740,7 @@ async function submitAction(action: WorkbenchAction) {
   try {
     await submitWorkbenchAction(activeOrder.value.orderId, {
       action,
+      expectedCurrentStepId: activeOrder.value.currentStepId || null,
       description: actionForm.value.description.trim() || null,
       blockReason: actionForm.value.blockReason.trim() || null,
       rollbackTargetStepId: action === 'rollback' ? actionForm.value.rollbackTargetStepId : null,
