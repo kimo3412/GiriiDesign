@@ -2,9 +2,9 @@
   <div class="banner-page">
     <!-- 顶部统计 -->
     <div class="stat-cards">
-      <BusinessMetricCard label="全部轮播图" :value="stats.total" icon="📋" variant="primary" />
-      <BusinessMetricCard label="已启用" :value="stats.active" icon="✅" variant="success" />
-      <BusinessMetricCard label="已禁用" :value="stats.inactive" icon="🚫" variant="error" />
+      <BusinessMetricCard label="全部轮播图" :value="bannerStats.total" icon="📋" variant="primary" />
+      <BusinessMetricCard label="已启用" :value="bannerStats.active" icon="✅" variant="success" />
+      <BusinessMetricCard label="已禁用" :value="bannerStats.inactive" icon="🚫" variant="error" />
     </div>
 
     <n-card :bordered="false" class="directory-card">
@@ -18,21 +18,21 @@
               :class="{ 'tree-item--active': selectedStatus === null }"
               @click="selectStatus(null)"
             >
-              全部 <span class="tree-item__count">{{ stats.total }}</span>
+              全部 <span class="tree-item__count">{{ bannerStats.total }}</span>
             </div>
             <div
               class="tree-item"
               :class="{ 'tree-item--active': selectedStatus === 1 }"
               @click="selectStatus(1)"
             >
-              已启用 <span class="tree-item__count">{{ stats.active }}</span>
+              已启用 <span class="tree-item__count">{{ bannerStats.active }}</span>
             </div>
             <div
               class="tree-item"
               :class="{ 'tree-item--active': selectedStatus === 0 }"
               @click="selectStatus(0)"
             >
-              已禁用 <span class="tree-item__count">{{ stats.inactive }}</span>
+              已禁用 <span class="tree-item__count">{{ bannerStats.inactive }}</span>
             </div>
           </div>
         </div>
@@ -171,14 +171,7 @@ const linkTypeOptions = [
 ];
 
 // 统计
-const stats = computed(() => {
-  const all = tableData.value;
-  return {
-    total: all.length,
-    active: all.filter((r: any) => r.status === 1).length,
-    inactive: all.filter((r: any) => r.status === 0).length,
-  };
-});
+const bannerStats = ref<{ total: number; active: number; inactive: number }>({ total: 0, active: 0, inactive: 0 });
 
 // 筛选后数据
 const displayData = computed(() => {
@@ -280,6 +273,11 @@ const loadData = async () => {
     const res: any = await getBannerList({ pageNum: pageNum.value, pageSize: pageSize.value });
     tableData.value = getRecords(res);
     total.value = res?.total || tableData.value.length;
+    if (res.stats) {
+      bannerStats.value.total = res.total || tableData.value.length;
+      bannerStats.value.active = res.stats.active || 0;
+      bannerStats.value.inactive = res.stats.inactive || 0;
+    }
   } catch (e) { console.error(e); }
   finally { loading.value = false; }
 };

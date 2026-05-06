@@ -2,6 +2,7 @@ package com.designstudio.supply.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.designstudio.common.annotation.OperLog;
+import com.designstudio.common.result.ListWithStats;
 import com.designstudio.common.result.PageResult;
 import com.designstudio.common.result.R;
 import com.designstudio.supply.domain.DsMaterial;
@@ -13,7 +14,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 物料管理
@@ -28,13 +31,15 @@ public class MaterialController {
 
     @GetMapping
     @Operation(summary = "物料列表（支持分页）")
-    public R<PageResult<DsMaterial>> list(
+    public R<ListWithStats<DsMaterial>> list(
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") Long pageNum,
             @RequestParam(defaultValue = "10") Long pageSize) {
         IPage<DsMaterial> page = materialService.listMaterials(category, keyword, pageNum, pageSize);
-        return R.ok(PageResult.of(page.getRecords(), page.getTotal(), page.getCurrent(), page.getSize()));
+        List<ListWithStats.CategoryStat> categoryStats = materialService.listCategoryStats(category, keyword);
+        return R.ok(ListWithStats.of(page.getRecords(), page.getTotal(), page.getCurrent(), page.getSize())
+                .categoryStats(categoryStats));
     }
 
     @GetMapping("/{id}")

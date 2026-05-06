@@ -165,18 +165,13 @@ const stats = computed(() => {
 });
 
 // 品类统计
-const categoryStats = computed(() => {
-  const map: Record<string, number> = {};
-  tableData.value.forEach((r: any) => {
-    if (r.category) map[r.category] = (map[r.category] || 0) + 1;
-  });
-  return Object.entries(map).map(([name, count]) => ({ name, count }));
-});
+const categoryStats = ref<any[]>([]);
+const allCategoryTotal = ref(0);
 
 const categoryTotals = computed(() => {
-  const map: Record<string, number> = { all: tableData.value.length };
-  tableData.value.forEach((r: any) => {
-    if (r.category) map[r.category] = (map[r.category] || 0) + 1;
+  const map: Record<string, number> = { all: allCategoryTotal.value };
+  categoryStats.value.forEach((r: any) => {
+    map[r.name] = r.count;
   });
   return map;
 });
@@ -290,6 +285,8 @@ const loadData = async () => {
     const res = await getMaterialList(params);
     tableData.value = res.records || [];
     total.value = res.total || 0;
+    categoryStats.value = res.categoryStats || [];
+    allCategoryTotal.value = res.total || 0;
   } finally { loading.value = false; }
 };
 const handleSearch = () => {

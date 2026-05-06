@@ -1,6 +1,7 @@
 package com.designstudio.supply.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.designstudio.common.result.ListWithStats;
 import com.designstudio.supply.controller.BomTemplateController;
 import com.designstudio.supply.domain.DsBomTemplate;
 import com.designstudio.supply.domain.DsBomTemplateItem;
@@ -13,6 +14,8 @@ import java.util.List;
 public interface BomTemplateService {
 
     IPage<DsBomTemplate> listTemplates(Long categoryId, Long pageNum, Long pageSize);
+
+    List<ListWithStats.CategoryStat> listCategoryStats();
 
     BomTemplateController.BomDetailVO getTemplateDetail(Long id);
 

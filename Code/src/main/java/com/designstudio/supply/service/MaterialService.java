@@ -1,7 +1,7 @@
 package com.designstudio.supply.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.designstudio.supply.controller.MaterialController;
+import com.designstudio.common.result.ListWithStats;
 import com.designstudio.supply.domain.DsMaterial;
 
 import java.math.BigDecimal;
@@ -13,6 +13,8 @@ import java.util.List;
 public interface MaterialService {
 
     IPage<DsMaterial> listMaterials(String category, String keyword, Long pageNum, Long pageSize);
+
+    List<ListWithStats.CategoryStat> listCategoryStats(String category, String keyword);
 
     DsMaterial getMaterial(Long id);
 

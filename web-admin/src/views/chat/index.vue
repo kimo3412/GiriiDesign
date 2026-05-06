@@ -1040,6 +1040,11 @@
     font-size: 14px;
     font-weight: 700;
     line-height: 1.45;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
   }
 
   .chat-card__desc {
@@ -1047,6 +1052,11 @@
     font-size: 12px;
     line-height: 1.55;
     color: #667085;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
   }
 
   .chat-card__meta {

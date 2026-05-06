@@ -146,17 +146,7 @@ const stats = computed(() => {
 });
 
 // 品类统计
-const categoryStats = computed(() => {
-  const map: Record<number, number> = {};
-  tableData.value.forEach((r: any) => {
-    if (r.categoryId) map[r.categoryId] = (map[r.categoryId] || 0) + 1;
-  });
-  return Object.entries(map).map(([id, count]) => ({
-    id: Number(id),
-    name: categoryMap.value[Number(id)] || `ID#${id}`,
-    count,
-  }));
-});
+const categoryStats = ref<any[]>([]);
 
 // 筛选后数据
 const displayData = computed(() => tableData.value);
@@ -202,6 +192,11 @@ const loadData = async () => {
     const res: any = await getBomTemplateList(params);
     tableData.value = res.records || [];
     total.value = res.total || 0;
+    categoryStats.value = (res.categoryStats || []).map((c: any) => ({
+      id: c.id,
+      name: categoryMap.value[c.id] || `ID#${c.id}`,
+      count: c.count,
+    }));
   } catch (e) { console.error(e); }
   finally { loading.value = false; }
 };

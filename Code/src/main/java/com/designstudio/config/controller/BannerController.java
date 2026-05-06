@@ -2,6 +2,7 @@ package com.designstudio.config.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.designstudio.common.annotation.OperLog;
+import com.designstudio.common.result.ListWithStats;
 import com.designstudio.common.result.PageResult;
 import com.designstudio.common.result.R;
 import com.designstudio.config.domain.DsBanner;
@@ -11,6 +12,9 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * 后台 - 轮播图管理
@@ -25,11 +29,16 @@ public class BannerController {
 
     @GetMapping
     @Operation(summary = "轮播图列表（分页）")
-    public R<PageResult<DsBanner>> list(
+    public R<ListWithStats<DsBanner>> list(
             @RequestParam(defaultValue = "1") Long pageNum,
             @RequestParam(defaultValue = "10") Long pageSize) {
         IPage<DsBanner> page = bannerService.listBanners(pageNum, pageSize);
-        return R.ok(PageResult.of(page.getRecords(), page.getTotal(), page.getCurrent(), page.getSize()));
+        long totalActive = page.getRecords().stream().filter(r -> r.getStatus() == 1).count();
+        long totalInactive = page.getRecords().stream().filter(r -> r.getStatus() == 0).count();
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("active", totalActive);
+        stats.put("inactive", totalInactive);
+        return R.ok(ListWithStats.of(page.getRecords(), page.getTotal(), page.getCurrent(), page.getSize()).stats(stats));
     }
 
     @GetMapping("/{id}")

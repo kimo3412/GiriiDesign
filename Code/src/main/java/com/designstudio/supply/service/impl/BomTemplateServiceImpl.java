@@ -3,6 +3,7 @@ package com.designstudio.supply.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.designstudio.common.result.ListWithStats;
 import com.designstudio.supply.controller.BomTemplateController;
 import com.designstudio.supply.domain.DsBomTemplate;
 import com.designstudio.supply.domain.DsBomTemplateItem;
@@ -15,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -41,6 +43,16 @@ public class BomTemplateServiceImpl implements BomTemplateService {
         wrapper.orderByDesc(DsBomTemplate::getCreateTime);
         Page<DsBomTemplate> page = new Page<>(pageNum, pageSize);
         return templateMapper.selectPage(page, wrapper);
+    }
+
+    @Override
+    public List<ListWithStats.CategoryStat> listCategoryStats() {
+        List<DsBomTemplate> all = templateMapper.selectList(new LambdaQueryWrapper<>());
+        Map<Long, Long> countMap = all.stream().collect(Collectors.groupingBy(
+                t -> t.getCategoryId() == null ? 0L : t.getCategoryId(), Collectors.counting()));
+        return countMap.entrySet().stream()
+                .map(e -> new ListWithStats.CategoryStat(null, e.getKey(), e.getValue()))
+                .collect(Collectors.toList());
     }
 
     @Override

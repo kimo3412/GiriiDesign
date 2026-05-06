@@ -2,9 +2,9 @@
   <div class="customer-page">
     <!-- 顶部统计 -->
     <div class="stat-cards">
-      <BusinessMetricCard label="全部客户" :value="stats.total" icon="👥" variant="primary" />
-      <BusinessMetricCard label="正常" :value="stats.enabled" icon="✅" variant="success" />
-      <BusinessMetricCard label="禁用" :value="stats.disabled" icon="🚫" variant="error" />
+      <BusinessMetricCard label="全部客户" :value="total" icon="👥" variant="primary" />
+      <BusinessMetricCard label="正常" :value="statusStats.find(s => s.value === 1)?.count || 0" icon="✅" variant="success" />
+      <BusinessMetricCard label="禁用" :value="statusStats.find(s => s.value === 0)?.count || 0" icon="🚫" variant="error" />
     </div>
 
     <n-card :bordered="false" class="directory-card">
@@ -18,7 +18,7 @@
               :class="{ 'tree-item--active': selectedStatus === null }"
               @click="selectStatus(null)"
             >
-              全部 <span class="tree-item__count">{{ tableData.length }}</span>
+              全部 <span class="tree-item__count">{{ total }}</span>
             </div>
             <div
               v-for="s in statusStats"
@@ -99,9 +99,9 @@
     disabled: tableData.value.filter((r: CustomerItem) => r.status === 0).length,
   }));
 
-  const statusStats = computed(() => [
-    { label: '正常', value: 1, count: stats.value.enabled },
-    { label: '禁用', value: 0, count: stats.value.disabled },
+  const statusStats = ref<{ label: string; value: number; count: number }[]>([
+    { label: '正常', value: 1, count: 0 },
+    { label: '禁用', value: 0, count: 0 },
   ]);
 
   const displayData = computed(() => tableData.value);
@@ -192,6 +192,12 @@
       });
       tableData.value = res.records || [];
       total.value = res.total || 0;
+      if (res.stats) {
+        statusStats.value = [
+          { label: '正常', value: 1, count: res.stats.enabled || 0 },
+          { label: '禁用', value: 0, count: res.stats.disabled || 0 },
+        ];
+      }
     } finally {
       loading.value = false;
     }

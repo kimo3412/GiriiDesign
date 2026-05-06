@@ -2,6 +2,7 @@ package com.designstudio.supply.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.designstudio.common.annotation.OperLog;
+import com.designstudio.common.result.ListWithStats;
 import com.designstudio.common.result.PageResult;
 import com.designstudio.common.result.R;
 import com.designstudio.supply.domain.DsBomTemplate;
@@ -29,12 +30,14 @@ public class BomTemplateController {
 
     @GetMapping
     @Operation(summary = "BOM模板列表（支持分页）")
-    public R<PageResult<DsBomTemplate>> list(
+    public R<ListWithStats<DsBomTemplate>> list(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(defaultValue = "1") Long pageNum,
             @RequestParam(defaultValue = "10") Long pageSize) {
         IPage<DsBomTemplate> page = bomTemplateService.listTemplates(categoryId, pageNum, pageSize);
-        return R.ok(PageResult.of(page.getRecords(), page.getTotal(), page.getCurrent(), page.getSize()));
+        List<ListWithStats.CategoryStat> categoryStats = bomTemplateService.listCategoryStats();
+        return R.ok(ListWithStats.of(page.getRecords(), page.getTotal(), page.getCurrent(), page.getSize())
+                .categoryStats(categoryStats));
     }
 
     @GetMapping("/{id}")

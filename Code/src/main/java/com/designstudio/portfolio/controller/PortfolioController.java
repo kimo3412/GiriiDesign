@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.designstudio.common.annotation.OperLog;
+import com.designstudio.common.result.ListWithStats;
 import com.designstudio.common.result.PageResult;
 import com.designstudio.common.result.R;
 import com.designstudio.portfolio.domain.DsPortfolio;
@@ -14,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * B端 - 作品集管理
@@ -28,7 +31,7 @@ public class PortfolioController {
 
     @GetMapping
     @Operation(summary = "作品集列表（支持分页）")
-    public R<PageResult<DsPortfolio>> list(
+    public R<ListWithStats<DsPortfolio>> list(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") Long pageNum,
@@ -43,7 +46,20 @@ public class PortfolioController {
         wrapper.orderByDesc(DsPortfolio::getSortOrder, DsPortfolio::getCreateTime);
         Page<DsPortfolio> page = new Page<>(pageNum, pageSize);
         IPage<DsPortfolio> result = portfolioMapper.selectPage(page, wrapper);
-        return R.ok(PageResult.of(result.getRecords(), result.getTotal(), result.getCurrent(), result.getSize()));
+
+        LambdaQueryWrapper<DsPortfolio> countWrapper = new LambdaQueryWrapper<>();
+        if (keyword != null && !keyword.isEmpty()) {
+            countWrapper.like(DsPortfolio::getTitle, keyword);
+        }
+        List<DsPortfolio> all = portfolioMapper.selectList(countWrapper);
+        Map<Long, Long> countMap = all.stream().collect(Collectors.groupingBy(
+                p -> p.getCategoryId() == null ? 0L : p.getCategoryId(), Collectors.counting()));
+        List<ListWithStats.CategoryStat> categoryStats = countMap.entrySet().stream()
+                .map(e -> new ListWithStats.CategoryStat(null, e.getKey(), e.getValue()))
+                .collect(Collectors.toList());
+
+        return R.ok(ListWithStats.of(result.getRecords(), result.getTotal(), result.getCurrent(), result.getSize())
+                .categoryStats(categoryStats));
     }
 
     @GetMapping("/{id}")

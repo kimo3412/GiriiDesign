@@ -36,7 +36,7 @@
               :class="{ 'tree-item--active': selectedCategory === null }"
               @click="selectCategory(null)"
             >
-              全部 <span class="tree-item__count">{{ tableData.length }}</span>
+              全部 <span class="tree-item__count">{{ allCategoryTotal }}</span>
             </div>
             <div
               v-for="cat in categoryStats"
@@ -176,14 +176,8 @@ const stats = computed(() => {
   return { total: total.value, lowStock, totalValue: totalValue.toFixed(2) };
 });
 
-// 分类统计
-const categoryStats = computed(() => {
-  const map: Record<string, number> = {};
-  tableData.value.forEach((r: any) => {
-    if (r.category) map[r.category] = (map[r.category] || 0) + 1;
-  });
-  return Object.entries(map).map(([name, count]) => ({ name, count }));
-});
+const categoryStats = ref<any[]>([]);
+const allCategoryTotal = ref(0);
 
 // 筛选后数据
 const displayData = computed(() => {
@@ -273,6 +267,8 @@ const loadData = async () => {
     const res: any = await getMaterialList(params);
     tableData.value = res.records || [];
     total.value = Number(res.total || 0);
+    categoryStats.value = res.categoryStats || [];
+    allCategoryTotal.value = res.total || 0;
   } catch (e) { console.error(e); }
   finally { loading.value = false; }
 };

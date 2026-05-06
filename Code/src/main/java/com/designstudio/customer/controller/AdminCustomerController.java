@@ -3,6 +3,7 @@ package com.designstudio.customer.controller;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.designstudio.common.result.ListWithStats;
 import com.designstudio.common.result.PageResult;
 import com.designstudio.common.result.R;
 import com.designstudio.customer.domain.DsAddress;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -40,7 +42,7 @@ public class AdminCustomerController {
 
     @GetMapping
     @Operation(summary = "客户列表（分页）")
-    public R<PageResult<CustomerListVO>> listCustomers(
+    public R<ListWithStats<CustomerListVO>> listCustomers(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer status,
             @RequestParam(defaultValue = "1") Long pageNum,
@@ -73,7 +75,18 @@ public class AdminCustomerController {
             return vo;
         }).collect(Collectors.toList());
 
-        return R.ok(PageResult.of(records, page.getTotal(), page.getCurrent(), page.getSize()));
+        LambdaQueryWrapper<DsUser> countWrapper = new LambdaQueryWrapper<>();
+        if (StringUtils.hasText(keyword)) {
+            countWrapper.and(w -> w.like(DsUser::getNickname, keyword).or().like(DsUser::getPhone, keyword));
+        }
+        List<DsUser> allUsers = userMapper.selectList(countWrapper);
+        long enabledCount = allUsers.stream().filter(u -> u.getStatus() == 1).count();
+        long disabledCount = allUsers.stream().filter(u -> u.getStatus() == 0).count();
+        Map<String, Long> stats = new HashMap<>();
+        stats.put("enabled", enabledCount);
+        stats.put("disabled", disabledCount);
+
+        return R.ok(ListWithStats.of(records, page.getTotal(), page.getCurrent(), page.getSize()).stats(stats));
     }
 
     @GetMapping("/addresses")
