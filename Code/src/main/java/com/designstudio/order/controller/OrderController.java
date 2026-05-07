@@ -36,9 +36,10 @@ public class OrderController {
             @RequestParam(required = false) Integer status,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long designerId,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") Long pageNum,
             @RequestParam(defaultValue = "10") Long pageSize) {
-        IPage<DsOrder> page = orderService.listOrders(status, categoryId, designerId, pageNum, pageSize);
+        IPage<DsOrder> page = orderService.listOrders(status, categoryId, designerId, keyword, pageNum, pageSize);
         return R.ok(PageResult.of(page.getRecords(), page.getTotal(), page.getCurrent(), page.getSize()));
     }
 

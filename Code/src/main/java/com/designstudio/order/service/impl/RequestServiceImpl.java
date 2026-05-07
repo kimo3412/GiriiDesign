@@ -23,6 +23,7 @@ import com.designstudio.supply.mapper.DsMaterialMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -52,13 +53,33 @@ public class RequestServiceImpl implements RequestService {
     private final ObjectMapper objectMapper;
 
     @Override
-    public IPage<DsOrderRequest> listRequests(Integer status, Long categoryId, Long pageNum, Long pageSize) {
+    public IPage<DsOrderRequest> listRequests(Integer status, Long categoryId, String keyword, Long pageNum, Long pageSize) {
         LambdaQueryWrapper<DsOrderRequest> wrapper = new LambdaQueryWrapper<>();
         if (status != null) {
             wrapper.eq(DsOrderRequest::getStatus, status);
         }
         if (categoryId != null) {
             wrapper.eq(DsOrderRequest::getCategoryId, categoryId);
+        }
+        if (StringUtils.hasText(keyword)) {
+            String kw = keyword.trim();
+            Long idKeyword = null;
+            try {
+                idKeyword = Long.valueOf(kw);
+            } catch (NumberFormatException ignored) {
+                // Non-numeric keywords only search text columns.
+            }
+            Long finalIdKeyword = idKeyword;
+            wrapper.and(w -> {
+                w.like(DsOrderRequest::getDescription, kw)
+                        .or().like(DsOrderRequest::getCustomData, kw)
+                        .or().like(DsOrderRequest::getCloseReason, kw);
+                if (finalIdKeyword != null) {
+                    w.or().eq(DsOrderRequest::getRequestId, finalIdKeyword)
+                            .or().eq(DsOrderRequest::getUserId, finalIdKeyword)
+                            .or().eq(DsOrderRequest::getLinkedOrderId, finalIdKeyword);
+                }
+            });
         }
         wrapper.orderByDesc(DsOrderRequest::getCreateTime);
         Page<DsOrderRequest> page = new Page<>(pageNum, pageSize);

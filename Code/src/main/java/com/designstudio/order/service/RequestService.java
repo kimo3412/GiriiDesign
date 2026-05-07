@@ -15,7 +15,7 @@ public interface RequestService {
     /**
      * 意向列表（分页）
      */
-    IPage<DsOrderRequest> listRequests(Integer status, Long categoryId, Long pageNum, Long pageSize);
+    IPage<DsOrderRequest> listRequests(Integer status, Long categoryId, String keyword, Long pageNum, Long pageSize);
 
     /**
      * 意向详情

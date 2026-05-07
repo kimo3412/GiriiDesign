@@ -33,9 +33,10 @@ public class RequestController {
     public R<PageResult<DsOrderRequest>> list(
             @RequestParam(required = false) Integer status,
             @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") Long pageNum,
             @RequestParam(defaultValue = "10") Long pageSize) {
-        IPage<DsOrderRequest> page = requestService.listRequests(status, categoryId, pageNum, pageSize);
+        IPage<DsOrderRequest> page = requestService.listRequests(status, categoryId, keyword, pageNum, pageSize);
         return R.ok(PageResult.of(page.getRecords(), page.getTotal(), page.getCurrent(), page.getSize()));
     }
 

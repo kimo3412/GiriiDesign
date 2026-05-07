@@ -1,12 +1,20 @@
 <template>
   <n-card title="菜单管理" :bordered="false">
     <template #header-extra>
-      <n-button type="primary" @click="handleAdd(0)">新增顶级菜单</n-button>
+      <n-space align="center" :size="8">
+        <n-input
+          v-model:value="keyword"
+          placeholder="搜索菜单/路径/权限"
+          clearable
+          style="width: 220px"
+        />
+        <n-button type="primary" @click="handleAdd(0)">新增顶级菜单</n-button>
+      </n-space>
     </template>
 
     <n-data-table
       :columns="columns"
-      :data="tableData"
+      :data="filteredTableData"
       :loading="loading"
       :row-key="row => row.menuId"
       default-expand-all
@@ -65,8 +73,8 @@
 </template>
 
 <script lang="ts" setup>
-import { ref, onMounted, h } from 'vue';
-import { NButton, NTag, NSpace, useMessage, useDialog } from 'naive-ui';
+import { computed, ref, onMounted, h } from 'vue';
+import { NButton, NInput, NTag, NSpace, useMessage, useDialog } from 'naive-ui';
 import { getMenuList, getMenuDetail, addMenu, updateMenu, deleteMenu, type SysMenu } from '@/api/system/menuConfig';
 
 const message = useMessage();
@@ -74,6 +82,22 @@ const dialog = useDialog();
 
 const loading = ref(false);
 const tableData = ref([]);
+const keyword = ref('');
+const filteredTableData = computed(() => {
+  const kw = keyword.value.trim().toLowerCase();
+  if (!kw) return tableData.value;
+  const filterTree = (items: any[]): any[] =>
+    items
+      .map((item) => {
+        const children = item.children ? filterTree(item.children) : [];
+        const matched = [item.menuName, item.path, item.component, item.perms, item.icon].some((value) =>
+          String(value || '').toLowerCase().includes(kw)
+        );
+        return matched || children.length ? { ...item, children } : null;
+      })
+      .filter(Boolean);
+  return filterTree(tableData.value);
+});
 
 const showModal = ref(false);
 const isEdit = ref(false);

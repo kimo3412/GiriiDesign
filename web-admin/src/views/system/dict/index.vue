@@ -5,11 +5,20 @@
       <n-gi>
         <n-card title="字典类型" size="small" :bordered="true">
           <template #header-extra>
-            <n-button size="small" type="primary" @click="handleAddType">新增</n-button>
+            <n-space align="center" :size="8">
+              <n-input
+                v-model:value="typeKeyword"
+                placeholder="搜索名称/类型"
+                clearable
+                size="small"
+                style="width: 160px"
+              />
+              <n-button size="small" type="primary" @click="handleAddType">新增</n-button>
+            </n-space>
           </template>
           <n-data-table
             :columns="typeColumns"
-            :data="typeList"
+            :data="filteredTypeList"
             :loading="typeLoading"
             :row-key="(row) => row.dictId"
             :row-class-name="(row) => selectedType?.dictId === row.dictId ? 'selected-row' : ''"
@@ -24,12 +33,22 @@
       <n-gi>
         <n-card :title="selectedType ? `字典数据 - ${selectedType.dictName}` : '字典数据'" size="small" :bordered="true">
           <template #header-extra>
-            <n-button size="small" type="primary" :disabled="!selectedType" @click="handleAddData">新增</n-button>
+            <n-space align="center" :size="8">
+              <n-input
+                v-model:value="dataKeyword"
+                placeholder="搜索标签/值"
+                clearable
+                size="small"
+                style="width: 150px"
+                :disabled="!selectedType"
+              />
+              <n-button size="small" type="primary" :disabled="!selectedType" @click="handleAddData">新增</n-button>
+            </n-space>
           </template>
           <n-data-table
             v-if="selectedType"
             :columns="dataColumns"
-            :data="dataList"
+            :data="filteredDataList"
             :loading="dataLoading"
             :row-key="(row) => row.dictCode"
             size="small"
@@ -92,7 +111,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { ref, h, onMounted } from 'vue';
+  import { computed, ref, h, onMounted } from 'vue';
   import { useMessage, NButton, NSpace } from 'naive-ui';
   import {
     getDictTypeList,
@@ -105,10 +124,20 @@
   // ========== 字典类型 ==========
   const typeLoading = ref(false);
   const typeList = ref<any[]>([]);
+  const typeKeyword = ref('');
   const selectedType = ref<any>(null);
   const showTypeModal = ref(false);
   const isEditType = ref(false);
   const typeForm = ref({ dictId: null, dictName: '', dictType: '', remark: '' });
+  const filteredTypeList = computed(() => {
+    const kw = typeKeyword.value.trim().toLowerCase();
+    if (!kw) return typeList.value;
+    return typeList.value.filter((row) =>
+      [row.dictName, row.dictType, row.remark].some((value) =>
+        String(value || '').toLowerCase().includes(kw)
+      )
+    );
+  });
 
   const typeColumns = [
     { title: '字典名称', key: 'dictName', width: 120 },
@@ -188,9 +217,19 @@
   // ========== 字典数据 ==========
   const dataLoading = ref(false);
   const dataList = ref<any[]>([]);
+  const dataKeyword = ref('');
   const showDataModal = ref(false);
   const isEditData = ref(false);
   const dataForm = ref({ dictCode: null, dictType: '', dictLabel: '', dictValue: '', sortOrder: 0, remark: '' });
+  const filteredDataList = computed(() => {
+    const kw = dataKeyword.value.trim().toLowerCase();
+    if (!kw) return dataList.value;
+    return dataList.value.filter((row) =>
+      [row.dictLabel, row.dictValue, row.remark].some((value) =>
+        String(value || '').toLowerCase().includes(kw)
+      )
+    );
+  });
 
   const dataColumns = [
     { title: '标签', key: 'dictLabel', width: 100 },

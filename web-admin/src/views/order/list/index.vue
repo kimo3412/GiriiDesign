@@ -62,7 +62,7 @@
             />
             <n-input
               v-model:value="keyword"
-              placeholder="搜索订单号/客户..."
+              placeholder="搜索订单号/客户ID/备注..."
               clearable
               size="small"
               style="width: 220px"
@@ -281,13 +281,16 @@ const columns = [
 function selectStatus(value: number | null) {
   selectedStatus.value = value;
   pageNum.value = 1;
+  loadData();
 }
 
 async function loadData() {
   loading.value = true;
   try {
     const params: any = { pageNum: pageNum.value, pageSize: pageSize.value };
+    if (selectedStatus.value !== null) params.status = selectedStatus.value;
     if (filterCategory.value !== null) params.categoryId = filterCategory.value;
+    if (keyword.value.trim()) params.keyword = keyword.value.trim();
     const res: any = await getOrderList(params);
     tableData.value = res.records || [];
     total.value = res.total || 0;

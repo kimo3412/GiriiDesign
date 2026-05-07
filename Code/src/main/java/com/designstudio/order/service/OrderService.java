@@ -18,7 +18,7 @@ public interface OrderService {
     /**
      * 订单列表（支持分页、筛选）
      */
-    IPage<DsOrder> listOrders(Integer status, Long categoryId, Long designerId, Long pageNum, Long pageSize);
+    IPage<DsOrder> listOrders(Integer status, Long categoryId, Long designerId, String keyword, Long pageNum, Long pageSize);
 
     /**
      * 订单详情（360° 视图）

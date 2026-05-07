@@ -10,6 +10,12 @@
           style="width: 200px"
           @update:value="loadFields"
         />
+        <n-input
+          v-model:value="keyword"
+          placeholder="搜索字段名称/key"
+          clearable
+          style="width: 180px"
+        />
         <n-button type="primary" :disabled="!selectedCategoryId" @click="handleAdd">
           新增字段
         </n-button>
@@ -23,7 +29,7 @@
       <div v-if="!selectedCategoryId" class="empty-hint">
         请先在右上角选择需要配置的品类
       </div>
-      <div v-else-if="fieldList.length === 0" class="empty-hint">
+      <div v-else-if="displayFieldList.length === 0" class="empty-hint">
         当前品类暂无字段，请点击「新增字段」
       </div>
       <div v-else class="drag-container">
@@ -36,10 +42,11 @@
           <div class="col-action">操作</div>
         </div>
         <draggable
-          v-model="fieldList"
+          v-model="displayFieldList"
           item-key="fieldKey"
           handle=".drag-handle"
           animation="200"
+          :disabled="!!keyword.trim()"
         >
           <template #item="{ element, index }">
             <div class="field-item">
@@ -57,8 +64,8 @@
                 </n-tag>
               </div>
               <div class="col-action">
-                <n-button size="small" text type="primary" @click="handleEdit(element, index)">编辑</n-button>
-                <n-button size="small" text type="error" style="margin-left: 12px;" @click="handleDelete(index)">删除</n-button>
+                <n-button size="small" text type="primary" @click="handleEdit(element, getFieldIndex(element))">编辑</n-button>
+                <n-button size="small" text type="error" style="margin-left: 12px;" @click="handleDelete(getFieldIndex(element))">删除</n-button>
               </div>
             </div>
           </template>
@@ -109,7 +116,7 @@
 </template>
 
 <script lang="ts" setup>
-  import { ref, onMounted } from 'vue';
+  import { computed, ref, onMounted } from 'vue';
   import { useRoute } from 'vue-router';
   import { useMessage, useDialog } from 'naive-ui';
   import { MenuOutlined } from '@vicons/antd';
@@ -127,9 +134,24 @@
   // 品类下拉
   const categoryOptions = ref<{label: string, value: number}[]>([]);
   const selectedCategoryId = ref<number | null>(null);
+  const keyword = ref('');
 
   // 字段列表数据
   const fieldList = ref<CustomField[]>([]);
+  const displayFieldList = computed({
+    get() {
+      const kw = keyword.value.trim().toLowerCase();
+      if (!kw) return fieldList.value;
+      return fieldList.value.filter((field) =>
+        [field.label, field.fieldKey, field.fieldType].some((value) =>
+          String(value || '').toLowerCase().includes(kw)
+        )
+      );
+    },
+    set(value: CustomField[]) {
+      if (!keyword.value.trim()) fieldList.value = value;
+    },
+  });
 
   // 表单状态
   const showModal = ref(false);
@@ -162,6 +184,8 @@
   ];
 
   const getTypeName = (val: string) => typeOptions.find(t => t.value === val)?.label || val;
+  const getFieldIndex = (field: CustomField) =>
+    fieldList.value.findIndex((item) => item.fieldKey === field.fieldKey);
 
   // 初始化加载品类，并支持从品类管理跳转预选
   onMounted(async () => {

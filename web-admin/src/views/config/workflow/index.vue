@@ -16,6 +16,12 @@
         <n-button :disabled="!selectedCategoryId" @click="goWorkbench">
           打开工作台
         </n-button>
+        <n-input
+          v-model:value="keyword"
+          placeholder="搜索节点名称/说明"
+          clearable
+          style="width: 190px"
+        />
         <n-button type="success" :disabled="!selectedCategoryId" :loading="saving" @click="handleSaveAll">
           保存流程
         </n-button>
@@ -35,7 +41,7 @@
           </n-form-item>
         </n-form>
 
-        <div v-if="stepsList.length === 0" class="empty-hint">当前品类还没有工作流节点。</div>
+        <div v-if="displayStepsList.length === 0" class="empty-hint">当前品类还没有工作流节点。</div>
         <div v-else class="step-table">
           <div class="step-header">
             <div class="col-drag"></div>
@@ -47,7 +53,13 @@
             <div class="col-meta">预计天数</div>
             <div class="col-action">操作</div>
           </div>
-          <draggable v-model="stepsList" item-key="stepName" handle=".drag-handle" animation="200">
+          <draggable
+            v-model="displayStepsList"
+            item-key="stepName"
+            handle=".drag-handle"
+            animation="200"
+            :disabled="!!keyword.trim()"
+          >
             <template #item="{ element, index }">
               <div class="step-item">
                 <div class="col-drag">
@@ -75,8 +87,8 @@
                 </div>
                 <div class="col-meta">{{ element.expectedDurationDays || '-' }}</div>
                 <div class="col-action">
-                  <n-button text type="primary" size="small" @click="handleEditStep(element, index)">编辑</n-button>
-                  <n-button text type="error" size="small" @click="handleDeleteStep(index)">删除</n-button>
+                  <n-button text type="primary" size="small" @click="handleEditStep(element, getStepIndex(element))">编辑</n-button>
+                  <n-button text type="error" size="small" @click="handleDeleteStep(getStepIndex(element))">删除</n-button>
                 </div>
               </div>
             </template>
@@ -161,8 +173,23 @@ const categoryOptions = ref<{ label: string; value: number }[]>([]);
 const fieldOptions = ref<{ label: string; value: string }[]>([]);
 const categoryFields = ref<CustomField[]>([]);
 const selectedCategoryId = ref<number | null>(null);
+const keyword = ref('');
 const workflowName = ref('');
 const stepsList = ref<WorkflowStep[]>([]);
+const displayStepsList = computed({
+  get() {
+    const kw = keyword.value.trim().toLowerCase();
+    if (!kw) return stepsList.value;
+    return stepsList.value.filter((step) =>
+      [step.stepName, step.nodeDescription, step.nodeFormFields].some((value) =>
+        String(value || '').toLowerCase().includes(kw)
+      )
+    );
+  },
+  set(value: WorkflowStep[]) {
+    if (!keyword.value.trim()) stepsList.value = value;
+  },
+});
 
 const showModal = ref(false);
 const isEdit = ref(false);
@@ -222,6 +249,12 @@ const selectedNodeFields = computed({
     formData.value.nodeFormFields = JSON.stringify(value);
   },
 });
+
+const getStepIndex = (step: WorkflowStep) =>
+  stepsList.value.findIndex((item) => {
+    if (step.stepId !== undefined) return item.stepId === step.stepId;
+    return item.stepName === step.stepName;
+  });
 
 onMounted(async () => {
   const categories = await getCategoryList();

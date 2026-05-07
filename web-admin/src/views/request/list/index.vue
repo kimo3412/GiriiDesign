@@ -69,7 +69,7 @@
         />
         <n-input
           v-model:value="searchText"
-          placeholder="搜索描述..."
+          placeholder="搜索描述/意向ID/客户ID..."
           size="small"
           style="width: 160px"
           clearable
@@ -419,13 +419,6 @@
     if (filterStatus.value !== null) {
       list = list.filter((r: any) => r.status === filterStatus.value);
     }
-    if (searchText.value) {
-      const kw = searchText.value.toLowerCase();
-      list = list.filter(
-        (r: any) =>
-          (r.description || '').toLowerCase().includes(kw) || String(r.requestId).includes(kw)
-      );
-    }
     return list;
   });
 
@@ -540,6 +533,7 @@
       const params: any = { pageNum: pageNum.value, pageSize: pageSize.value };
       if (filterCategory.value != null) params.categoryId = filterCategory.value;
       if (filterStatus.value !== null) params.status = filterStatus.value;
+      if (searchText.value.trim()) params.keyword = searchText.value.trim();
       const res = await getRequestList(params);
       tableData.value = toArray(res);
       total.value = res?.total || 0;

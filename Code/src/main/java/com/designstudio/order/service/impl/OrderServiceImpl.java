@@ -59,7 +59,7 @@ public class OrderServiceImpl implements OrderService {
     private final NotificationService notificationService;
 
     @Override
-    public IPage<DsOrder> listOrders(Integer status, Long categoryId, Long designerId, Long pageNum, Long pageSize) {
+    public IPage<DsOrder> listOrders(Integer status, Long categoryId, Long designerId, String keyword, Long pageNum, Long pageSize) {
         LambdaQueryWrapper<DsOrder> wrapper = new LambdaQueryWrapper<>();
         if (status != null) {
             wrapper.eq(DsOrder::getStatus, status);
@@ -69,6 +69,26 @@ public class OrderServiceImpl implements OrderService {
         }
         if (designerId != null) {
             wrapper.eq(DsOrder::getDesignerId, designerId);
+        }
+        if (StringUtils.hasText(keyword)) {
+            String kw = keyword.trim();
+            Long idKeyword = null;
+            try {
+                idKeyword = Long.valueOf(kw);
+            } catch (NumberFormatException ignored) {
+                // Non-numeric keywords only search text columns.
+            }
+            Long finalIdKeyword = idKeyword;
+            wrapper.and(w -> {
+                w.like(DsOrder::getOrderSn, kw)
+                        .or().like(DsOrder::getCustomDataSnapshot, kw)
+                        .or().like(DsOrder::getRemark, kw);
+                if (finalIdKeyword != null) {
+                    w.or().eq(DsOrder::getOrderId, finalIdKeyword)
+                            .or().eq(DsOrder::getUserId, finalIdKeyword)
+                            .or().eq(DsOrder::getDesignerId, finalIdKeyword);
+                }
+            });
         }
         applyDesignerScope(wrapper);
         wrapper.orderByDesc(DsOrder::getCreateTime);
