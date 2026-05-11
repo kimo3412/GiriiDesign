@@ -55,8 +55,11 @@ public class OrderController {
 
     @GetMapping("/kanban")
     @Operation(summary = "订单看板数据（按品类分组，列=工作流节点）")
-    public R<List<KanbanColumnVO>> kanban(@RequestParam(required = false) Long categoryId) {
-        return R.ok(orderService.getKanbanData(categoryId));
+    public R<PageResult<KanbanColumnVO>> kanban(
+            @RequestParam(required = false) Long categoryId,
+            @RequestParam(defaultValue = "1") Long pageNum,
+            @RequestParam(defaultValue = "10") Long pageSize) {
+        return R.ok(orderService.getKanbanData(categoryId, pageNum, pageSize));
     }
 
     // ==================== 订单操作 ====================

@@ -13,7 +13,7 @@
         <div class="panel-left__stats">
           <div class="summary-pill">
             <span class="summary-pill__label">会话</span>
-            <strong>{{ conversations.length }}</strong>
+            <strong>{{ filteredConversations.length }}</strong>
           </div>
           <div class="summary-pill">
             <span class="summary-pill__label">未读</span>
@@ -34,7 +34,7 @@
 
         <div class="conv-scroll">
           <button
-            v-for="conv in filteredConversations"
+            v-for="conv in pagedConversations"
             :key="`${conv.userId}_${conv.orderId || 'general'}`"
             class="conv-item"
             :class="{ active: activeUserId === conv.userId && activeOrderId == conv.orderId }"
@@ -68,6 +68,16 @@
           </button>
 
           <div v-if="filteredConversations.length === 0" class="conv-empty">暂无会话</div>
+        </div>
+
+        <div v-if="filteredConversations.length > conversationPageSize" class="conv-pagination">
+          <n-pagination
+            v-model:page="conversationPage"
+            :page-size="conversationPageSize"
+            :item-count="filteredConversations.length"
+            :page-slot="4"
+            size="small"
+          />
         </div>
       </aside>
 
@@ -312,7 +322,7 @@
 </template>
 
 <script setup lang="ts">
-  import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue';
+  import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
   import { useRouter } from 'vue-router';
   import { useUser } from '@/store/modules/user';
   import {
@@ -329,6 +339,8 @@
 
   const searchText = ref('');
   const conversations = ref<any[]>([]);
+  const conversationPage = ref(1);
+  const conversationPageSize = 12;
   const activeUserId = ref<number | null>(null);
   const activeOrderId = ref<number | null>(null);
   const activeUserName = ref('');
@@ -376,6 +388,11 @@
     );
   });
 
+  const pagedConversations = computed(() => {
+    const start = (conversationPage.value - 1) * conversationPageSize;
+    return filteredConversations.value.slice(start, start + conversationPageSize);
+  });
+
   const orderCount = computed(() => userSummary.value?.orders?.length || 0);
 
   const requestCount = computed(() => userSummary.value?.requests?.length || 0);
@@ -417,6 +434,18 @@
       ws = null;
     }
   });
+
+  watch(searchText, () => {
+    conversationPage.value = 1;
+  });
+
+  watch(
+    () => filteredConversations.value.length,
+    (len) => {
+      const maxPage = Math.max(1, Math.ceil(len / conversationPageSize));
+      if (conversationPage.value > maxPage) conversationPage.value = maxPage;
+    }
+  );
 
   const fetchConversations = async () => {
     try {
@@ -706,6 +735,15 @@
     flex: 1;
     overflow-y: auto;
     padding: 0 10px 10px;
+  }
+
+  .conv-pagination {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: center;
+    padding: 8px 10px 12px;
+    border-top: 1px solid var(--border-light);
+    background: rgba(248, 250, 252, 0.96);
   }
 
   .conv-item {

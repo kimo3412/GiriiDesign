@@ -121,15 +121,24 @@
 
           <!-- 分页 -->
           <div class="master-pagination">
-            <n-pagination
-              v-model:page="pageNum"
-              v-model:page-size="pageSize"
-              :page-sizes="[10, 20, 50]"
-              :item-count="total"
-              show-size-picker
+            <n-button size="small" quaternary :disabled="pageNum <= 1" @click="handlePageChange(pageNum - 1)">
+              上一页
+            </n-button>
+            <span class="master-pagination__page">{{ pageNum }} / {{ totalPages }}</span>
+            <n-button
               size="small"
-              @update:page="handlePageChange"
-              @update:page-size="handlePageSizeChange"
+              quaternary
+              :disabled="pageNum >= totalPages"
+              @click="handlePageChange(pageNum + 1)"
+            >
+              下一页
+            </n-button>
+            <n-select
+              v-model:value="pageSize"
+              class="master-pagination__size"
+              :options="pageSizeOptions"
+              size="small"
+              @update:value="handlePageSizeChange"
             />
           </div>
         </div>
@@ -346,7 +355,6 @@
     NImage,
     NDivider,
     NCard,
-    NPagination,
     NGrid,
     NGi,
     NForm,
@@ -378,6 +386,11 @@
   const total = ref(0);
   const pageNum = ref(1);
   const pageSize = ref(10);
+  const pageSizeOptions = [
+    { label: '10 / 页', value: 10 },
+    { label: '20 / 页', value: 20 },
+    { label: '50 / 页', value: 50 },
+  ];
   const searchText = ref('');
   const statsState = ref({
     pending: 0,
@@ -413,6 +426,8 @@
 
   // 统计
   const stats = computed(() => statsState.value);
+
+  const totalPages = computed(() => Math.max(1, Math.ceil(Number(total.value || 0) / pageSize.value)));
 
   const filteredData = computed(() => {
     let list = toArray(tableData.value);
@@ -822,11 +837,27 @@ const handlePageSizeChange = (size: number) => {
   }
 
   .master-pagination {
-    padding: 10px 12px;
+    padding: 10px;
     border-top: 1px solid var(--border-light);
     display: flex;
-    justify-content: flex-end;
-  flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .master-pagination__page {
+    min-width: 64px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .master-pagination__size {
+    width: 92px;
+    flex-shrink: 0;
   }
 
   .master-loading,

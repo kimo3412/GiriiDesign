@@ -24,8 +24,10 @@ public class WorkbenchController {
     @GetMapping("/categories/{categoryId}")
     @Operation(summary = "获取品类节点工作台数据")
     public R<WorkbenchVO> getWorkbench(@PathVariable Long categoryId,
-                                       @RequestParam(required = false) Long stepId) {
-        return R.ok(orderService.getWorkbenchData(categoryId, stepId));
+                                       @RequestParam(required = false) Long stepId,
+                                       @RequestParam(defaultValue = "1") Long pageNum,
+                                       @RequestParam(defaultValue = "12") Long pageSize) {
+        return R.ok(orderService.getWorkbenchData(categoryId, stepId, pageNum, pageSize));
     }
 
     @PostMapping("/orders/{orderId}/action")
@@ -46,6 +48,9 @@ public class WorkbenchController {
         private Long selectedStepId;
         private List<DsWorkflowStep> workflowSteps;
         private List<DsOrder> orders;
+        private Long total;
+        private Long pageNum;
+        private Long pageSize;
     }
 
     @Data

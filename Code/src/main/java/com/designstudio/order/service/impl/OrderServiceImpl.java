@@ -3,6 +3,7 @@ package com.designstudio.order.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
+import com.designstudio.common.result.PageResult;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.designstudio.common.security.LoginHelper;
@@ -115,23 +116,27 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<OrderController.KanbanColumnVO> getKanbanData(Long categoryId) {
+    public PageResult<OrderController.KanbanColumnVO> getKanbanData(Long categoryId, Long pageNum, Long pageSize) {
         LambdaQueryWrapper<DsOrder> orderWrapper = new LambdaQueryWrapper<DsOrder>()
-                .eq(DsOrder::getStatus, 1);
+                .eq(DsOrder::getStatus, 1)
+                .isNotNull(DsOrder::getCurrentStepId)
+                .orderByDesc(DsOrder::getCreateTime);
         if (categoryId != null) {
             orderWrapper.eq(DsOrder::getCategoryId, categoryId);
         }
         applyDesignerScope(orderWrapper);
-        List<DsOrder> orders = orderMapper.selectList(orderWrapper);
+        Page<DsOrder> page = new Page<>(pageNum, pageSize);
+        IPage<DsOrder> orderPage = orderMapper.selectPage(page, orderWrapper);
+        List<DsOrder> orders = orderPage.getRecords();
         if (orders.isEmpty()) {
-            return Collections.emptyList();
+            return PageResult.of(Collections.emptyList(), orderPage.getTotal(), orderPage.getCurrent(), orderPage.getSize());
         }
 
         Set<Long> categoryIds = orders.stream().map(DsOrder::getCategoryId).collect(Collectors.toSet());
         List<DsWorkflow> workflows = workflowMapper.selectList(
                 new LambdaQueryWrapper<DsWorkflow>().in(DsWorkflow::getCategoryId, categoryIds));
         if (workflows.isEmpty()) {
-            return Collections.emptyList();
+            return PageResult.of(Collections.emptyList(), orderPage.getTotal(), orderPage.getCurrent(), orderPage.getSize());
         }
 
         Set<Long> workflowIds = workflows.stream().map(DsWorkflow::getWorkflowId).collect(Collectors.toSet());
@@ -161,7 +166,7 @@ public class OrderServiceImpl implements OrderService {
             return col;
         }).collect(Collectors.toList());
         columns.forEach(column -> fillOrderDisplayNames(column.getOrders()));
-        return columns;
+        return PageResult.of(columns, orderPage.getTotal(), orderPage.getCurrent(), orderPage.getSize());
     }
 
     @Override
@@ -426,7 +431,7 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public WorkbenchController.WorkbenchVO getWorkbenchData(Long categoryId, Long stepId) {
+    public WorkbenchController.WorkbenchVO getWorkbenchData(Long categoryId, Long stepId, Long pageNum, Long pageSize) {
         List<DsWorkflowStep> steps = getWorkflowStepsByCategory(categoryId);
         Long selectedStepId = stepId;
         if (selectedStepId == null && !steps.isEmpty()) {
@@ -442,11 +447,16 @@ public class OrderServiceImpl implements OrderService {
         }
         applyDesignerScope(wrapper);
 
+        Page<DsOrder> page = new Page<>(pageNum, pageSize);
+        IPage<DsOrder> orderPage = orderMapper.selectPage(page, wrapper);
         WorkbenchController.WorkbenchVO vo = new WorkbenchController.WorkbenchVO();
         vo.setCategoryId(categoryId);
         vo.setSelectedStepId(selectedStepId);
         vo.setWorkflowSteps(steps);
-        List<DsOrder> orders = orderMapper.selectList(wrapper);
+        vo.setTotal(orderPage.getTotal());
+        vo.setPageNum(orderPage.getCurrent());
+        vo.setPageSize(orderPage.getSize());
+        List<DsOrder> orders = orderPage.getRecords();
         fillOrderDisplayNames(orders);
         vo.setOrders(orders);
         return vo;

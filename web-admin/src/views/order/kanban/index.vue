@@ -153,7 +153,7 @@
 
           <div v-if="expandedGroupIds.includes(group.stepId)" class="group-body">
             <div
-              v-for="order in group.orders"
+              v-for="order in group.pagedOrders"
               :key="order.orderId"
               class="order-row"
               :class="{ 'is-blocked': order.isBlocked === 1 }"
@@ -213,6 +213,19 @@
                 >
               </div>
             </div>
+
+            <div v-if="group.totalPages > 1" class="group-pagination">
+              <span class="group-pagination__text">
+                第 {{ group.currentPage }} / {{ group.totalPages }} 页，共 {{ group.orders.length }} 单
+              </span>
+              <n-pagination
+                :page="group.currentPage"
+                :page-count="group.totalPages"
+                :page-slot="5"
+                size="small"
+                @update:page="(page) => setGroupPage(group.stepId, page)"
+              />
+            </div>
           </div>
         </section>
       </div>
@@ -234,6 +247,8 @@
   const activeStep = ref<number | null>(null);
   const activeCategory = ref<number | null>(null);
   const expandedGroupIds = ref<number[]>([]);
+  const groupPages = ref<Record<number, number>>({});
+  const groupPageSize = 8;
   const categoryOptions = ref<any[]>([]);
   const categoryMap = ref<Record<number, string>>({});
   const columns = ref<any[]>([]);
@@ -340,7 +355,19 @@
       }
       groups.get(order._stepId)!.orders.push(order);
     });
-    return Array.from(groups.values()).sort((a, b) => a.stepIdx - b.stepIdx);
+    return Array.from(groups.values())
+      .sort((a, b) => a.stepIdx - b.stepIdx)
+      .map((group) => {
+        const totalPages = Math.max(1, Math.ceil(group.orders.length / groupPageSize));
+        const currentPage = Math.min(groupPages.value[group.stepId] || 1, totalPages);
+        const start = (currentPage - 1) * groupPageSize;
+        return {
+          ...group,
+          currentPage,
+          totalPages,
+          pagedOrders: group.orders.slice(start, start + groupPageSize),
+        };
+      });
   });
 
   function syncExpandedGroups() {
@@ -357,25 +384,37 @@
     expandedGroupIds.value = preserved.length ? preserved : [available[0]];
   }
 
+  const setGroupPage = (stepId: number, page: number) => {
+    groupPages.value = { ...groupPages.value, [stepId]: page };
+  };
+
+  const resetGroupPages = () => {
+    groupPages.value = {};
+  };
+
   const switchStep = (stepId: number | null) => {
     activeStep.value = activeStep.value === stepId ? null : stepId;
+    resetGroupPages();
     syncExpandedGroups();
   };
 
   const filterByCategory = (catId: number) => {
     activeCategory.value = activeCategory.value === catId ? null : catId;
     activeStep.value = null;
+    resetGroupPages();
     syncExpandedGroups();
   };
 
   const clearCategoryFilter = () => {
     activeCategory.value = null;
+    resetGroupPages();
     syncExpandedGroups();
   };
 
   const clearAllFilter = () => {
     activeStep.value = null;
     activeCategory.value = null;
+    resetGroupPages();
     syncExpandedGroups();
   };
 
@@ -448,6 +487,7 @@
     loading.value = true;
     activeStep.value = null;
     activeCategory.value = null;
+    resetGroupPages();
     try {
       const params: any = {};
       if (filterCategory.value != null) params.categoryId = filterCategory.value;
@@ -688,6 +728,22 @@
   .group-body {
     display: flex;
     flex-direction: column;
+  }
+
+  .group-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border-top: 1px solid rgba(226, 232, 240, 0.82);
+    background: rgba(248, 250, 252, 0.72);
+  }
+
+  .group-pagination__text {
+    flex-shrink: 0;
+    font-size: 12px;
+    color: #8a94a6;
   }
 
   .order-row {

@@ -72,7 +72,10 @@
       <div class="order-switch-section__head">
         <div>
           <div class="order-switch-section__title">当前节点订单</div>
-          <div class="order-switch-section__caption">{{ selectedStep?.stepName || '当前节点' }} · {{ orders.length }} 条</div>
+          <div class="order-switch-section__caption">
+            {{ selectedStep?.stepName || '当前节点' }} · {{ orders.length }} 条
+            <span v-if="orders.length > orderPageSize"> · 当前第 {{ orderPage }} 页</span>
+          </div>
         </div>
       </div>
       <n-spin :show="loadingWorkbench">
@@ -83,7 +86,7 @@
         <div v-else class="order-switcher-shell">
           <div class="order-switcher">
           <button
-            v-for="order in orders"
+            v-for="order in pagedOrders"
             :key="order.orderId"
             type="button"
             class="compact-order"
@@ -100,6 +103,19 @@
               <span>{{ getStepName(order.currentStepId) }}</span>
             </div>
           </button>
+          </div>
+
+          <div v-if="orders.length > orderPageSize" class="order-switcher-pagination">
+            <span class="order-switcher-pagination__text">
+              显示 {{ pageStartIndex + 1 }}-{{ pageEndIndex }} / {{ orders.length }}
+            </span>
+            <n-pagination
+              v-model:page="orderPage"
+              :page-size="orderPageSize"
+              :item-count="orders.length"
+              :page-slot="5"
+              size="small"
+            />
           </div>
         </div>
       </n-spin>
@@ -334,7 +350,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import type { UploadCustomRequestOptions, UploadFileInfo } from 'naive-ui';
 import { useDialog, useMessage } from 'naive-ui';
 import { useRoute } from 'vue-router';
@@ -358,6 +374,8 @@ const selectedStepId = ref<number | null>(null);
 const workflowSteps = ref<any[]>([]);
 const categoryFields = ref<CustomField[]>([]);
 const orders = ref<any[]>([]);
+const orderPage = ref(1);
+const orderPageSize = 6;
 const activeOrderId = ref<number | null>(null);
 const detail = ref<any>(null);
 const loadingWorkbench = ref(false);
@@ -411,6 +429,10 @@ const currentOrderStepName = computed(() => (!activeOrder.value?.currentStepId ?
 const rollbackActionText = computed(() => (!rollbackOptions.value.length ? '退回前序节点' : rollbackTargetLabel.value ? `退回到 ${rollbackTargetLabel.value}` : '退回前序节点'));
 const recentProgressList = computed(() => (detail.value?.progressList || []).slice(0, 2));
 
+const pageStartIndex = computed(() => (orderPage.value - 1) * orderPageSize);
+const pageEndIndex = computed(() => Math.min(pageStartIndex.value + orderPageSize, orders.value.length));
+const pagedOrders = computed(() => orders.value.slice(pageStartIndex.value, pageEndIndex.value));
+
 const currentStepFields = computed(() => {
   const raw = selectedStep.value?.nodeFormFields;
   if (!raw) return [];
@@ -432,6 +454,21 @@ onMounted(async () => {
     await loadWorkbench();
   }
 });
+
+watch(
+  () => [selectedCategoryId.value, selectedStepId.value],
+  () => {
+    orderPage.value = 1;
+  }
+);
+
+watch(
+  () => orders.value.length,
+  (len) => {
+    const maxPage = Math.max(1, Math.ceil(len / orderPageSize));
+    if (orderPage.value > maxPage) orderPage.value = maxPage;
+  }
+);
 
 async function loadCategories() {
   const list = await getCategoryList();
@@ -458,6 +495,7 @@ async function loadWorkbench() {
     workflowSteps.value = res?.workflowSteps || [];
     selectedStepId.value = res?.selectedStepId || workflowSteps.value[0]?.stepId || null;
     orders.value = res?.orders || [];
+    orderPage.value = 1;
 
     if (orders.value.some((item: any) => item.orderId === activeOrderId.value)) {
       await loadOrderDetail(activeOrderId.value as number);
@@ -1040,6 +1078,23 @@ const actionSuccessText: Record<WorkbenchAction, string> = {
   display: flex;
   flex-wrap: wrap;
   gap: 14px;
+}
+
+.order-switcher-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid #eef1f7;
+}
+
+.order-switcher-pagination__text {
+  flex-shrink: 0;
+  color: #7c879d;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .compact-order {

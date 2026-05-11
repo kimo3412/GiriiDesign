@@ -1,6 +1,7 @@
 package com.designstudio.order.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.designstudio.common.result.PageResult;
 import com.designstudio.order.controller.AppOrderController;
 import com.designstudio.order.controller.OrderController;
 import com.designstudio.order.controller.WorkbenchController;
@@ -28,7 +29,7 @@ public interface OrderService {
     /**
      * 看板数据
      */
-    List<OrderController.KanbanColumnVO> getKanbanData(Long categoryId);
+    PageResult<OrderController.KanbanColumnVO> getKanbanData(Long categoryId, Long pageNum, Long pageSize);
 
     /**
      * 推进订单到下一个工作流节点
@@ -78,7 +79,7 @@ public interface OrderService {
      */
     OrderController.OrderDetailVO getAppOrderDetail(Long orderId, Long userId);
 
-    WorkbenchController.WorkbenchVO getWorkbenchData(Long categoryId, Long stepId);
+    WorkbenchController.WorkbenchVO getWorkbenchData(Long categoryId, Long stepId, Long pageNum, Long pageSize);
 
     void handleWorkbenchAction(Long orderId, WorkbenchController.WorkbenchActionDTO dto);
 
