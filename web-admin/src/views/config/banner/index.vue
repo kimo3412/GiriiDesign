@@ -96,11 +96,12 @@
         </n-form-item>
         <n-form-item label="图片" path="imageUrl">
           <n-upload
+            v-model:file-list="coverFileList"
             :custom-request="handleUpload"
-            :file-list="coverFileList"
             list-type="image"
             :max="1"
             accept="image/*"
+            @remove="handleUploadRemove"
           >
             <n-button size="small">点击上传</n-button>
           </n-upload>
@@ -256,8 +257,20 @@ const columns = [
 function toFileUrl(url?: string | null) {
   if (!url) return '';
   if (/^https?:\/\//i.test(url)) return url;
-  if (fileUrl) return `${fileUrl}${url}`;
-  return url;
+  if (url.startsWith('/api/')) return url;
+  if (url.startsWith('/uploads/')) return fileUrl ? `${fileUrl}${url}` : url;
+  const normalized = url.startsWith('/') ? url : `/${url}`;
+  return fileUrl ? `${fileUrl}/uploads${normalized}` : `/uploads${normalized}`;
+}
+
+function createUploadFile(id: string, name: string, url: string): UploadFileInfo {
+  return {
+    id,
+    name,
+    status: 'finished',
+    url: toFileUrl(url),
+    sourceUrl: url,
+  } as UploadFileInfo & { sourceUrl: string };
 }
 
 const getRecords = (value: any) => {
@@ -314,11 +327,7 @@ const handleEdit = async (row: any) => {
     const res = await getBannerDetail(row.bannerId);
     isEdit.value = true;
     formData.value = { ...res };
-    if (res.imageUrl) {
-      coverFileList.value = [{ id: 'existing', name: 'image.jpg', status: 'finished', url: toFileUrl(res.imageUrl) }];
-    } else {
-      coverFileList.value = [];
-    }
+    coverFileList.value = res.imageUrl ? [createUploadFile('banner-existing', 'banner.jpg', res.imageUrl)] : [];
     showModal.value = true;
   } catch (e) { console.error(e); }
 };
@@ -356,11 +365,16 @@ const handleToggleStatus = async (row: any, status: number) => {
 
 const handleSubmit = async () => {
   try {
+    const imageFile = coverFileList.value[0] as UploadFileInfo & { sourceUrl?: string } | undefined;
+    const data = {
+      ...formData.value,
+      imageUrl: imageFile?.sourceUrl || formData.value.imageUrl || '',
+    };
     if (isEdit.value) {
-      await updateBanner(formData.value.bannerId, formData.value);
+      await updateBanner(formData.value.bannerId, data);
       message.success('修改成功');
     } else {
-      await addBanner(formData.value);
+      await addBanner(data);
       message.success('新增成功');
     }
     showModal.value = false;
@@ -387,12 +401,19 @@ async function handleUpload(options: UploadCustomRequestOptions) {
       return;
     }
     formData.value.imageUrl = result.data;
+    (options.file as UploadFileInfo & { sourceUrl?: string }).sourceUrl = result.data;
+    options.file.url = toFileUrl(result.data);
     options.onFinish();
   } catch (e) {
     console.error(e);
     message.error('上传失败');
     options.onError();
   }
+}
+
+function handleUploadRemove() {
+  formData.value.imageUrl = '';
+  return true;
 }
 </script>
 
