@@ -116,27 +116,15 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public PageResult<OrderController.KanbanColumnVO> getKanbanData(Long categoryId, Long pageNum, Long pageSize) {
-        LambdaQueryWrapper<DsOrder> orderWrapper = new LambdaQueryWrapper<DsOrder>()
-                .eq(DsOrder::getStatus, 1)
-                .isNotNull(DsOrder::getCurrentStepId)
-                .orderByDesc(DsOrder::getCreateTime);
-        if (categoryId != null) {
-            orderWrapper.eq(DsOrder::getCategoryId, categoryId);
-        }
-        applyDesignerScope(orderWrapper);
-        Page<DsOrder> page = new Page<>(pageNum, pageSize);
-        IPage<DsOrder> orderPage = orderMapper.selectPage(page, orderWrapper);
-        List<DsOrder> orders = orderPage.getRecords();
-        if (orders.isEmpty()) {
-            return PageResult.of(Collections.emptyList(), orderPage.getTotal(), orderPage.getCurrent(), orderPage.getSize());
-        }
+    public PageResult<OrderController.KanbanColumnVO> getKanbanData(Long categoryId, Long stepId, Long pageNum, Long pageSize) {
+        Long safePageNum = pageNum == null || pageNum < 1 ? 1L : pageNum;
+        Long safePageSize = pageSize == null || pageSize < 1 ? 8L : Math.min(pageSize, 50L);
 
-        Set<Long> categoryIds = orders.stream().map(DsOrder::getCategoryId).collect(Collectors.toSet());
         List<DsWorkflow> workflows = workflowMapper.selectList(
-                new LambdaQueryWrapper<DsWorkflow>().in(DsWorkflow::getCategoryId, categoryIds));
+                new LambdaQueryWrapper<DsWorkflow>()
+                        .eq(categoryId != null, DsWorkflow::getCategoryId, categoryId));
         if (workflows.isEmpty()) {
-            return PageResult.of(Collections.emptyList(), orderPage.getTotal(), orderPage.getCurrent(), orderPage.getSize());
+            return PageResult.of(Collections.emptyList(), 0L, safePageNum, safePageSize);
         }
 
         Set<Long> workflowIds = workflows.stream().map(DsWorkflow::getWorkflowId).collect(Collectors.toSet());
@@ -144,29 +132,55 @@ public class OrderServiceImpl implements OrderService {
                 new LambdaQueryWrapper<DsWorkflowStep>()
                         .in(DsWorkflowStep::getWorkflowId, workflowIds)
                         .orderByAsc(DsWorkflowStep::getStepOrder));
+        if (stepId != null) {
+            allSteps = allSteps.stream()
+                    .filter(step -> Objects.equals(step.getStepId(), stepId))
+                    .collect(Collectors.toList());
+        }
+        if (allSteps.isEmpty()) {
+            return PageResult.of(Collections.emptyList(), 0L, safePageNum, safePageSize);
+        }
 
         Map<Long, Long> workflowCategoryMap = workflows.stream()
                 .collect(Collectors.toMap(DsWorkflow::getWorkflowId, DsWorkflow::getCategoryId));
-        Map<Long, List<DsOrder>> ordersByStep = orders.stream()
-                .filter(order -> order.getCurrentStepId() != null)
-                .collect(Collectors.groupingBy(DsOrder::getCurrentStepId));
-
         Map<Long, Long> stepCategoryMap = new HashMap<>();
         for (DsWorkflowStep step : allSteps) {
             stepCategoryMap.put(step.getStepId(), workflowCategoryMap.get(step.getWorkflowId()));
         }
 
         List<OrderController.KanbanColumnVO> columns = allSteps.stream().map(step -> {
+            LambdaQueryWrapper<DsOrder> orderWrapper = new LambdaQueryWrapper<DsOrder>()
+                    .eq(DsOrder::getStatus, 1)
+                    .eq(DsOrder::getCurrentStepId, step.getStepId())
+                    .orderByDesc(DsOrder::getCreateTime);
+            Long stepCategoryId = stepCategoryMap.get(step.getStepId());
+            if (stepCategoryId != null) {
+                orderWrapper.eq(DsOrder::getCategoryId, stepCategoryId);
+            }
+            applyDesignerScope(orderWrapper);
+
+            Page<DsOrder> page = new Page<>(safePageNum, safePageSize);
+            IPage<DsOrder> orderPage = orderMapper.selectPage(page, orderWrapper);
+            List<DsOrder> orders = orderPage.getRecords();
+            fillOrderDisplayNames(orders);
+
             OrderController.KanbanColumnVO col = new OrderController.KanbanColumnVO();
             col.setStepId(step.getStepId());
             col.setStepName(step.getStepName());
             col.setStepOrder(step.getStepOrder());
-            col.setCategoryId(stepCategoryMap.get(step.getStepId()));
-            col.setOrders(ordersByStep.getOrDefault(step.getStepId(), Collections.emptyList()));
+            col.setCategoryId(stepCategoryId);
+            col.setTotal(orderPage.getTotal());
+            col.setPageNum(orderPage.getCurrent());
+            col.setPageSize(orderPage.getSize());
+            long totalPages = orderPage.getSize() > 0
+                    ? (long) Math.ceil((double) orderPage.getTotal() / orderPage.getSize())
+                    : 1L;
+            col.setTotalPages(Math.max(1L, totalPages));
+            col.setOrders(orders);
             return col;
         }).collect(Collectors.toList());
-        columns.forEach(column -> fillOrderDisplayNames(column.getOrders()));
-        return PageResult.of(columns, orderPage.getTotal(), orderPage.getCurrent(), orderPage.getSize());
+        Long total = columns.stream().mapToLong(column -> column.getTotal() == null ? 0L : column.getTotal()).sum();
+        return PageResult.of(columns, total, safePageNum, safePageSize);
     }
 
     @Override

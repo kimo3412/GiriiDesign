@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.designstudio.chat.domain.DsChatMessage;
 import com.designstudio.chat.mapper.DsChatMessageMapper;
 import com.designstudio.chat.service.ChatService;
+import com.designstudio.common.result.PageResult;
 import com.designstudio.order.domain.DsOrder;
 import com.designstudio.order.domain.DsOrderRequest;
 import com.designstudio.order.mapper.DsOrderMapper;
@@ -60,6 +61,21 @@ public class ChatServiceImpl implements ChatService {
             item.put("handoffActive", isHumanHandoffActive(userId, orderId));
         });
         return conversations;
+    }
+
+    @Override
+    public PageResult<Map<String, Object>> getConversations(Long pageNum, Long pageSize) {
+        long safePageNum = pageNum == null || pageNum < 1 ? 1L : pageNum;
+        long safePageSize = pageSize == null || pageSize < 1 ? 12L : Math.min(pageSize, 50L);
+        long total = messageMapper.countConversationList();
+        long offset = (safePageNum - 1) * safePageSize;
+        List<Map<String, Object>> conversations = messageMapper.selectConversationPage(offset, safePageSize);
+        conversations.forEach(item -> {
+            Long userId = toLong(item.get("userId"));
+            Long orderId = toLong(item.get("orderId"));
+            item.put("handoffActive", isHumanHandoffActive(userId, orderId));
+        });
+        return PageResult.of(conversations, total, safePageNum, safePageSize);
     }
 
     @Override

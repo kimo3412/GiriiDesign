@@ -29,7 +29,7 @@ public interface OrderService {
     /**
      * 看板数据
      */
-    PageResult<OrderController.KanbanColumnVO> getKanbanData(Long categoryId, Long pageNum, Long pageSize);
+    PageResult<OrderController.KanbanColumnVO> getKanbanData(Long categoryId, Long stepId, Long pageNum, Long pageSize);
 
     /**
      * 推进订单到下一个工作流节点

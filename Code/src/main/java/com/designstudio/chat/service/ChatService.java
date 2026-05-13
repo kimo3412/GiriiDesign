@@ -1,6 +1,7 @@
 package com.designstudio.chat.service;
 
 import com.designstudio.chat.domain.DsChatMessage;
+import com.designstudio.common.result.PageResult;
 
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,8 @@ public interface ChatService {
      * B端 - 获取所有会话列表
      */
     List<Map<String, Object>> getConversations();
+
+    PageResult<Map<String, Object>> getConversations(Long pageNum, Long pageSize);
 
     /**
      * B端 - 获取某客户的聊天记录

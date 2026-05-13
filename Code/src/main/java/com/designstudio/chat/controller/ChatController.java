@@ -4,6 +4,7 @@ import cn.hutool.json.JSONObject;
 import com.designstudio.chat.domain.DsChatMessage;
 import com.designstudio.chat.service.ChatService;
 import com.designstudio.chat.websocket.SessionManager;
+import com.designstudio.common.result.PageResult;
 import com.designstudio.common.result.R;
 import com.designstudio.common.security.LoginHelper;
 import io.swagger.v3.oas.annotations.Operation;
@@ -79,8 +80,10 @@ public class ChatController {
 
     @GetMapping("/api/v1/admin/chat/conversations")
     @Operation(summary = "B端获取所有会话列表")
-    public R<List<Map<String, Object>>> getConversations() {
-        return R.ok(chatService.getConversations());
+    public R<PageResult<Map<String, Object>>> getConversations(
+            @RequestParam(defaultValue = "1") Long pageNum,
+            @RequestParam(defaultValue = "12") Long pageSize) {
+        return R.ok(chatService.getConversations(pageNum, pageSize));
     }
 
     @GetMapping("/api/v1/admin/chat/{userId}")

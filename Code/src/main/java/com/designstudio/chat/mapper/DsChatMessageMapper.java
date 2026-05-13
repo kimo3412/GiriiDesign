@@ -32,4 +32,28 @@ public interface DsChatMessageMapper extends BaseMapper<DsChatMessage> {
             "GROUP BY m.user_id, m.order_id, o.order_sn, u.nickname, u.avatar_url " +
             "ORDER BY lastTime DESC")
     List<Map<String, Object>> selectConversationList();
+
+    @Select("SELECT COUNT(*) FROM (" +
+            "SELECT m.user_id, m.order_id " +
+            "FROM ds_chat_message m " +
+            "GROUP BY m.user_id, m.order_id" +
+            ") t")
+    long countConversationList();
+
+    @Select("SELECT m.user_id AS userId, m.order_id AS orderId, " +
+            "o.order_sn AS orderSn, " +
+            "u.nickname, u.avatar_url AS avatar, " +
+            "COUNT(CASE WHEN m.is_read = 0 AND m.sender_type = 0 THEN 1 END) AS unreadCount, " +
+            "COUNT(CASE WHEN m.is_read = 0 AND m.sender_type = 0 AND m.content_type = 4 AND m.extra_json LIKE '%handoff_request%' THEN 1 END) AS handoffCount, " +
+            "MAX(m.create_time) AS lastTime, " +
+            "(SELECT content FROM ds_chat_message m2 " +
+            " WHERE m2.user_id = m.user_id AND (m2.order_id <=> m.order_id) " +
+            " ORDER BY create_time DESC LIMIT 1) AS lastContent " +
+            "FROM ds_chat_message m " +
+            "LEFT JOIN ds_user u ON m.user_id = u.user_id " +
+            "LEFT JOIN ds_order o ON m.order_id = o.order_id " +
+            "GROUP BY m.user_id, m.order_id, o.order_sn, u.nickname, u.avatar_url " +
+            "ORDER BY lastTime DESC " +
+            "LIMIT #{offset}, #{pageSize}")
+    List<Map<String, Object>> selectConversationPage(long offset, long pageSize);
 }

@@ -57,9 +57,10 @@ public class OrderController {
     @Operation(summary = "订单看板数据（按品类分组，列=工作流节点）")
     public R<PageResult<KanbanColumnVO>> kanban(
             @RequestParam(required = false) Long categoryId,
+            @RequestParam(required = false) Long stepId,
             @RequestParam(defaultValue = "1") Long pageNum,
             @RequestParam(defaultValue = "10") Long pageSize) {
-        return R.ok(orderService.getKanbanData(categoryId, pageNum, pageSize));
+        return R.ok(orderService.getKanbanData(categoryId, stepId, pageNum, pageSize));
     }
 
     // ==================== 订单操作 ====================
@@ -179,6 +180,10 @@ public class OrderController {
         private String stepName;
         private Integer stepOrder;
         private Long categoryId;
+        private Long total;
+        private Long pageNum;
+        private Long pageSize;
+        private Long totalPages;
         private List<DsOrder> orders;
     }
 
