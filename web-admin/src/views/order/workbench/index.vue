@@ -707,11 +707,16 @@ function getStepName(stepId?: number | null) {
 function toFileUrl(url?: string | null) {
   if (!url) return '';
   if (/^https?:\/\//i.test(url)) return url;
-  return fileUrl ? `${fileUrl}${url}` : url;
+  if (url.startsWith('/api/')) return url;
+  if (url.startsWith('/uploads/')) return fileUrl ? `${fileUrl}${url}` : url;
+  const normalized = url.startsWith('/') ? url : `/${url}`;
+  return fileUrl ? `${fileUrl}/uploads${normalized}` : `/uploads${normalized}`;
 }
 
 function getUploadedImageUrls() {
-  return uploadFiles.value.map((file) => file.url).filter((url): url is string => typeof url === 'string' && !!url);
+  return uploadFiles.value
+    .map((file) => (file as UploadFileInfo & { sourceUrl?: string }).sourceUrl || file.url)
+    .filter((url): url is string => typeof url === 'string' && !!url);
 }
 
 function hasFinishedUploadedImages() {
@@ -747,7 +752,8 @@ async function handleUpload(options: UploadCustomRequestOptions) {
       return;
     }
 
-    options.file.url = result.data;
+    (options.file as UploadFileInfo & { sourceUrl?: string }).sourceUrl = result.data;
+    options.file.url = toFileUrl(result.data);
     options.onFinish();
   } catch (error) {
     console.error(error);
