@@ -7,6 +7,8 @@ import com.designstudio.chat.domain.DsChatMessage;
 import com.designstudio.chat.mapper.DsChatMessageMapper;
 import com.designstudio.chat.service.ChatService;
 import com.designstudio.common.result.PageResult;
+import com.designstudio.common.security.LoginHelper;
+import com.designstudio.common.security.LoginUser;
 import com.designstudio.order.domain.DsOrder;
 import com.designstudio.order.domain.DsOrderRequest;
 import com.designstudio.order.mapper.DsOrderMapper;
@@ -15,9 +17,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -67,9 +72,10 @@ public class ChatServiceImpl implements ChatService {
     public PageResult<Map<String, Object>> getConversations(Long pageNum, Long pageSize) {
         long safePageNum = pageNum == null || pageNum < 1 ? 1L : pageNum;
         long safePageSize = pageSize == null || pageSize < 1 ? 12L : Math.min(pageSize, 50L);
-        long total = messageMapper.countConversationList();
+        Long designerId = getCurrentDesignerId();
+        long total = messageMapper.countConversationList(designerId);
         long offset = (safePageNum - 1) * safePageSize;
-        List<Map<String, Object>> conversations = messageMapper.selectConversationPage(offset, safePageSize);
+        List<Map<String, Object>> conversations = messageMapper.selectConversationPage(offset, safePageSize, designerId);
         conversations.forEach(item -> {
             Long userId = toLong(item.get("userId"));
             Long orderId = toLong(item.get("orderId"));
@@ -80,6 +86,7 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public List<DsChatMessage> getAdminMessages(Long userId, Long orderId) {
+        ensureAdminCanAccessConversation(userId, orderId);
         LambdaQueryWrapper<DsChatMessage> wrapper = new LambdaQueryWrapper<DsChatMessage>()
                 .eq(DsChatMessage::getUserId, userId);
         appendOrderFilter(wrapper, orderId);
@@ -89,6 +96,7 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public void markAsRead(Long userId, Long orderId) {
+        ensureAdminCanAccessConversation(userId, orderId);
         LambdaUpdateWrapper<DsChatMessage> wrapper = new LambdaUpdateWrapper<DsChatMessage>()
                 .eq(DsChatMessage::getUserId, userId)
                 .eq(DsChatMessage::getSenderType, SENDER_TYPE_CLIENT)
@@ -100,6 +108,7 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public Map<String, Object> getChatUserSummary(Long userId) {
+        Long designerId = getCurrentDesignerId();
         List<DsOrderRequest> requests = requestMapper.selectList(
                 new LambdaQueryWrapper<DsOrderRequest>()
                         .eq(DsOrderRequest::getUserId, userId)
@@ -107,7 +116,18 @@ public class ChatServiceImpl implements ChatService {
         List<DsOrder> orders = orderMapper.selectList(
                 new LambdaQueryWrapper<DsOrder>()
                         .eq(DsOrder::getUserId, userId)
+                        .eq(designerId != null, DsOrder::getDesignerId, designerId)
                         .orderByDesc(DsOrder::getCreateTime));
+        if (designerId != null) {
+            List<Long> visibleOrderIds = orders.stream()
+                    .map(DsOrder::getOrderId)
+                    .collect(Collectors.toList());
+            requests = visibleOrderIds.isEmpty()
+                    ? Collections.emptyList()
+                    : requests.stream()
+                            .filter(request -> visibleOrderIds.contains(request.getLinkedOrderId()))
+                            .collect(Collectors.toList());
+        }
 
         Map<String, Object> map = new HashMap<>();
         map.put("requests", requests);
@@ -165,6 +185,7 @@ public class ChatServiceImpl implements ChatService {
 
     @Override
     public DsChatMessage resolveHumanHandoff(Long chatUserId, Long orderId, Long adminId) {
+        ensureAdminCanAccessConversation(chatUserId, orderId);
         String content = "人工服务已处理，AI客服已恢复自动接待。";
         JSONObject extra = new JSONObject();
         extra.set("cardType", HANDOFF_RESOLVED);
@@ -201,6 +222,39 @@ public class ChatServiceImpl implements ChatService {
         } else {
             wrapper.isNull(DsChatMessage::getOrderId);
         }
+    }
+
+    @Override
+    public void ensureAdminCanAccessConversation(Long chatUserId, Long orderId) {
+        Long designerId = getCurrentDesignerId();
+        if (designerId == null) {
+            return;
+        }
+        if (orderId == null) {
+            throw new RuntimeException("无权访问未关联订单的会话");
+        }
+        DsOrder order = orderMapper.selectById(orderId);
+        if (order == null || !Objects.equals(order.getUserId(), chatUserId)
+                || !Objects.equals(order.getDesignerId(), designerId)) {
+            throw new RuntimeException("无权访问其他设计师负责的订单会话");
+        }
+    }
+
+    private Long getCurrentDesignerId() {
+        LoginUser loginUser = LoginHelper.getLoginUser();
+        if (loginUser == null || loginUser.getAdminId() == null) {
+            return null;
+        }
+        List<String> roleKeys = loginUser.getRoleKeys();
+        if (roleKeys == null || roleKeys.isEmpty()) {
+            return null;
+        }
+        boolean isAdmin = roleKeys.stream().anyMatch(role -> "admin".equalsIgnoreCase(role));
+        boolean isDesigner = roleKeys.stream().anyMatch(role -> "designer".equalsIgnoreCase(role));
+        if (isDesigner && !isAdmin) {
+            return loginUser.getAdminId();
+        }
+        return null;
     }
 
     private Long toLong(Object value) {

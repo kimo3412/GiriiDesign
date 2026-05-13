@@ -11,6 +11,7 @@ import com.designstudio.config.domain.DsWorkflowStep;
 import com.designstudio.config.mapper.DsCategoryMapper;
 import com.designstudio.order.controller.AppOrderController;
 import com.designstudio.order.domain.DsOrder;
+import com.designstudio.order.mapper.DsOrderMapper;
 import com.designstudio.order.service.OrderService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 /**
@@ -43,6 +45,7 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
     private final AiCustomerService aiCustomerService;
     private final OrderService orderService;
     private final DsCategoryMapper categoryMapper;
+    private final DsOrderMapper orderMapper;
 
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     private static final int CONTENT_TYPE_TEXT = 0;
@@ -64,10 +67,12 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
 
         Long userId = jwtUtils.getUserIdFromToken(token);
         String userType = jwtUtils.getUserTypeFromToken(token);
+        List<String> roles = jwtUtils.getRolesFromToken(token);
         String key = sessionManager.buildKey(userType, userId);
 
         session.getAttributes().put("userId", userId);
         session.getAttributes().put("userType", userType);
+        session.getAttributes().put("roles", roles);
         session.getAttributes().put("sessionKey", key);
 
         sessionManager.add(key, session);
@@ -91,6 +96,14 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
         Object extraJson = json.get("extraJson");
         int senderTypeInt = "client".equals(userType) ? 0 : 1;
         int contentTypeInt = resolveContentType(msgType);
+
+        if (!canSendMessage(session, userType, currentUserId, chatUserId, orderId)) {
+            JSONObject error = new JSONObject();
+            error.set("type", "ERROR");
+            error.set("message", "无权访问该订单会话");
+            session.sendMessage(new TextMessage(error.toString()));
+            return;
+        }
 
         DsChatMessage msg = chatService.saveMessage(chatUserId, senderTypeInt, currentUserId, content,
                 contentTypeInt, orderId, extraJson == null ? null : extraJson.toString());
@@ -132,6 +145,27 @@ public class ChatWebSocketHandler extends TextWebSocketHandler {
             return CONTENT_TYPE_FILE;
         }
         return CONTENT_TYPE_TEXT;
+    }
+
+    @SuppressWarnings("unchecked")
+    private boolean canSendMessage(WebSocketSession session, String userType, Long currentUserId,
+                                   Long chatUserId, Long orderId) {
+        if ("client".equals(userType)) {
+            return currentUserId != null && Objects.equals(currentUserId, chatUserId);
+        }
+        List<String> roles = (List<String>) session.getAttributes().getOrDefault("roles", List.of());
+        boolean isAdmin = roles.stream().anyMatch(role -> "admin".equalsIgnoreCase(role));
+        boolean isDesigner = roles.stream().anyMatch(role -> "designer".equalsIgnoreCase(role));
+        if (!isDesigner || isAdmin) {
+            return true;
+        }
+        if (orderId == null || chatUserId == null) {
+            return false;
+        }
+        DsOrder order = orderMapper.selectById(orderId);
+        return order != null
+                && Objects.equals(order.getUserId(), chatUserId)
+                && Objects.equals(order.getDesignerId(), currentUserId);
     }
 
     private void triggerAiReply(Long chatUserId, Long orderId, String content) {

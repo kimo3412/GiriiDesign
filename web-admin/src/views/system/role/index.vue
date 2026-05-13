@@ -263,8 +263,7 @@ const handleCheckMenu = (keys: Array<string | number>) => {
   formData.value.menuIds = keys as number[];
 };
 
-const handleSubmit = (e: MouseEvent) => {
-  e.preventDefault();
+const handleSubmit = () => {
   formRef.value?.validate(async (errors: any) => {
     if (!errors) {
       try {
@@ -280,7 +279,6 @@ const handleSubmit = (e: MouseEvent) => {
       } catch (err) { console.error(err); }
     }
   });
-  return false;
 };
 </script>
 

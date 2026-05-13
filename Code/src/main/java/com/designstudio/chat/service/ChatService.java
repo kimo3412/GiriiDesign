@@ -33,6 +33,8 @@ public interface ChatService {
      */
     void markAsRead(Long userId, Long orderId);
 
+    void ensureAdminCanAccessConversation(Long chatUserId, Long orderId);
+
     /**
      * B端 - 获取聊天客户的全景意向/订单一览
      */

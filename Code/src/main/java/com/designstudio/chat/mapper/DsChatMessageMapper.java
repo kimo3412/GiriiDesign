@@ -3,6 +3,7 @@ package com.designstudio.chat.mapper;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.designstudio.chat.domain.DsChatMessage;
 import org.apache.ibatis.annotations.Mapper;
+import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
 import java.util.List;
@@ -36,9 +37,11 @@ public interface DsChatMessageMapper extends BaseMapper<DsChatMessage> {
     @Select("SELECT COUNT(*) FROM (" +
             "SELECT m.user_id, m.order_id " +
             "FROM ds_chat_message m " +
+            "LEFT JOIN ds_order o ON m.order_id = o.order_id " +
+            "WHERE (#{designerId} IS NULL OR o.designer_id = #{designerId}) " +
             "GROUP BY m.user_id, m.order_id" +
             ") t")
-    long countConversationList();
+    long countConversationList(@Param("designerId") Long designerId);
 
     @Select("SELECT m.user_id AS userId, m.order_id AS orderId, " +
             "o.order_sn AS orderSn, " +
@@ -52,8 +55,12 @@ public interface DsChatMessageMapper extends BaseMapper<DsChatMessage> {
             "FROM ds_chat_message m " +
             "LEFT JOIN ds_user u ON m.user_id = u.user_id " +
             "LEFT JOIN ds_order o ON m.order_id = o.order_id " +
+            "WHERE (#{designerId} IS NULL OR o.designer_id = #{designerId}) " +
             "GROUP BY m.user_id, m.order_id, o.order_sn, u.nickname, u.avatar_url " +
             "ORDER BY lastTime DESC " +
             "LIMIT #{offset}, #{pageSize}")
-    List<Map<String, Object>> selectConversationPage(long offset, long pageSize);
+    List<Map<String, Object>> selectConversationPage(
+            @Param("offset") long offset,
+            @Param("pageSize") long pageSize,
+            @Param("designerId") Long designerId);
 }
