@@ -1,8 +1,8 @@
 import { Alova } from '@/utils/http/alova/index';
 
 /** 获取所有会话列表（含未读数，按订单分组） */
-export const getConversations = () => {
-  return Alova.Get<any>('/v1/admin/chat/conversations');
+export const getConversations = (params?: any) => {
+  return Alova.Get<any>('/v1/admin/chat/conversations', { params });
 };
 
 /** 获取某客户的聊天记录 */

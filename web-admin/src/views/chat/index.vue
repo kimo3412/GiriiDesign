@@ -13,7 +13,7 @@
         <div class="panel-left__stats">
           <div class="summary-pill">
             <span class="summary-pill__label">会话</span>
-            <strong>{{ filteredConversations.length }}</strong>
+            <strong>{{ conversationTotal }}</strong>
           </div>
           <div class="summary-pill">
             <span class="summary-pill__label">未读</span>
@@ -34,7 +34,7 @@
 
         <div class="conv-scroll">
           <button
-            v-for="conv in pagedConversations"
+            v-for="conv in filteredConversations"
             :key="`${conv.userId}_${conv.orderId || 'general'}`"
             class="conv-item"
             :class="{ active: activeUserId === conv.userId && activeOrderId == conv.orderId }"
@@ -70,14 +70,27 @@
           <div v-if="filteredConversations.length === 0" class="conv-empty">暂无会话</div>
         </div>
 
-        <div v-if="filteredConversations.length > conversationPageSize" class="conv-pagination">
-          <n-pagination
-            v-model:page="conversationPage"
-            :page-size="conversationPageSize"
-            :item-count="filteredConversations.length"
-            :page-slot="4"
+        <div v-if="conversationTotalPages > 1" class="conv-pagination">
+          <n-button
             size="small"
-          />
+            quaternary
+            :disabled="conversationPage <= 1"
+            @click="handleConversationPageChange(conversationPage - 1)"
+          >
+            上一页
+          </n-button>
+          <span class="conv-pagination__page">
+            {{ conversationPage }} / {{ conversationTotalPages }}
+          </span>
+          <n-button
+            size="small"
+            quaternary
+            :disabled="conversationPage >= conversationTotalPages"
+            @click="handleConversationPageChange(conversationPage + 1)"
+          >
+            下一页
+          </n-button>
+          <span class="conv-pagination__total">共 {{ conversationTotal }} 条</span>
         </div>
       </aside>
 
@@ -341,6 +354,7 @@
   const conversations = ref<any[]>([]);
   const conversationPage = ref(1);
   const conversationPageSize = 12;
+  const conversationTotal = ref(0);
   const activeUserId = ref<number | null>(null);
   const activeOrderId = ref<number | null>(null);
   const activeUserName = ref('');
@@ -388,10 +402,9 @@
     );
   });
 
-  const pagedConversations = computed(() => {
-    const start = (conversationPage.value - 1) * conversationPageSize;
-    return filteredConversations.value.slice(start, start + conversationPageSize);
-  });
+  const conversationTotalPages = computed(() =>
+    Math.max(1, Math.ceil(conversationTotal.value / conversationPageSize))
+  );
 
   const orderCount = computed(() => userSummary.value?.orders?.length || 0);
 
@@ -439,18 +452,15 @@
     conversationPage.value = 1;
   });
 
-  watch(
-    () => filteredConversations.value.length,
-    (len) => {
-      const maxPage = Math.max(1, Math.ceil(len / conversationPageSize));
-      if (conversationPage.value > maxPage) conversationPage.value = maxPage;
-    }
-  );
-
   const fetchConversations = async () => {
     try {
-      const result = await fetchConvApi();
-      conversations.value = (result || []).map((item: any) => ({
+      const result: any = await fetchConvApi({
+        pageNum: conversationPage.value,
+        pageSize: conversationPageSize,
+      });
+      const records = Array.isArray(result) ? result : result?.records || [];
+      conversationTotal.value = Number(result?.total ?? records.length);
+      conversations.value = records.map((item: any) => ({
         ...item,
         unreadCount: Number(item.unreadCount ?? item.unread_count ?? 0),
         handoffCount: Number(item.handoffCount ?? item.handoff_count ?? 0),
@@ -459,6 +469,11 @@
     } catch (error) {
       console.error('获取会话列表失败', error);
     }
+  };
+
+  const handleConversationPageChange = async (page: number) => {
+    conversationPage.value = page;
+    await fetchConversations();
   };
 
   const selectConversation = async (conv: any) => {
@@ -740,10 +755,29 @@
   .conv-pagination {
     flex-shrink: 0;
     display: flex;
+    align-items: center;
     justify-content: center;
-    padding: 8px 10px 12px;
+    gap: 8px;
+    padding: 10px;
     border-top: 1px solid var(--border-light);
     background: rgba(248, 250, 252, 0.96);
+    flex-wrap: wrap;
+  }
+
+  .conv-pagination__page {
+    min-width: 64px;
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .conv-pagination__total {
+    flex-shrink: 0;
+    color: var(--text-tertiary);
+    font-size: 12px;
+    white-space: nowrap;
   }
 
   .conv-item {

@@ -136,7 +136,7 @@
               <span class="group-head__accent" :style="{ background: group.color }"></span>
               <div class="group-head__title">
                 <strong>{{ group.stepName }}</strong>
-                <span>{{ group.orders.length }} 单</span>
+              <span>{{ group.total }} 单</span>
               </div>
             </div>
             <div class="group-head__meta">
@@ -215,16 +215,26 @@
             </div>
 
             <div v-if="group.totalPages > 1" class="group-pagination">
-              <span class="group-pagination__text">
-                第 {{ group.currentPage }} / {{ group.totalPages }} 页，共 {{ group.orders.length }} 单
-              </span>
-              <n-pagination
-                :page="group.currentPage"
-                :page-count="group.totalPages"
-                :page-slot="5"
+              <n-button
                 size="small"
-                @update:page="(page) => setGroupPage(group.stepId, page)"
-              />
+                quaternary
+                :disabled="group.currentPage <= 1"
+                @click="setGroupPage(group.stepId, group.currentPage - 1)"
+              >
+                上一页
+              </n-button>
+              <span class="group-pagination__page">
+                {{ group.currentPage }} / {{ group.totalPages }}
+              </span>
+              <n-button
+                size="small"
+                quaternary
+                :disabled="group.currentPage >= group.totalPages"
+                @click="setGroupPage(group.stepId, group.currentPage + 1)"
+              >
+                下一页
+              </n-button>
+              <span class="group-pagination__total">共 {{ group.total }} 单</span>
             </div>
           </div>
         </section>
@@ -296,7 +306,7 @@
   });
 
   const totalOrders = computed(() =>
-    columns.value.reduce((sum, col) => sum + col.orders.length, 0)
+    columns.value.reduce((sum, col) => sum + Number(col.total ?? col.orders?.length ?? 0), 0)
   );
 
   const activeStepName = computed(() => {
@@ -307,7 +317,7 @@
   const allOrders = computed(() => {
     const result: any[] = [];
     columns.value.forEach((col) => {
-      col.orders.forEach((order: any) => {
+      (col.orders || []).forEach((order: any) => {
         const steps = workflowStepsMap.value[order.categoryId] || [];
         const stepIdx = steps.findIndex((step: any) => step.stepId === col.stepId);
         result.push({
@@ -358,14 +368,16 @@
     return Array.from(groups.values())
       .sort((a, b) => a.stepIdx - b.stepIdx)
       .map((group) => {
-        const totalPages = Math.max(1, Math.ceil(group.orders.length / groupPageSize));
-        const currentPage = Math.min(groupPages.value[group.stepId] || 1, totalPages);
-        const start = (currentPage - 1) * groupPageSize;
+        const sourceCol = columns.value.find((col) => col.stepId === group.stepId);
+        const total = Number(sourceCol?.total ?? group.orders.length);
+        const totalPages = Math.max(1, Number(sourceCol?.totalPages ?? Math.ceil(total / groupPageSize)));
+        const currentPage = Math.min(groupPages.value[group.stepId] || Number(sourceCol?.pageNum ?? 1), totalPages);
         return {
           ...group,
+          total,
           currentPage,
           totalPages,
-          pagedOrders: group.orders.slice(start, start + groupPageSize),
+          pagedOrders: group.orders,
         };
       });
   });
@@ -384,8 +396,9 @@
     expandedGroupIds.value = preserved.length ? preserved : [available[0]];
   }
 
-  const setGroupPage = (stepId: number, page: number) => {
+  const setGroupPage = async (stepId: number, page: number) => {
     groupPages.value = { ...groupPages.value, [stepId]: page };
+    await loadGroupPage(stepId, page);
   };
 
   const resetGroupPages = () => {
@@ -489,14 +502,31 @@
     activeCategory.value = null;
     resetGroupPages();
     try {
-      const params: any = {};
+      const params: any = { pageNum: 1, pageSize: groupPageSize };
       if (filterCategory.value != null) params.categoryId = filterCategory.value;
-      columns.value = (await getKanbanData(params)) || [];
+      const res: any = await getKanbanData(params);
+      columns.value = Array.isArray(res) ? res : res?.records || [];
       syncExpandedGroups();
     } catch (error) {
       console.error(error);
     } finally {
       loading.value = false;
+    }
+  };
+
+  const loadGroupPage = async (stepId: number, page: number) => {
+    try {
+      const params: any = { stepId, pageNum: page, pageSize: groupPageSize };
+      if (filterCategory.value != null) params.categoryId = filterCategory.value;
+      const res: any = await getKanbanData(params);
+      const nextColumns = Array.isArray(res) ? res : res?.records || [];
+      const nextColumn = nextColumns[0];
+      if (!nextColumn) return;
+      columns.value = columns.value.map((column) =>
+        column.stepId === stepId ? { ...column, ...nextColumn } : column
+      );
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -733,17 +763,28 @@
   .group-pagination {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    justify-content: center;
+    gap: 8px;
     padding: 10px 14px;
     border-top: 1px solid rgba(226, 232, 240, 0.82);
     background: rgba(248, 250, 252, 0.72);
+    flex-wrap: wrap;
   }
 
-  .group-pagination__text {
+  .group-pagination__page {
+    min-width: 64px;
+    text-align: center;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  .group-pagination__total {
     flex-shrink: 0;
     font-size: 12px;
     color: #8a94a6;
+    white-space: nowrap;
   }
 
   .order-row {
