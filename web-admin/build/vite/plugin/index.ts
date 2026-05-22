@@ -4,6 +4,7 @@ import { NaiveUiResolver } from 'unplugin-vue-components/resolvers';
 
 import vue from '@vitejs/plugin-vue';
 import vueJsx from '@vitejs/plugin-vue-jsx';
+import Inspector from 'vite-plugin-vue-inspector';
 
 import { configHtmlPlugin } from './html';
 import { configCompressPlugin } from './compress';
@@ -16,6 +17,9 @@ export function createVitePlugins(viteEnv: ViteEnv, isBuild: boolean) {
     vue(),
     // have to
     vueJsx(),
+
+    // 点击组件跳转到IDE
+    Inspector(),
 
     // 按需引入NaiveUi且自动创建组件声明
     Components({

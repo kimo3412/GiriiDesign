@@ -91,6 +91,7 @@
     "vite-plugin-compression": "^0.5.1",
     "vite-plugin-html": "^3.2.2",
     "vite-plugin-style-import": "^2.0.0",
+    "vite-plugin-vue-inspector": "^6.0.0",
     "vue-demi": "^0.13.11",
     "vue-draggable-next": "^2.3.0",
     "vue-eslint-parser": "^9.4.3",
