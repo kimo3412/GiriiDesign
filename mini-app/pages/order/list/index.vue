@@ -115,15 +115,15 @@ import { onShow } from '@dcloudio/uni-app'
 import { confirmOrder, getOrderList, payOrder } from '@/api/order'
 
 const tabs = [
-  { label: '进行中', value: '1' },
-  { label: '待收货', value: '3' },
-  { label: '已完成', value: '4' },
-  { label: '全部', value: '' }
+  { label: '进行中', value: 'active', statuses: [0, 1, 2, 6] },
+  { label: '待收货', value: 'receive', statuses: [3] },
+  { label: '已完成', value: 'done', statuses: [4] },
+  { label: '全部', value: '', statuses: [] }
 ]
 
 const progressSteps = ['沟通确认', '生产制作', '试穿验收', '交付完成']
 
-const currentTab = ref('1')
+const currentTab = ref('active')
 const orders = ref([])
 const loading = ref(false)
 const hasMore = ref(false)
@@ -139,7 +139,7 @@ const fetchOrders = async (refresh = false) => {
 
   try {
     const data = await getOrderList({
-      status: currentTab.value
+      statuses: getCurrentStatuses().join(',')
     })
     const list = Array.isArray(data) ? data : (data.records || data.list || [])
     orders.value = list
@@ -154,6 +154,11 @@ const fetchOrders = async (refresh = false) => {
 
 const loadMore = () => {
   // 预留分页入口；等后端支持 page/size 后再启用追加加载。
+}
+
+const getCurrentStatuses = () => {
+  const tab = tabs.find((item) => item.value === currentTab.value)
+  return tab?.statuses || []
 }
 
 const goToStudio = () => {

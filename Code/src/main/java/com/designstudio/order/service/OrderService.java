@@ -72,7 +72,7 @@ public interface OrderService {
     /**
      * C端 - 我的订单列表
      */
-    List<DsOrder> getMyOrders(Long userId, Integer status);
+    List<DsOrder> getMyOrders(Long userId, Integer status, List<Integer> statuses);
 
     /**
      * C端 - 订单详情及进度时间轴

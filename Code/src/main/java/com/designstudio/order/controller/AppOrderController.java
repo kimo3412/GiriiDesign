@@ -25,12 +25,13 @@ public class AppOrderController {
 
     @GetMapping("/my")
     @Operation(summary = "我的订单列表")
-    public R<List<DsOrder>> myOrders(@RequestParam(required = false) Integer status) {
+    public R<List<DsOrder>> myOrders(@RequestParam(required = false) Integer status,
+                                     @RequestParam(required = false) List<Integer> statuses) {
         Long userId = LoginHelper.getUserId();
         if (userId == null) {
             return R.fail("未登录");
         }
-        return R.ok(orderService.getMyOrders(userId, status));
+        return R.ok(orderService.getMyOrders(userId, status, statuses));
     }
 
     @GetMapping("/{id}")

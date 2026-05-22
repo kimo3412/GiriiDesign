@@ -417,10 +417,12 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public List<DsOrder> getMyOrders(Long userId, Integer status) {
+    public List<DsOrder> getMyOrders(Long userId, Integer status, List<Integer> statuses) {
         LambdaQueryWrapper<DsOrder> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(DsOrder::getUserId, userId);
-        if (status != null) {
+        if (statuses != null && !statuses.isEmpty()) {
+            wrapper.in(DsOrder::getStatus, statuses);
+        } else if (status != null) {
             wrapper.eq(DsOrder::getStatus, status);
         }
         wrapper.orderByDesc(DsOrder::getCreateTime);
