@@ -352,11 +352,11 @@ const handleBatchDelete = () => {
 };
 
 const handleFields = (row: any) => {
-  router.push({ path: '/config/config/field', query: { categoryId: row.categoryId } });
+  router.push({ path: '/config/field' });
 };
 
 const handleWorkflow = (row: any) => {
-  router.push({ path: '/config/config/workflow', query: { categoryId: row.categoryId } });
+  router.push({ path: '/config/workflow' });
 };
 </script>
 
