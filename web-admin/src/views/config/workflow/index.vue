@@ -336,18 +336,20 @@ function handleEditStep(row: WorkflowStep, index: number) {
   showModal.value = true;
 }
 
-function handleSubmitStep(e: MouseEvent) {
-  e.preventDefault();
-  formRef.value?.validate((errors: any) => {
-    if (errors) return;
-    const payload = { ...formData.value };
-    if (isEdit.value) {
-      stepsList.value.splice(editIndex.value, 1, payload);
-    } else {
-      stepsList.value.push(payload);
-    }
-    showModal.value = false;
-  });
+async function handleSubmitStep() {
+  try {
+    await formRef.value?.validate();
+  } catch {
+    return false;
+  }
+
+  const payload = { ...formData.value };
+  if (isEdit.value) {
+    stepsList.value.splice(editIndex.value, 1, payload);
+  } else {
+    stepsList.value.push(payload);
+  }
+  showModal.value = false;
   return false;
 }
 
