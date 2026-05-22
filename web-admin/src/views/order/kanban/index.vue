@@ -30,7 +30,7 @@
         >
           <div class="overview-topline">
             <div class="overview-count" :style="{ color: stepColors[idx % stepColors.length] }">
-              {{ col.orders.length }}
+              {{ Number(col.total ?? col.orders.length) }}
             </div>
             <div class="overview-name">{{ col.stepName }}</div>
           </div>
@@ -107,6 +107,7 @@
           size="small"
           style="width: 260px"
           clearable
+          @keydown.enter="loadData"
         >
           <template #prefix>🔍</template>
         </n-input>
@@ -263,6 +264,7 @@
   const categoryMap = ref<Record<number, string>>({});
   const columns = ref<any[]>([]);
   const workflowStepsMap = ref<Record<number, any[]>>({});
+  let searchTimer: ReturnType<typeof setTimeout> | null = null;
 
   const stepColors = ['#5B8C5A', '#4B7BEC', '#E5A84B', '#D35D6E', '#6C5CE7', '#00B894', '#E17055'];
 
@@ -286,7 +288,7 @@
   const categoryColumnsMap = computed(() => {
     const map: Record<number, any[]> = {};
     columns.value.forEach((col) => {
-      const catId = col.categoryId || stepCategoryLookup.value[col.stepId];
+        const catId = col.categoryId || stepCategoryLookup.value[col.stepId];
       if (!catId) return;
       if (!map[catId]) map[catId] = [];
       map[catId].push(col);
@@ -300,7 +302,7 @@
     const counts: Record<number, number> = {};
     columns.value.forEach((col) => {
       const catId = col.categoryId || stepCategoryLookup.value[col.stepId];
-      if (catId) counts[catId] = (counts[catId] || 0) + col.orders.length;
+      if (catId) counts[catId] = (counts[catId] || 0) + Number(col.total ?? col.orders.length);
     });
     return counts;
   });
@@ -324,7 +326,7 @@
           ...order,
           _stepId: col.stepId,
           _stepName: col.stepName,
-          _stepIdx: stepIdx >= 0 ? stepIdx : 0,
+          _stepIdx: col.stepId === 0 ? -1 : stepIdx >= 0 ? stepIdx : 0,
           _steps: steps,
         });
       });
@@ -337,14 +339,6 @@
     if (activeStep.value !== null) list = list.filter((item) => item._stepId === activeStep.value);
     if (activeCategory.value !== null)
       list = list.filter((item) => item.categoryId === activeCategory.value);
-    if (searchText.value) {
-      const kw = searchText.value.toLowerCase();
-      list = list.filter((item) =>
-        [item.orderSn, item.customerName, item.designerName].some((field) =>
-          (field || '').toLowerCase().includes(kw)
-        )
-      );
-    }
     return list;
   });
 
@@ -466,6 +460,13 @@
     () => syncExpandedGroups()
   );
 
+  watch(searchText, () => {
+    if (searchTimer) clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      loadData();
+    }, 350);
+  });
+
   onMounted(async () => {
     try {
       const categories = await getCategoryList();
@@ -504,6 +505,7 @@
     try {
       const params: any = { pageNum: 1, pageSize: groupPageSize };
       if (filterCategory.value != null) params.categoryId = filterCategory.value;
+      if (searchText.value.trim()) params.keyword = searchText.value.trim();
       const res: any = await getKanbanData(params);
       columns.value = Array.isArray(res) ? res : res?.records || [];
       syncExpandedGroups();
@@ -518,6 +520,7 @@
     try {
       const params: any = { stepId, pageNum: page, pageSize: groupPageSize };
       if (filterCategory.value != null) params.categoryId = filterCategory.value;
+      if (searchText.value.trim()) params.keyword = searchText.value.trim();
       const res: any = await getKanbanData(params);
       const nextColumns = Array.isArray(res) ? res : res?.records || [];
       const nextColumn = nextColumns[0];

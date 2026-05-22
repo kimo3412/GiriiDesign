@@ -116,9 +116,39 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-    public PageResult<OrderController.KanbanColumnVO> getKanbanData(Long categoryId, Long stepId, Long pageNum, Long pageSize) {
+    public PageResult<OrderController.KanbanColumnVO> getKanbanData(Long categoryId, Long stepId, String keyword, Long pageNum, Long pageSize) {
         Long safePageNum = pageNum == null || pageNum < 1 ? 1L : pageNum;
         Long safePageSize = pageSize == null || pageSize < 1 ? 8L : Math.min(pageSize, 50L);
+
+        if (Objects.equals(stepId, 0L)) {
+            LambdaQueryWrapper<DsOrder> unboundWrapper = baseKanbanOrderWrapper(keyword)
+                    .eq(DsOrder::getStatus, 1)
+                    .isNull(DsOrder::getCurrentStepId)
+                    .orderByDesc(DsOrder::getCreateTime);
+            if (categoryId != null) {
+                unboundWrapper.eq(DsOrder::getCategoryId, categoryId);
+            }
+            applyDesignerScope(unboundWrapper);
+            Page<DsOrder> page = new Page<>(safePageNum, safePageSize);
+            IPage<DsOrder> orderPage = orderMapper.selectPage(page, unboundWrapper);
+            List<DsOrder> orders = orderPage.getRecords();
+            fillOrderDisplayNames(orders);
+
+            OrderController.KanbanColumnVO col = new OrderController.KanbanColumnVO();
+            col.setStepId(0L);
+            col.setStepName("未绑定节点");
+            col.setStepOrder(-1);
+            col.setCategoryId(categoryId);
+            col.setTotal(orderPage.getTotal());
+            col.setPageNum(orderPage.getCurrent());
+            col.setPageSize(orderPage.getSize());
+            long totalPages = orderPage.getSize() > 0
+                    ? (long) Math.ceil((double) orderPage.getTotal() / orderPage.getSize())
+                    : 1L;
+            col.setTotalPages(Math.max(1L, totalPages));
+            col.setOrders(orders);
+            return PageResult.of(Collections.singletonList(col), orderPage.getTotal(), safePageNum, safePageSize);
+        }
 
         List<DsWorkflow> workflows = workflowMapper.selectList(
                 new LambdaQueryWrapper<DsWorkflow>()
@@ -149,7 +179,7 @@ public class OrderServiceImpl implements OrderService {
         }
 
         List<OrderController.KanbanColumnVO> columns = allSteps.stream().map(step -> {
-            LambdaQueryWrapper<DsOrder> orderWrapper = new LambdaQueryWrapper<DsOrder>()
+            LambdaQueryWrapper<DsOrder> orderWrapper = baseKanbanOrderWrapper(keyword)
                     .eq(DsOrder::getStatus, 1)
                     .eq(DsOrder::getCurrentStepId, step.getStepId())
                     .orderByDesc(DsOrder::getCreateTime);
@@ -179,8 +209,67 @@ public class OrderServiceImpl implements OrderService {
             col.setOrders(orders);
             return col;
         }).collect(Collectors.toList());
+
+        if (stepId == null) {
+            LambdaQueryWrapper<DsOrder> unboundWrapper = baseKanbanOrderWrapper(keyword)
+                    .eq(DsOrder::getStatus, 1)
+                    .isNull(DsOrder::getCurrentStepId)
+                    .orderByDesc(DsOrder::getCreateTime);
+            if (categoryId != null) {
+                unboundWrapper.eq(DsOrder::getCategoryId, categoryId);
+            }
+            applyDesignerScope(unboundWrapper);
+
+            Page<DsOrder> page = new Page<>(safePageNum, safePageSize);
+            IPage<DsOrder> orderPage = orderMapper.selectPage(page, unboundWrapper);
+            if (orderPage.getTotal() > 0) {
+                List<DsOrder> orders = orderPage.getRecords();
+                fillOrderDisplayNames(orders);
+
+                OrderController.KanbanColumnVO col = new OrderController.KanbanColumnVO();
+                col.setStepId(0L);
+                col.setStepName("未绑定节点");
+                col.setStepOrder(-1);
+                col.setCategoryId(categoryId);
+                col.setTotal(orderPage.getTotal());
+                col.setPageNum(orderPage.getCurrent());
+                col.setPageSize(orderPage.getSize());
+                long totalPages = orderPage.getSize() > 0
+                        ? (long) Math.ceil((double) orderPage.getTotal() / orderPage.getSize())
+                        : 1L;
+                col.setTotalPages(Math.max(1L, totalPages));
+                col.setOrders(orders);
+                columns.add(0, col);
+            }
+        }
         Long total = columns.stream().mapToLong(column -> column.getTotal() == null ? 0L : column.getTotal()).sum();
         return PageResult.of(columns, total, safePageNum, safePageSize);
+    }
+
+    private LambdaQueryWrapper<DsOrder> baseKanbanOrderWrapper(String keyword) {
+        LambdaQueryWrapper<DsOrder> wrapper = new LambdaQueryWrapper<DsOrder>()
+                .eq(DsOrder::getDelFlag, 0);
+        if (StringUtils.hasText(keyword)) {
+            String kw = keyword.trim();
+            Long idKeyword = null;
+            try {
+                idKeyword = Long.valueOf(kw);
+            } catch (NumberFormatException ignored) {
+                // Non-numeric keywords only search text columns.
+            }
+            Long finalIdKeyword = idKeyword;
+            wrapper.and(w -> {
+                w.like(DsOrder::getOrderSn, kw)
+                        .or().like(DsOrder::getCustomDataSnapshot, kw)
+                        .or().like(DsOrder::getRemark, kw);
+                if (finalIdKeyword != null) {
+                    w.or().eq(DsOrder::getOrderId, finalIdKeyword)
+                            .or().eq(DsOrder::getUserId, finalIdKeyword)
+                            .or().eq(DsOrder::getDesignerId, finalIdKeyword);
+                }
+            });
+        }
+        return wrapper;
     }
 
     @Override

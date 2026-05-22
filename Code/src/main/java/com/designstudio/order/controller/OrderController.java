@@ -58,9 +58,10 @@ public class OrderController {
     public R<PageResult<KanbanColumnVO>> kanban(
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long stepId,
+            @RequestParam(required = false) String keyword,
             @RequestParam(defaultValue = "1") Long pageNum,
             @RequestParam(defaultValue = "10") Long pageSize) {
-        return R.ok(orderService.getKanbanData(categoryId, stepId, pageNum, pageSize));
+        return R.ok(orderService.getKanbanData(categoryId, stepId, keyword, pageNum, pageSize));
     }
 
     // ==================== 订单操作 ====================
