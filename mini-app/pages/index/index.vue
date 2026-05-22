@@ -70,13 +70,15 @@
             v-for="(item, index) in featuredPortfolios"
             :key="item.portfolioId || index"
             class="masterpiece-item"
-            :class="{ 'masterpiece-item--offset': index % 2 === 1 }"
             @click="goToDetail(item.portfolioId)"
           >
-            <image v-if="item.coverUrl" :src="item.coverUrl" mode="aspectFill" class="masterpiece-image" />
-            <view v-else class="masterpiece-fallback">
-              <text class="masterpiece-fallback__text">ZeHana</text>
+            <view class="masterpiece-cover">
+              <image v-if="item.coverUrl" :src="item.coverUrl" mode="aspectFill" class="masterpiece-image" />
+              <view v-else class="masterpiece-fallback">
+                <text class="masterpiece-fallback__text">ZeHana</text>
+              </view>
             </view>
+            <text class="masterpiece-title">{{ item.title || '未命名作品' }}</text>
           </view>
         </view>
 
@@ -146,7 +148,7 @@ const fetchBanners = async () => {
     banners.value = list.map(item => ({
       image: toFileUrl(item.imageUrl || item.image),
       label: item.title || 'ZeHana 工作室',
-      headline: item.description || item.linkUrl || '专属定制，优雅抵达'
+      headline: item.description || '专属定制，优雅抵达'
     }))
   } catch (err) {
     console.error('获取轮播图失败', err)
@@ -417,15 +419,17 @@ onLoad(() => {
 }
 
 .masterpiece-item {
-  position: relative;
-  height: 410rpx;
+  min-width: 0;
   overflow: hidden;
   border-radius: 16rpx;
-  background: #e4e2e3;
+  background: #ffffff;
+  box-shadow: 0 12rpx 28rpx rgba(26, 43, 60, 0.08);
 }
 
-.masterpiece-item--offset {
-  margin-top: 46rpx;
+.masterpiece-cover {
+  width: 100%;
+  height: 360rpx;
+  background: #e4e2e3;
 }
 
 .masterpiece-image,
@@ -436,6 +440,22 @@ onLoad(() => {
 
 .masterpiece-image {
   display: block;
+}
+
+.masterpiece-title {
+  display: block;
+  min-height: 72rpx;
+  padding: 18rpx 18rpx 20rpx;
+  color: #1a2b3c;
+  font-size: 26rpx;
+  line-height: 1.35;
+  font-weight: 700;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 
 .masterpiece-fallback {

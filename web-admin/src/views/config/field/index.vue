@@ -254,36 +254,41 @@
   };
 
   // 弹窗提交（本地列表更新，暂不发服务端）
-  const handleSubmit = (e: MouseEvent) => {
-    e.preventDefault();
-    formRef.value?.validate((errors: any) => {
-      if (!errors) {
-        // 组装 options
-        if (formData.value.fieldType === 'select') {
-          formData.value.options = JSON.stringify(optionsList.value);
-        } else {
-          formData.value.options = null;
-        }
+  const handleSubmit = async () => {
+    try {
+      await formRef.value?.validate();
+    } catch {
+      return false;
+    }
 
-        if (isEdit.value) {
-          // 检查重复 key
-          const exists = fieldList.value.find((f, i) => f.fieldKey === formData.value.fieldKey && i !== editIndex.value);
-          if (exists) {
-            message.error('字段键名不能重复');
-            return false;
-          }
-          fieldList.value[editIndex.value] = { ...formData.value };
-        } else {
-          const exists = fieldList.value.find((f) => f.fieldKey === formData.value.fieldKey);
-          if (exists) {
-            message.error('字段键名已存在');
-            return false;
-          }
-          fieldList.value.push({ ...formData.value });
-        }
-        showModal.value = false;
+    const normalizedField: CustomField = {
+      ...formData.value,
+      categoryId: selectedCategoryId.value as number,
+      label: formData.value.label?.trim(),
+      fieldKey: formData.value.fieldKey?.trim(),
+      unit: formData.value.unit?.trim(),
+      placeholder: formData.value.placeholder?.trim(),
+      options: formData.value.fieldType === 'select' ? JSON.stringify(optionsList.value) : null,
+    };
+
+    if (isEdit.value) {
+      // 检查重复 key
+      const exists = fieldList.value.find((f, i) => f.fieldKey === normalizedField.fieldKey && i !== editIndex.value);
+      if (exists) {
+        message.error('字段键名不能重复');
+        return false;
       }
-    });
+      fieldList.value[editIndex.value] = normalizedField;
+    } else {
+      const exists = fieldList.value.find((f) => f.fieldKey === normalizedField.fieldKey);
+      if (exists) {
+        message.error('字段键名已存在');
+        return false;
+      }
+      fieldList.value.push(normalizedField);
+    }
+
+    showModal.value = false;
     return false; // 阻止默认关闭，由我们自己控制
   };
 
