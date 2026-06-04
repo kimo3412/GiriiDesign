@@ -69,6 +69,11 @@ __pycache__/
 项目文档/
 Code/sql/
 
+# 过程文档（保留 AGENTS.md / CLAUDE.md 作为架构说明，过程类不上）
+/BUG_AUDIT.md
+/DEV_PLAN.md
+/PAGE_REDESIGN_PLAN.md
+
 # ==================== 系统生成 / 工具缓存 ====================
 .agent/
 .claude/

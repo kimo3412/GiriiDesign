@@ -167,11 +167,12 @@ GiriiDesign/
 
 ## 文档
 
+仓库内仅保留核心架构文档，便于快速了解项目：
+
 - [AGENTS.md](./AGENTS.md) — 后端开发指南（架构 / 模块 / 常用命令）
 - [CLAUDE.md](./CLAUDE.md) — 项目当前真实状态
-- [DEV_PLAN.md](./DEV_PLAN.md) — 迭代计划
-- [BUG_AUDIT.md](./BUG_AUDIT.md) — 发布前 Bug 巡检
-- [PAGE_REDESIGN_PLAN.md](./PAGE_REDESIGN_PLAN.md) — 页面重构方案
+
+过程类文档（迭代计划、巡检记录、页面重构方案）仅本地维护，不对外公开。
 
 ## Roadmap
 
