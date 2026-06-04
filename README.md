@@ -176,6 +176,10 @@ GiriiDesign/
 - 更深度的库存与 BOM 联动
 - 视觉设计系统组件化沉淀
 
+## Acknowledgements
+
+Web 管理后台基于 Vue 3 与 [Naive UI](https://www.naiveui.com/) 构建，并参考 [naive-ui-admin](https://github.com/jekip/naive-ui-admin) 模板进行二次开发。感谢 Naive UI 及 naive-ui-admin 社区提供的优秀开源组件与后台模板支持。
+
 ## License
 
 MIT
