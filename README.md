@@ -26,11 +26,6 @@
 - Web 端看板：vuedraggable 拖拽订单到下一列，后端校验 → 乐观锁写入 → 进度历史落库
 - 阻塞机制：`block` 时记录原因进入阻塞列表，解除后从原节点继续
 
-### 6 角色 RBAC + 设计师数据范围
-- 角色：admin / designer / storekeeper / purchaser / finance / customer_service
-- Spring Security + JJWT + Redis 黑名单
-- 菜单 / 按钮 / 接口三层权限
-- 设计师范围过滤：只能看到自己负责的订单（接口级强制）
 
 ### WebSocket 实时聊天
 - `/ws/chat?token=xxx` 鉴权后建立连接
